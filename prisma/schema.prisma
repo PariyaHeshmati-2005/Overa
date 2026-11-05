@@ -1,0 +1,344 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Identity
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String   @id @default(cuid())
+  phone         String   @unique
+  email         String?  @unique
+  name          String
+  passwordHash  String? // null => OTP-only account
+  avatarUrl     String?
+  bio           String?
+  city          String?
+  // Capabilities: anyone authenticated may rent; host/admin are explicit flags
+  // so a user can be both renter and host (per playbook 3.1).
+  isHost        Boolean  @default(false)
+  isAdmin       Boolean  @default(false)
+  kycStatus     String   @default("UNVERIFIED") // UNVERIFIED | PENDING | VERIFIED | REJECTED
+  walletBalance Int      @default(0) // Toman, application ledger only (sandbox)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions         Session[]
+  listings         Listing[]
+  reservationsAsRenter Reservation[] @relation("RenterReservations")
+  reservationsAsHost   Reservation[] @relation("HostReservations")
+  messages         Message[]
+  conversations    ConversationParticipant[]
+  walletTx         WalletTransaction[]
+  reviews          Review[]
+  reviewReplies    Review[]                  @relation("ReviewHostReplies")
+  claims           DamageClaim[]             @relation("Claimant")
+  claimsAgainst    DamageClaim[]             @relation("ClaimedAgainst")
+  notifications    Notification[]
+  favorites        Favorite[]
+  auditLogs        AuditLog[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  consumed  Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([phone, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Catalog
+// ---------------------------------------------------------------------------
+
+model Category {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String // Persian name
+  icon        String? // emoji or Material symbol name
+  description String?
+  imageUrl    String?
+  sortOrder   Int     @default(0)
+
+  listings Listing[]
+}
+
+model Listing {
+  id          String @id @default(cuid())
+  ownerId     String
+  categoryId  String
+  title       String
+  description String
+  brand       String?
+  specs       String? // free-form specs text (source pages show spec chips)
+  // Pricing in Toman
+  dailyPrice  Int
+  weeklyPrice Int?
+  deposit     Int    @default(0)
+  // Location
+  city        String
+  area        String?
+  // Delivery options
+  pickupInPerson Boolean @default(true)
+  deliveryCourier Boolean @default(false)
+  // Rules / conditions
+  rules       String?
+  minDays     Int     @default(1)
+  maxDays     Int     @default(30)
+  instantBook Boolean @default(false)
+  // Moderation lifecycle: DRAFT | PENDING | ACTIVE | PAUSED | REJECTED | ARCHIVED
+  status      String  @default("PENDING")
+  rejectionReason String?
+  rating      Float   @default(0)
+  reviewsCount Int    @default(0)
+  viewsCount  Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner       User             @relation(fields: [ownerId], references: [id])
+  category    Category         @relation(fields: [categoryId], references: [id])
+  images      ListingImage[]
+  reservations Reservation[]
+  reviews     Review[]
+  favorites   Favorite[]
+  conversations Conversation[]
+
+  @@index([status, categoryId])
+  @@index([ownerId])
+}
+
+model ListingImage {
+  id        String  @id @default(cuid())
+  listingId String
+  url       String
+  alt       String?
+  sortOrder Int     @default(0)
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model Favorite {
+  id        String  @id @default(cuid())
+  userId    String
+  listingId String
+  createdAt DateTime @default(now())
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listingId])
+}
+
+// ---------------------------------------------------------------------------
+// Rental lifecycle
+// ---------------------------------------------------------------------------
+
+// REQUESTED -> APPROVED -> AGREEMENT -> PAYMENT -> PAID -> DELIVERED ->
+// RETURNED -> INSPECTION -> COMPLETED ; plus REJECTED / CANCELLED / DISPUTED
+// (see src/lib/rental-state.ts for the exact transition table)
+model Reservation {
+  id         String @id @default(cuid())
+  code       String @unique // OVR-XXXXX
+  listingId  String
+  renterId   String
+  hostId     String
+  startDate  DateTime
+  endDate    DateTime
+  days       Int
+  dailyPrice Int // snapshot of price at request time
+  subtotal   Int
+  deposit    Int
+  discount   Int    @default(0)
+  total      Int
+  pickupMethod String @default("PICKUP") // PICKUP | COURIER
+  renterNote String?
+  status     String @default("REQUESTED")
+  // Two-sided condition/inspection protocol
+  renterProtocol   String? // free text taken at return/inspection
+  hostProtocol     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  listing  Listing @relation(fields: [listingId], references: [id])
+  renter   User    @relation("RenterReservations", fields: [renterId], references: [id])
+  host     User    @relation("HostReservations", fields: [hostId], references: [id])
+  events   ReservationEvent[]
+  conversation Conversation?
+  claims   DamageClaim[]
+  reviews  Review[]
+
+  @@index([renterId, status])
+  @@index([hostId, status])
+}
+
+model ReservationEvent {
+  id            String   @id @default(cuid())
+  reservationId String
+  actor         String // renter | host | admin | system
+  type          String // APPROVE, PAY, DELIVER, ...
+  message       String
+  createdAt     DateTime @default(now())
+
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Chat
+// ---------------------------------------------------------------------------
+
+model Conversation {
+  id          String  @id @default(cuid())
+  listingId   String?
+  reservationId String? @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  listing      Listing?  @relation(fields: [listingId], references: [id])
+  reservation  Reservation? @relation(fields: [reservationId], references: [id])
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             String   @id @default(cuid())
+  conversationId String
+  userId         String
+  lastReadAt     DateTime @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String
+  attachmentUrl  String?
+  readAt         DateTime?
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Wallet / finance (application ledger — sandbox, NOT real custody)
+// ---------------------------------------------------------------------------
+
+model WalletTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  // DEPOSIT_HOLD | DEPOSIT_RELEASE | DEPOSIT_DEDUCTION | RENTAL_PAYMENT |
+  // RENTAL_REFUND | PAYOUT | TOPUP
+  type        String
+  amount      Int // positive = credit, negative = debit (Toman)
+  status      String   @default("COMPLETED") // PENDING | COMPLETED | FAILED
+  reference   String?  // e.g. OVR-XXXXX reservation code
+  description String
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Reviews
+// ---------------------------------------------------------------------------
+
+model Review {
+  id            String   @id @default(cuid())
+  listingId     String
+  authorId      String
+  reservationId String?
+  rating        Int // 1..5
+  comment       String
+  hostReply     String?
+  hostReplyAt   DateTime?
+  createdAt     DateTime @default(now())
+
+  listing     Listing @relation(fields: [listingId], references: [id])
+  author      User    @relation(fields: [authorId], references: [id])
+  host        User?   @relation("ReviewHostReplies", fields: [hostReplyUserId], references: [id])
+  hostReplyUserId String?
+  reservation Reservation? @relation(fields: [reservationId], references: [id])
+
+  @@index([listingId])
+}
+
+// ---------------------------------------------------------------------------
+// Trust & safety
+// ---------------------------------------------------------------------------
+
+// OPEN -> COUNTER_EVIDENCE -> UNDER_REVIEW -> DECIDED -> (APPEALED) -> SETTLED
+model DamageClaim {
+  id            String   @id @default(cuid())
+  reservationId String
+  claimantId    String
+  againstId     String
+  title         String
+  description   String
+  evidenceUrls  String   @default("[]") // JSON array of image paths
+  status        String   @default("OPEN")
+  decision      String?
+  decidedAt     DateTime?
+  appealMessage String?
+  settlementNote String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+  claimant    User        @relation("Claimant", fields: [claimantId], references: [id])
+  against     User        @relation("ClaimedAgainst", fields: [againstId], references: [id])
+}
+
+// ---------------------------------------------------------------------------
+// Notifications & audit
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String // RESERVATION | MESSAGE | REVIEW | LISTING | DISPUTE | SYSTEM
+  title     String
+  body      String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String?
+  meta       String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id])
+}
