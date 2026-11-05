@@ -1,0 +1,25 @@
+# Overa docker build context exclusions
+node_modules
+.next
+out
+build
+.git
+.github
+.env
+.env.*
+!.env.example
+db/*.db
+db/*.db-journal
+db/.seeded
+overa-source
+upload
+download
+docs
+*.log
+dev.log
+server.log
+skills
+examples
+mini-services
+README.md
+CLAUDE.md
