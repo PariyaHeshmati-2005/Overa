@@ -1,0 +1,287 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Overa design tokens — preserved from the original source project
+ * (tailwind.config in the supplied HTML pages). Do not redesign.
+ */
+@theme {
+  --font-sans: "Vazirmatn", "Plus Jakarta Sans", ui-sans-serif, system-ui,
+    sans-serif;
+
+  /* Primary violet family */
+  --color-primary-dark: #3a1e7b;
+  --color-primary-light: #8b5cf6;
+  --color-primary-soft: #ede7ff;
+  --color-primary-surface: #f5f0ff;
+
+  /* Accents */
+  --color-accent-gold: #f5a623;
+  --color-accent-emerald: #10b981;
+  --color-accent-pink: #ec4899;
+
+  /* Neutrals (Overa naming) */
+  --color-neutral-text: #1f1b2e;
+  --color-neutral-muted: #6b6880;
+  --color-neutral-border: #e8e3f5;
+  --color-neutral-card: #ffffff;
+  --color-neutral-bg: #f9f7fd;
+
+  /* Card shadows */
+  --shadow-card: 0 8px 28px -6px rgb(76 42 158 / 0.08);
+  --shadow-card-hover: 0 16px 36px -4px rgb(76 42 158 / 0.15);
+  --shadow-glow: 0 0 20px rgb(139 92 246 / 0.35);
+
+  /*
+   * Material-3 token family used by several source pages (signin, signup,
+   * account-settings, dashboards...). Names that collide with the main
+   * violet family are prefixed with m3-; the rest keep their source names.
+   */
+  --color-m3-primary: #630ed4;
+  --color-m3-secondary: #6849bb;
+  --color-m3-tertiary: #4f4c5f;
+  --color-m3-background: #fdf7ff;
+  --color-m3-surface: #fdf7ff;
+  --color-m3-error: #ba1a1a;
+  --color-m3-error-container: #ffdad6;
+  --color-m3-on-error: #ffffff;
+  --color-m3-on-error-container: #93000a;
+  --color-m3-outline: #7b7487;
+  --color-m3-inverse-surface: #322e42;
+  --color-m3-inverse-on-surface: #f5eeff;
+  --color-m3-inverse-primary: #d2bbff;
+
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #ede0ff;
+  --color-primary-container: #7c3aed;
+  --color-primary-fixed: #eaddff;
+  --color-primary-fixed-dim: #d2bbff;
+  --color-on-primary-fixed: #25005a;
+  --color-on-primary-fixed-variant: #5a00c6;
+
+  --color-secondary-container: #a688fe;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #3b128d;
+  --color-secondary-fixed: #e8ddff;
+  --color-secondary-fixed-dim: #cebdff;
+  --color-on-secondary-fixed: #21005d;
+  --color-on-secondary-fixed-variant: #4f2ea2;
+
+  --color-tertiary-container: #686478;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-container: #e8e2fa;
+  --color-tertiary-fixed: #e5dff7;
+  --color-tertiary-fixed-dim: #c9c3da;
+  --color-on-tertiary-fixed: #1c192a;
+  --color-on-tertiary-fixed-variant: #474457;
+
+  --color-on-background: #1d192c;
+  --color-on-surface: #1d192c;
+  --color-on-surface-variant: #4a4455;
+  --color-surface-variant: #e7dff9;
+  --color-surface-dim: #ded6f1;
+  --color-surface-bright: #fdf7ff;
+  --color-surface-tint: #732ee4;
+  --color-surface-container: #f2ebff;
+  --color-surface-container-low: #f7f1ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-high: #ece4ff;
+  --color-surface-container-highest: #e7dff9;
+  --color-outline-variant: #ccc3d8;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.625rem;
+  /* Overa light palette (single official theme — no dark mode in source) */
+  --background: #f8f6fc;
+  --foreground: #1f1b2e;
+  --card: #ffffff;
+  --card-foreground: #1f1b2e;
+  --popover: #ffffff;
+  --popover-foreground: #1f1b2e;
+  --primary: #4c2a9e;
+  --primary-foreground: #ffffff;
+  --secondary: #ede7ff;
+  --secondary-foreground: #4c2a9e;
+  --muted: #f5f0ff;
+  --muted-foreground: #6b6880;
+  --accent: #f5f0ff;
+  --accent-foreground: #4c2a9e;
+  --destructive: #dc2626;
+  --border: #e8e3f5;
+  --input: #e8e3f5;
+  --ring: #8b5cf6;
+  --chart-1: #4c2a9e;
+  --chart-2: #10b981;
+  --chart-3: #f5a623;
+  --chart-4: #ec4899;
+  --chart-5: #8b5cf6;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1f1b2e;
+  --sidebar-primary: #4c2a9e;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ede7ff;
+  --sidebar-accent-foreground: #4c2a9e;
+  --sidebar-border: #e8e3f5;
+  --sidebar-ring: #8b5cf6;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    background-color: #f8f6fc;
+    color: #1f1b2e;
+    font-family: "Vazirmatn", "Plus Jakarta Sans", ui-sans-serif, system-ui,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Smooth scrollbar (from source) */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #f3eefb;
+}
+::-webkit-scrollbar-thumb {
+  background: #c4b5fd;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8b5cf6;
+}
+
+/* Custom decorations preserved from source pages */
+.custom-gradient-banner {
+  background: linear-gradient(
+      135deg,
+      rgba(76, 42, 158, 0.92) 0%,
+      rgba(99, 44, 179, 0.78) 50%,
+      rgba(30, 17, 67, 0.88) 100%
+    ),
+    url("/assets/img/cc4888ebfe4f.jpg") center/cover no-repeat;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.badge-gradient-special {
+  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+}
+
+.badge-gradient-hot {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+/* Decorative background used by auth pages (from signin.html) */
+.ov-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ov-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    rgba(99, 14, 212, 0.12) 1px,
+    transparent 1px
+  );
+  background-size: 26px 26px;
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    #000 15%,
+    transparent 72%
+  );
+  mask-image: radial-gradient(ellipse at center, #000 15%, transparent 72%);
+}
+.ov-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.5;
+  animation: ov-float 16s ease-in-out infinite;
+}
+.ov-blob-1 {
+  width: 420px;
+  height: 420px;
+  top: -120px;
+  right: -100px;
+  background: #d2bbff;
+}
+.ov-blob-2 {
+  width: 320px;
+  height: 320px;
+  bottom: -80px;
+  left: -60px;
+  background: #e8ddff;
+  animation-delay: -8s;
+}
+.ov-blob-3 {
+  width: 260px;
+  height: 260px;
+  top: 40%;
+  left: 45%;
+  background: #f2ebff;
+  animation-delay: -4s;
+}
+@keyframes ov-float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-30px, 20px) scale(1.05);
+  }
+}
