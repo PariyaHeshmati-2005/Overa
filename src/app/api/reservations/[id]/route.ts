@@ -1,0 +1,199 @@
+import { db } from "@/lib/db";
+import { jsonError, jsonOk, requireUser } from "@/lib/api";
+import {
+  assertTransition,
+  canAct,
+  RESERVATION_STATUS_LABELS,
+  TransitionError,
+  type ReservationAction,
+  type ReservationStatus,
+} from "@/lib/rental-state";
+
+type Ctx = { params: Promise<{ id: string }> };
+
+/** GET /api/reservations/[id] — participant/admin only. */
+export async function GET(_req: Request, ctx: Ctx) {
+  const { id } = await ctx.params;
+  const auth = await requireUser();
+  if (auth.response) return auth.response;
+  const user = auth.user;
+
+  const reservation = await db.reservation.findUnique({
+    where: { id },
+    include: {
+      listing: { include: { images: true } },
+      renter: { select: { id: true, name: true } },
+      host: { select: { id: true, name: true } },
+      events: { orderBy: { createdAt: "asc" } },
+    },
+  });
+  if (!reservation) return jsonError("رزرو یافت نشد.", 404);
+  if (reservation.renterId !== user.id && reservation.hostId !== user.id && !user.isAdmin)
+    return jsonError("دسترسی به این رزرو مجاز نیست.", 403);
+  return jsonOk({ reservation });
+}
+
+/**
+ * PATCH /api/reservations/[id] — perform a state-machine action.
+ * Body: { action: ReservationAction, protocol?: string, note?: string }
+ * All financial entries are created through the SANDBOX adapter and are
+ * explicitly labelled; no real money movement is claimed anywhere.
+ */
+export async function PATCH(req: Request, ctx: Ctx) {
+  const { id } = await ctx.params;
+  const auth = await requireUser();
+  if (auth.response) return auth.response;
+  const user = auth.user;
+
+  const reservation = await db.reservation.findUnique({
+    where: { id },
+    include: { listing: true },
+  });
+  if (!reservation) return jsonError("رزرو یافت نشد.", 404);
+
+  const isRenter = reservation.renterId === user.id;
+  const isHost = reservation.hostId === user.id;
+  const isAdmin = user.isAdmin;
+  if (!isRenter && !isHost && !isAdmin)
+    return jsonError("دسترسی به این رزرو مجاز نیست.", 403);
+
+  const body = await req.json().catch(() => ({}));
+  const action = body.action as ReservationAction;
+  if (!action) return jsonError("کنش (action) مشخص نشده است.");
+
+  const actor: "renter" | "host" | "admin" = isAdmin && !isRenter && !isHost
+    ? "admin"
+    : isHost
+      ? "host"
+      : "renter";
+
+  if (!canAct(reservation.status as ReservationStatus, action, actor)) {
+    return jsonError(
+      `انجام «${action}» در وضعیت «${RESERVATION_STATUS_LABELS[reservation.status as ReservationStatus]}» برای شما مجاز نیست.`,
+      422,
+    );
+  }
+
+  let next: ReservationStatus;
+  try {
+    next = assertTransition(reservation.status as ReservationStatus, action);
+  } catch (e) {
+    if (e instanceof TransitionError) return jsonError(e.message, 422);
+    throw e;
+  }
+
+  const events: { actor: string; type: string; message: string }[] = [
+    { actor, type: action.toUpperCase(), message: "" },
+  ];
+  const walletEntries: {
+    userId: string; type: string; amount: number; reference: string; description: string; status?: string;
+  }[] = [];
+  const balanceDelta: Record<string, number> = {};
+
+  const addEvent = (message: string) => { events[0].message = message; };
+
+  switch (action) {
+    case "approve":
+      addEvent("مالک درخواست را تایید کرد؛ منتظر تایید قرارداد.");
+      await db.notification.create({ data: { userId: reservation.renterId, type: "RESERVATION", title: "درخواست شما تایید شد", body: `درخواست «${reservation.code}» تایید شد؛ لطفاً قرارداد را تایید کنید.`, link: "/rentals" } });
+      break;
+    case "reject":
+      addEvent("درخواست رد شد.");
+      await db.notification.create({ data: { userId: reservation.renterId, type: "RESERVATION", title: "درخواست رد شد", body: `درخواست «${reservation.code}» توسط مالک رد شد.`, link: "/rentals" } });
+      break;
+    case "confirm_agreement":
+      addEvent("قرارداد و شرایط توسط مستأجر تایید شد.");
+      break;
+    case "pay": {
+      // SANDBOX payment adapter — visibly labelled everywhere.
+      addEvent("پرداخت در حالت آزمایشی (Sandbox) انجام شد. هیچ پول واقعی جابه‌جا نشده است.");
+      walletEntries.push(
+        { userId: reservation.renterId, type: "RENTAL_PAYMENT", amount: -reservation.subtotal, reference: reservation.code, description: `پرداخت اجاره ${reservation.listing.title} — حالت شبیه‌سازی` },
+        { userId: reservation.renterId, type: "DEPOSIT_HOLD", amount: -reservation.deposit, reference: reservation.code, description: `بلوکه شدن ودیعه — حالت شبیه‌سازی` },
+        { userId: reservation.hostId, type: "RENTAL_PAYMENT", amount: reservation.subtotal, reference: reservation.code, description: `دریافت اجاره ${reservation.listing.title} — حالت شبیه‌سازی` },
+      );
+      balanceDelta[reservation.renterId] = (balanceDelta[reservation.renterId] ?? 0) - reservation.subtotal - reservation.deposit;
+      balanceDelta[reservation.hostId] = (balanceDelta[reservation.hostId] ?? 0) + reservation.subtotal;
+      await db.notification.create({ data: { userId: reservation.hostId, type: "RESERVATION", title: "پرداخت انجام شد", body: `پرداخت رزرو «${reservation.code}» انجام شد؛ وسیله را تحویل دهید.`, link: "/host-dashboard" } });
+      break;
+    }
+    case "deliver":
+      addEvent("وسیله تحویل داده شد؛ دوران استفاده آغاز شد.");
+      break;
+    case "request_return":
+      addEvent("درخواست بازگشت ثبت شد؛ منتظر بررسی مالک.");
+      break;
+    case "confirm_return":
+      addEvent("بازگشت وسیله تایید شد؛ صورت‌جلسه تحویل در حال تکمیل.");
+      break;
+    case "complete_inspection": {
+      const protocol = String(body.protocol ?? "").trim() || "وضعیت وسیله مطلوب و بدون خسارت بود.";
+      if (actor === "renter") reservation.renterProtocol = protocol;
+      else reservation.hostProtocol = protocol;
+      addEvent(`صورت‌جلسه تحویل ثبت شد: ${protocol}`);
+      break;
+    }
+    case "release_deposit":
+      addEvent("ودیعه آزاد شد و اجاره تکمیل شد (شبیه‌سازی).");
+      walletEntries.push(
+        { userId: reservation.renterId, type: "DEPOSIT_RELEASE", amount: reservation.deposit, reference: reservation.code, description: "آزادسازی ودیعه — حالت شبیه‌سازی" },
+      );
+      balanceDelta[reservation.renterId] = (balanceDelta[reservation.renterId] ?? 0) + reservation.deposit;
+      break;
+    case "dispute":
+      addEvent(String(body.note ?? "اعلام اختلاف/خسارت برای این اجاره."));
+      break;
+    case "cancel": {
+      addEvent("رزرو لغو شد.");
+      if (["AGREEMENT", "PAYMENT", "PAID"].includes(reservation.status)) {
+        // refund whatever was paid (sandbox)
+        walletEntries.push(
+          { userId: reservation.renterId, type: "RENTAL_REFUND", amount: reservation.subtotal, reference: reservation.code, description: "بازگشت وجه اجاره پس از لغو — حالت شبیه‌سازی" },
+          { userId: reservation.renterId, type: "DEPOSIT_RELEASE", amount: reservation.deposit, reference: reservation.code, description: "آزادسازی ودیعه پس از لغو — حالت شبیه‌سازی" },
+        );
+        balanceDelta[reservation.renterId] = (balanceDelta[reservation.renterId] ?? 0) + reservation.subtotal + reservation.deposit;
+        walletEntries.push(
+          { userId: reservation.hostId, type: "RENTAL_REFUND", amount: -reservation.subtotal, reference: reservation.code, description: "برگشت وجه اجاره به مستأجر — حالت شبیه‌سازی" },
+        );
+        balanceDelta[reservation.hostId] = (balanceDelta[reservation.hostId] ?? 0) - reservation.subtotal;
+        addEvent("رزرو لغو شد؛ وجه پرداختی به‌صورت شبیه‌سازی‌شده بازگردانده شد.");
+      }
+      break;
+    }
+  }
+
+  await db.$transaction(async (tx) => {
+    await tx.reservation.update({
+      where: { id },
+      data: {
+        status: next,
+        renterProtocol: reservation.renterProtocol ?? undefined,
+        hostProtocol: reservation.hostProtocol ?? undefined,
+        events: { create: events },
+      },
+    });
+    for (const w of walletEntries) {
+      await tx.walletTransaction.create({
+        data: {
+          userId: w.userId, type: w.type, amount: w.amount,
+          reference: w.reference, description: w.description,
+          status: w.status ?? "COMPLETED",
+        },
+      });
+    }
+    for (const [userId, delta] of Object.entries(balanceDelta)) {
+      if (delta !== 0) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { walletBalance: { increment: delta } },
+        });
+      }
+    }
+  });
+
+  const updated = await db.reservation.findUnique({
+    where: { id },
+    include: { events: { orderBy: { createdAt: "asc" } } },
+  });
+  return jsonOk({ reservation: updated, status: next });
+}
