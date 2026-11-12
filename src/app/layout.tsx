@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import PWARegister from "@/components/pwa/PWARegister";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,12 +12,20 @@ export const metadata: Metadata = {
   icons: {
     icon: "/assets/img/overa_logo_transparent.png",
     shortcut: "/assets/img/overa_logo_transparent.png",
+    apple: "/assets/img/pwa/apple-touch-icon.png",
+  },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Overa",
   },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#4c2a9e",
 };
 
 export default function RootLayout({
@@ -32,6 +41,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen antialiased selection:bg-primary-soft selection:text-primary">
         {children}
+        <PWARegister />
       </body>
     </html>
   );
