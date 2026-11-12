@@ -1,149 +1,232 @@
-# اورا (Overa) — Persian-first rental marketplace
+<div align="center">
+  <img src="docs/screenshots/banner.png" alt="اورا — پلتفرم هوشمند اجاره آنلاین وسایل" width="100%">
+  <h1>اُوِرا (Overa)</h1>
+  <p><b>هر چیزی که نیاز داری، فقط برای مدتی کوتاه!</b><br>بازار آنلاین اجارهٔ وسایل به‌صورت پُست‌به‌پُست — کاملاً فارسی، راست‌به‌چپ و با تقویم شمسی</p>
+  <p>
+    <img src="https://img.shields.io/badge/Next.js_16-black?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js 16">
+    <img src="https://img.shields.io/badge/React_19-149ECA?style=flat-square&logo=react&logoColor=white" alt="React 19">
+    <img src="https://img.shields.io/badge/TypeScript_5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 5">
+    <img src="https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS 4">
+    <img src="https://img.shields.io/badge/Prisma_6_+_SQLite-2D3748?style=flat-square&logo=prisma&logoColor=white" alt="Prisma + SQLite">
+    <img src="https://img.shields.io/badge/Bun_Runtime-F472B6?style=flat-square&logo=bun&logoColor=white" alt="Bun">
+    <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker">
+    <img src="https://img.shields.io/badge/PWA_Ready-7C3AED?style=flat-square&logo=pwa&logoColor=white" alt="PWA">
+    <img src="https://img.shields.io/badge/فارسی_|_RTL-4C2A9E?style=flat-square" alt="Persian RTL">
+  </p>
+</div>
 
-Full-stack implementation of the **Overa** marketplace: a peer-to-peer rental
-platform for equipment and belongings. This repository converts the original
-29-page static HTML prototype into a **Next.js 16 full-stack application**
-while preserving the established visual identity (Persian RTL, Vazirmatn,
-violet/gold/emerald palette, Overa logo and imagery).
+---
+
+## 🎯 اورا چیست؟
+
+**اورا** یک بازار آنلاین اجارهٔ وسایل (Rental Marketplace) است که اجارهٔ «هر وسیله‌ای» را بین افراد ممکن می‌کند: از دوربین عکاسی و ابزار برقی گرفته تا کنسول بازی، چادر کمپینگ و صندلی ماساژور. **میزبان‌ها** وسیله‌های خود را با قیمت و تقویم دسترسی خودشان ثبت می‌کنند و **مستأجرها** دقیقاً روزهایی را که نیاز دارند رزرو می‌کنند — همه‌چیز با تقویم شمسی، اعتبارسنجی سرِور و چرخهٔ اجارهٔ شفاف.
+
+این پروژه، پیاده‌سازی فول‌استک کاملِ پروتوتایپ ۲۹ صفحه‌ای اورا با **Next.js 16 (App Router)** است: هویت بصری، فونت وزیرمتن، پالت بنفش/طلایی و تمام تصاویر اصلی حفظ شده، اما پشت صحنه یک بک‌اند واقعی با **Prisma + SQLite**، احراز هویت، چرخهٔ حالت رزرو، کیف پول، چت، پنل مدیریت و CI/CD قرار گرفته است. تاریخچهٔ ریپو با **کامیت‌های تمیز و استاندارد (Conventional Commits)** نگهداری می‌شود.
+
+---
+
+## ✨ ویژگی‌های کلیدی
 
 | | |
 |---|---|
-| **Frontend + backend** | Next.js 16 (App Router) · React 19 · TypeScript 5 |
-| **Styling** | Tailwind CSS 4 with the original Overa design tokens |
-| **Database** | SQLite via Prisma ORM (seeded demo catalog) |
-| **Auth** | Session cookies + scrypt password hashing + OTP (demo mode until an SMS provider is configured) |
-| **Payments/escrow** | SANDBOX adapter only — explicitly labelled, no real money |
-| **Docker** | Multi-stage image + docker-compose with a data volume |
-| **CI/CD** | GitHub Actions: lint → type-check → tests → build → smoke test; Docker image → GHCR; optional Vercel deploy workflow |
+| 🗓 **تقویم شمسی ۱۴۰۵** | انتخاب بازهٔ تحویل و بازگشت با تقویم جلالی اختصاصی؛ روزهای گذشته و رزروشده غیرفعال‌اند، روزهای مسدودِ میزبان نمایش داده می‌شوند و پیام‌های خطا فارسی و دقیق‌اند |
+| 🔁 **چرخهٔ کامل اجاره** | ماشین‌حالت رزرو با ۱۲ وضعیت (REQUESTED → APPROVED → … → COMPLETED)؛ همهٔ گذارها سمت سرور با سطح دسترسی نقش‌ها اعتبارسنجی می‌شوند و تست واحد دارند |
+| 🧙 **ویزارد ثبت وسیله** | ثبت آگهی در ۴ مرحله (اطلاعات پایه ← تصاویر ← قیمت‌گذاری و تقویم ← قوانین تحویل) با پیش‌نمایش زنده و ماشین‌حساب درآمد میزبان |
+| 🔐 **احراز هویت واقعی** | ورود با رمز (هش scrypt) + ورود با کد یک‌بارمصرف (OTP)؛ کوکی سشن امضاشده و کنترل نقش در همهٔ APIها |
+| 🤝 **اعتماد و شفافیت** | ودیعه و پرداخت با برچسب شفاف «شبیه‌سازی (Sandbox)»، امانی (Escrow) شبیه‌سازی‌شده، سنجش اعتماد کاربران، داوری اختلاف و ادعای خسارت |
+| 💬 **تعامل زنده** | چت بین مستأجر و میزبان، اعلان‌ها، نظرات و پاسخ میزبان، علاقه‌مندی‌ها و کیف پول با دفتر تراکنش |
+| 👮 **پنل مدیریت** | تأیید آگهی‌ها، مدیریت کاربران، رسیدگی به ادعاها و لاگ ممیز (Audit Log) |
+| 📱 **PWA** | بدون استور، مثل اپ واقعی روی اندروید، iOS و دسکتاپ نصب می‌شود؛ آیکون اختصاصی و کش آفلاین |
+| 🧭 **RTL ریسپانسیو** | چیدمان راست‌به‌چپ کامل در موبایل، تبلت و دسکتاپ با فونت وزیرمتن |
+| ⚙️ **CI/CD آماده** | GitHub Actions برای lint، تایپ‌چک، تست، بیلد و اسموک‌تست + انتشار خودکار ایمیج داکر روی GHCR |
 
 ---
 
-## Quick start (local)
+## 📸 نگاهی به اورا
 
-```bash
-bun install            # install dependencies (bun.lock is committed)
-cp .env.example .env   # defaults work out of the box
-bun run db:push        # create the SQLite schema
-bun run seed           # fill the demo catalog (users, listings, reservations)
-bun run dev            # http://localhost:3000
-```
+<table>
+  <tr>
+    <td width="50%" align="center"><img src="docs/screenshots/home.png" width="100%" alt="صفحه اصلی"><br><sub><b>صفحهٔ اصلی</b> — هیرو، دسته‌بندی‌ها و فیلترها</sub></td>
+    <td width="50%" align="center"><img src="docs/screenshots/item-details.png" width="100%" alt="جزئیات وسیله"><br><sub><b>صفحهٔ جزئیات وسیله</b> — گالری، قیمت، ودیعه و تقویم شمسی</sub></td>
+  </tr>
+  <tr>
+    <td width="50%" align="center"><img src="docs/screenshots/create-listing-wizard.png" width="100%" alt="ویزارد ثبت وسیله"><br><sub><b>مرحلهٔ ۳ ویزارد ثبت وسیله</b> — قیمت‌گذاری و ماشین‌حساب درآمد</sub></td>
+    <td width="50%" align="center"><img src="docs/screenshots/create-listing-calendar.png" width="100%" alt="تقویم شمسی ویزارد"><br><sub><b>تقویم شمسی ۱۴۰۵</b> — مسدودسازی روزها توسط میزبان</sub></td>
+  </tr>
+  <tr>
+    <td width="50%" align="center"><img src="docs/screenshots/host-dashboard.png" width="100%" alt="پنل میزبان"><br><sub><b>پنل میزبان</b> — درآمد، امتیاز اعتبار و آمار اجاره‌ها</sub></td>
+    <td width="50%" align="center"><img src="docs/screenshots/rentals.png" width="100%" alt="مدیریت اجاره‌ها"><br><sub><b>مدیریت اجاره‌ها</b> — رزرو فعال، ودیعه امانی و گفتگو</sub></td>
+  </tr>
+</table>
 
-Quality gates:
+---
 
-```bash
-bun run lint           # ESLint
-bunx tsc --noEmit      # TypeScript
-bun test               # unit tests (state machine, formatters)
-bun run build          # production build (standalone output)
-bun run start          # serve the production build
-```
+## 🚀 اجرای پروژه از صفر تا صد
 
-### Demo accounts (password for all: `overa1234`)
+### گام ۰ — پیش‌نیازها
 
-| Role | Phone | Visible in |
+| ابزار | نسخهٔ پیشنهادی | نصب |
 |---|---|---|
-| Renter (مستأجر) | `09121111111` | rentals, chat, wallet, claims |
-| Host (میزبان) | `09122222222` | host dashboard, my items, reviews |
-| Admin (مدیر) | `09120000000` | admin dashboard, arbitration panel |
+| **Bun** (اجبار؛ ران‌تایم تست و seed) | 1.2 به بالا | ویندوز (PowerShell): `powershell -c "irm bun.sh/install.ps1 | iex"` — لینوکس/مک: `curl -fsSL https://bun.sh/install | bash` |
+| **Git** | آخرین نسخه | [git-scm.com](https://git-scm.com) |
+| **Docker Desktop** (اختیاری — برای اجرای کانتینری) | آخرین نسخه | [docker.com](https://www.docker.com/products/docker-desktop/) |
 
-OTP sign-in runs in **demo mode** when no SMS provider key is configured: the
-code is shown on screen with a «حالت توسعه» label. It is never hidden, and it
-is never claimed to be production authentication.
+> 💡 اگر فقط می‌خواهید سریع امتحان کنید، مسیر **داکر** در انتهای همین بخش با یک دستور بالا می‌آید.
 
----
-
-## Docker
+### گام ۱ — دریافت کد
 
 ```bash
-docker compose up -d --build   # build + start (http://localhost:3000)
-docker compose logs -f app     # follow logs
-docker compose down            # stop (data persists in the overa_db volume)
+git clone https://github.com/USERNAME/REPO-NAME.git
+cd Overa-fullsatck
 ```
 
-- The entrypoint applies the Prisma schema, seeds demo data on first run and
-  starts the server (non-root user, healthcheck included).
-- Data persists in the `overa_db` volume (`/app/db/custom.db`).
-- Set `SMS_PROVIDER_API_KEY` in `docker-compose.yml` only when a real provider
-  is configured.
+### گام ۲ — نصب وابستگی‌ها
 
-## CI/CD (GitHub Actions)
+```bash
+bun install
+```
 
-| Workflow | Trigger | What it does |
+### گام ۳ — تنظیم متغیرهای محیطی
+
+از فایل نمونه یک `.env` بسازید:
+
+```bash
+# لینوکس / مک
+cp .env.example .env
+
+# ویندوز (PowerShell)
+copy .env.example .env
+```
+
+برای اجرای **محلی** (بدون داکر) مقدار `DATABASE_URL` را به مسیری داخل پروژه تغییر دهید و پوشهٔ آن را بسازید:
+
+```env
+DATABASE_URL=file:../db/custom.db
+```
+
+```bash
+# لینوکس / مک
+mkdir -p db
+
+# ویندوز (PowerShell)
+md db
+```
+
+> ⚙️ مسیرهای SQLite نسبت به فایل `prisma/schema.prisma` حل می‌شوند؛ بنابراین `file:../db/custom.db` یعنی پوشهٔ `db` در ریشهٔ پروژه. در حالت داکر نیازی به تغییر این مقدار نیست — فایل `docker-compose.yml` خودش `DATABASE_URL=file:/app/db/custom.db` را ست می‌کند.
+
+### گام ۴ — ساخت اسکیمای دیتابیس
+
+```bash
+bun run db:push
+```
+
+### گام ۵ — دادهٔ نمونه (Seed)
+
+```bash
+bun run seed
+```
+
+این دستور یک کاتالوگ دموی کامل می‌سازد: **۸ کاربر، ۱۸ وسیله، ۸ دسته‌بندی و ۶ رزرو واقعی** — تا اولین لحظهٔ ورود، سایت زنده و پر باشد.
+
+### گام ۶ — اجرا 🎉
+
+```bash
+bun run dev
+```
+
+حالا [http://localhost:3000](http://localhost:3000) را باز کنید.
+
+### حساب‌های دمو
+
+رمز عبور همهٔ حساب‌ها: `overa1234`
+
+| نقش | شماره موبایل | چه چیزهایی می‌بینید |
 |---|---|---|
-| `.github/workflows/ci.yml` | push / PR to main | install (frozen lockfile) → Prisma validate → lint → type-check → `bun test` → production build → smoke-test the server |
-| `.github/workflows/docker-publish.yml` | push to main / tags `v*` | build multi-stage image → publish to GHCR (`ghcr.io/<owner>/<repo>`) → optional SSH server deploy (enable with `ENABLE_SERVER_DEPLOY=true` + SSH secrets) |
-| `.github/workflows/vercel.yml` | manual (`workflow_dispatch`) | CI-driven Vercel deploy; requires `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`. For dashboard-imported projects, Vercel deploys automatically without this file |
+| 🧑 مستأجر | `09121111111` | اجاره‌ها، چت، کیف پول، ادعای خسارت |
+| 🏠 میزبان | `09122222222` | پنل میزبان، وسایل من، نظرات، ویزارد ثبت وسیله |
+| 👮 مدیر | `09120000000` | پنل ادمین، پنل داوری |
 
----
+> 🔑 ورود با OTP تا زمانی که سرویس پیامک تنظیم نشود در **حالت دمو** کار می‌کند: کد روی صفحه با برچسب «حالت توسعه» نمایش داده می‌شود.
 
-## What is implemented
+### مسیر جایگزین — اجرا با داکر 🐳
 
-- **All 29 original pages** are now production routes (see
-  `docs/ROUTES-AND-PAGES.md`), including the three embedded React mini-apps
-  (categories tabs, create-listing wizard, rental lifecycle) rebuilt as real
-  React state with the same composition.
-- **Unified session-aware navigation** — every header shows
-  «ورود \| ثبت‌نام» for guests and the real account menu for signed-in users.
-  Hard-coded demo identities are gone (the only remaining occurrences are the
-  About-page team roster and a signup placeholder, both legitimate content).
-- **Rental state machine** (`src/lib/rental-state.ts`): REQUESTED → APPROVED →
-  AGREEMENT → PAYMENT → PAID → DELIVERED → RETURNED → INSPECTION → COMPLETED
-  (+ REJECTED / CANCELLED / DISPUTED). All transitions are validated
-  server-side with role permissions (unit-tested); invalid jumps return 422.
-- **Backend APIs** for auth (password + OTP), listings CRUD + search/filters,
-  reservations, chat (polling), wallet ledger, reviews, damage claims, admin
-  moderation/audit — every endpoint re-checks identity, role and ownership.
-- **Truthful finance**: deposits, payouts and payment stages are labelled
-  «شبیه‌سازی (Sandbox)» everywhere; the ledger is an application ledger, not
-  real custody.
-- **Responsive RTL** at 390 / 768 / desktop widths; the five mobile reference
-  pages were folded into responsive behavior rather than duplicate routes.
-
-## Repository layout
-
-```text
-prisma/schema.prisma        domain model (users…audit log)
-scripts/seed.ts             demo seed from the original page content
-src/app/(main)/             all site routes (server components + client islands)
-src/app/api/                REST endpoints (auth, listings, reservations, …)
-src/components/layout/      session-aware header/footer/user menu
-src/components/overa/       shared Overa UI (listing card, 404/500 content)
-src/lib/                    auth, db, rental-state, format, api helpers
-docs/                       architecture, routes, deployment, state & handoff
-tests/                      bun unit tests
-Dockerfile · docker-compose.yml · docker-entrypoint.sh
-.github/workflows/          CI + Docker CD + optional Vercel deploy
-overa-source/               the original HTML prototype (reference only, git-ignored)
+```bash
+docker compose up -d --build   # بیلد + اجرا (http://localhost:3000)
+docker compose logs -f app     # دنبال کردن لاگ‌ها
+docker compose down            # توقف (داده‌ها در والیوم overa_db می‌مانند)
 ```
 
-## Environment
+- در اولین اجرا، اسکیمای Prisma اعمال و دادهٔ نمونه به‌صورت خودکار seed می‌شود (با تلاش مجدد برای خطاهای گذرا).
+- داده‌ها در والیوم `overa_db` باقی می‌مانند و با حذف کانتینر پاک نمی‌شوند.
+- اگر seed در محیط پرترافیک بار اول کامل نشد، فقط یک‌بار `docker compose restart app` بزنید.
 
-`.env.example` documents every variable. `DATABASE_URL` is the only required
-one. Real `.env*` files are git-ignored; never commit secrets.
+### بیلد پروداکشن
 
-## Known limitations
-
-- OTP has no real SMS delivery until a provider key is configured (clearly
-  labelled demo mode).
-- Payment/deposit flows are sandbox simulations by design — no provider is
-  configured and no real money movement is claimed anywhere.
-- File/attachment uploads are intentionally disabled (buttons show «به‌زودی»)
-  until durable object storage is connected.
-- Chat uses 4-second polling (Vercel-compatible) rather than long-lived
-  WebSockets.
-
-See `docs/PROJECT-STATE.md` for the precise status and
-`docs/PHASE-HANDOFF.md` if you are continuing this project in a new session.
+```bash
+bun run build    # خروجی standalone در .next/standalone
+bun run start    # سرو کردن بیلد پروداکشن
+```
 
 ---
 
-## نصب به‌عنوان اپلیکیشن (PWA)
+## 🧪 تست و کیفیت
 
-اورا یک Progressive Web App است و بدون استور، مثل یک اپ واقعی روی گوشی و دسکتاپ نصب می‌شود:
+```bash
+bun test              # تست‌های واحد (ماشین‌حالت رزرو، توابع تقویم جلالی و فرمت‌ها)
+bun run lint          # ESLint
+bunx tsc --noEmit     # تایپ‌چک کامل TypeScript
+```
 
-- **اندروید (Chrome/Edge):** منوی سه‌نقطه ← «Add to Home Screen / Install app»
-- **iOS (Safari):** دکمه Share ← «Add to Home Screen»
-- **دسکتاپ (Chrome/Edge):** آیکون نصب در نوار آدرس ← Install
+| Workflow | زمان اجرا | کار |
+|---|---|---|
+| `ci.yml` | هر push / PR | نصب (با lockfile) → Prisma validate → lint → تایپ‌چک → تست → بیلد → اسموک‌تست سرور |
+| `docker-publish.yml` | push روی main و تگ‌های `v*` | بیلد ایمیج چندمرحله‌ای و انتشار روی GHCR |
+| `vercel.yml` | دستی (workflow_dispatch) | دیپلوی Vercel با توکن اختصاصی |
 
-نسخه نصب‌شده آیکون اختصاصی، اجرای تمام‌صفحه و کش آفلاین برای فایل‌های استاتیک دارد.
-جزئیات فنی و راهنمای کامل: `docs/PWA.md`
+---
+
+## 🛠 استک فنی
+
+| لایه | تکنولوژی |
+|---|---|
+| فریم‌ورک | Next.js 16 (App Router) + React 19 + TypeScript 5 |
+| استایل | Tailwind CSS 4 با توکن‌های طراحی اورا + کامپوننت‌های shadcn/ui |
+| دیتابیس | SQLite با Prisma ORM 6 |
+| احراز هویت | کوکی سشن + هش scrypt + OTP (حالت دمو تا اتصال سرویس پیامک) |
+| ران‌تایم | Bun (dev، تست، seed) |
+| جعبه‌ابزار | Radix UI، Recharts، react-hook-form + zod، framer-motion |
+| استقرار | Docker چندمرحله‌ای + docker-compose + GitHub Actions |
+| سایر | PWA (Service Worker + Manifest)، چت polling سبک، خروجی standalone |
+
+---
+
+## 📚 مستندات بیشتر
+
+| فایل | موضوع |
+|---|---|
+| `docs/ARCHITECTURE.md` | معماری کلی و لایه‌های پروژه |
+| `docs/ROUTES-AND-PAGES.md` | فهرست کامل مسیرها و صفحات |
+| `docs/DEPLOYMENT.md` | استقرار، متغیرهای محیطی و نکات seed در داکر |
+| `docs/JALALI-CALENDAR-AND-FILTER.md` | معماری تقویم شمسی و فیلترهای صفحهٔ اصلی |
+| `docs/PWA.md` | جزئیات فنی Progressive Web App |
+| `docs/PROJECT-STATE.md` | وضعیت دقیق پیاده‌سازی |
+| `docs/CHANGELOG.md` | تاریخچهٔ تغییرات |
+
+---
+
+## ⚠️ محدودیت‌های شناخته‌شده
+
+- پرداخت، ودیعه و امانی **شبیه‌سازی‌شده (Sandbox)** هستند و عمداً هیچ جریان پول واقعی ادعا نمی‌شوند.
+- OTP تا زمانی که کلید سرویس پیامک تنظیم نشود، فقط در حالت دمو با کد نمایان کار می‌کند.
+- آپلود فایل عمداً غیرفعال است (دکمه‌ها برچسب «به‌زودی» دارند) تا اتصال Object Storage انجام شود.
+- چت به‌جای WebSocket از polling سبک ۴ ثانیه‌ای استفاده می‌کند (سازگار با Vercel).
+
+---
+
+<div align="center">
+
+**اُوِرا** — وسایل بهتر، زندگی سبک‌تر 🌿
+
+اگر این پروژه برایتان مفید بود، یک ⭐ به ریپو بدهید!
+
+</div>
