@@ -134,3 +134,16 @@ one. Real `.env*` files are git-ignored; never commit secrets.
 
 See `docs/PROJECT-STATE.md` for the precise status and
 `docs/PHASE-HANDOFF.md` if you are continuing this project in a new session.
+
+---
+
+## نصب به‌عنوان اپلیکیشن (PWA)
+
+اورا یک Progressive Web App است و بدون استور، مثل یک اپ واقعی روی گوشی و دسکتاپ نصب می‌شود:
+
+- **اندروید (Chrome/Edge):** منوی سه‌نقطه ← «Add to Home Screen / Install app»
+- **iOS (Safari):** دکمه Share ← «Add to Home Screen»
+- **دسکتاپ (Chrome/Edge):** آیکون نصب در نوار آدرس ← Install
+
+نسخه نصب‌شده آیکون اختصاصی، اجرای تمام‌صفحه و کش آفلاین برای فایل‌های استاتیک دارد.
+جزئیات فنی و راهنمای کامل: `docs/PWA.md`
