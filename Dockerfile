@@ -24,10 +24,12 @@ ENV DATABASE_URL=file:/app/db/custom.db
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN mkdir -p db && bun run db:push && bun run build
 
-# Seed the demo content into the image's SQLite database so a fresh container
-# starts with the Overa demo catalog (idempotent: entrypoint skips seeding
-# when the database already exists in the mounted volume).
-RUN bun run scripts/seed.ts
+# NOTE: demo content is deliberately NOT seeded during the image build.
+# docker-compose mounts the overa_db volume over /app/db, shadowing anything
+# baked into the image, so build-time seeding is wasted work — and a fragile
+# build dependency (the SQLite query engine can stall under builder load and
+# fail with P1008 "Socket timeout"). The entrypoint pushes the schema and
+# seeds the volume on the container's first start instead (with retries).
 
 FROM oven/bun:1-slim AS runtime
 WORKDIR /app
