@@ -41,68 +41,71 @@ async function main() {
 
   /* ------------------------------ categories ------------------------------ */
   console.log("Seeding categories…");
-  const categories = await Promise.all(
-    [
-      { slug: "digital", name: "لوازم دیجیتال", icon: "devices", count: 38 },
-      { slug: "home", name: "لوازم خانگی", icon: "home", count: 21 },
-      { slug: "sport", name: "ورزش و تفریح", icon: "sports_soccer", count: 19 },
-      { slug: "tools", name: "ابزار و تجهیزات", icon: "handyman", count: 15 },
-      { slug: "camping", name: "سفر و کمپینگ", icon: "forest", count: 17 },
-      { slug: "beauty", name: "مد و زیبایی", icon: "checkroom", count: 9 },
-      { slug: "kids", name: "کودک و نوزاد", icon: "child_care", count: 6 },
-      { slug: "other", name: "سایر دسته‌ها", icon: "category", count: 12 },
-    ].map((c, i) =>
-      db.category.create({
+  // SQLite is a single-writer database: seed writes run sequentially (no
+  // Promise.all) so the query engine never contends with itself — parallel
+  // writes under memory pressure can wedge the engine (Prisma P1008).
+  const categoryData = [
+    { slug: "digital", name: "لوازم دیجیتال", icon: "devices", count: 38 },
+    { slug: "home", name: "لوازم خانگی", icon: "home", count: 21 },
+    { slug: "sport", name: "ورزش و تفریح", icon: "sports_soccer", count: 19 },
+    { slug: "tools", name: "ابزار و تجهیزات", icon: "handyman", count: 15 },
+    { slug: "camping", name: "سفر و کمپینگ", icon: "forest", count: 17 },
+    { slug: "beauty", name: "مد و زیبایی", icon: "checkroom", count: 9 },
+    { slug: "kids", name: "کودک و نوزاد", icon: "child_care", count: 6 },
+    { slug: "other", name: "سایر دسته‌ها", icon: "category", count: 12 },
+  ];
+  const categories: { slug: string; id: string }[] = [];
+  for (const [i, c] of categoryData.entries()) {
+    categories.push(
+      await db.category.create({
         data: { slug: c.slug, name: c.name, icon: c.icon, sortOrder: i },
       }),
-    ),
-  );
+    );
+  }
   const cat = Object.fromEntries(categories.map((c) => [c.slug, c.id]));
 
   /* -------------------------------- users --------------------------------- */
   console.log("Seeding users (demo accounts)…");
   const pw = hashPassword(DEMO_PASSWORD);
-  const [sara, ali, mehrdad, campstore, sohrab, arash, amirmahdi] =
-    await Promise.all([
-      db.user.create({
-        data: {
-          name: "سارا محمدی",
-          phone: "09121111111",
-          passwordHash: pw,
-          city: "تهران",
-          kycStatus: "VERIFIED",
-          walletBalance: 2_500_000,
-          avatarUrl: null,
-        },
-      }),
-      db.user.create({
-        data: {
-          name: "علی رضایی",
-          phone: "09122222222",
-          passwordHash: pw,
-          isHost: true,
-          city: "تهران",
-          kycStatus: "VERIFIED",
-          walletBalance: 8_400_000,
-          bio: "میزبان اورا از ۱۴۰۲ — تجهیزات عکاسی و دیجیتال",
-        },
-      }),
-      db.user.create({
-        data: { name: "مهرداد رضایی", phone: "09123333333", passwordHash: pw, isHost: true, city: "تهران", kycStatus: "VERIFIED" },
-      }),
-      db.user.create({
-        data: { name: "کمپ‌استور البرز", phone: "09124444444", passwordHash: pw, isHost: true, city: "کرج", kycStatus: "VERIFIED" },
-      }),
-      db.user.create({
-        data: { name: "سهراب علوی", phone: "09125555555", passwordHash: pw, isHost: true, city: "تهران", kycStatus: "PENDING" },
-      }),
-      db.user.create({
-        data: { name: "آرش کوهیار", phone: "09126666666", passwordHash: pw, isHost: true, city: "تهران", kycStatus: "VERIFIED" },
-      }),
-      db.user.create({
-        data: { name: "امیرمهدی رجبی", phone: "09127777777", passwordHash: pw, isHost: true, city: "تهران", kycStatus: "VERIFIED" },
-      }),
-    ]);
+  // Sequential creates (SQLite: single writer — see the note above).
+  const sara = await db.user.create({
+    data: {
+      name: "سارا محمدی",
+      phone: "09121111111",
+      passwordHash: pw,
+      city: "تهران",
+      kycStatus: "VERIFIED",
+      walletBalance: 2_500_000,
+      avatarUrl: null,
+    },
+  });
+  const ali = await db.user.create({
+    data: {
+      name: "علی رضایی",
+      phone: "09122222222",
+      passwordHash: pw,
+      isHost: true,
+      city: "تهران",
+      kycStatus: "VERIFIED",
+      walletBalance: 8_400_000,
+      bio: "میزبان اورا از ۱۴۰۲ — تجهیزات عکاسی و دیجیتال",
+    },
+  });
+  const mehrdad = await db.user.create({
+    data: { name: "مهرداد رضایی", phone: "09123333333", passwordHash: pw, isHost: true, city: "تهران", kycStatus: "VERIFIED" },
+  });
+  const campstore = await db.user.create({
+    data: { name: "کمپ‌استور البرز", phone: "09124444444", passwordHash: pw, isHost: true, city: "کرج", kycStatus: "VERIFIED" },
+  });
+  const sohrab = await db.user.create({
+    data: { name: "سهراب علوی", phone: "09125555555", passwordHash: pw, isHost: true, city: "تهران", kycStatus: "PENDING" },
+  });
+  const arash = await db.user.create({
+    data: { name: "آرش کوهیار", phone: "09126666666", passwordHash: pw, isHost: true, city: "تهران", kycStatus: "VERIFIED" },
+  });
+  const amirmahdi = await db.user.create({
+    data: { name: "امیرمهدی رجبی", phone: "09127777777", passwordHash: pw, isHost: true, city: "تهران", kycStatus: "VERIFIED" },
+  });
 
   const admin = await db.user.create({
     data: { name: "مدیر اورا", phone: "09120000000", passwordHash: pw, isAdmin: true, kycStatus: "VERIFIED" },
@@ -447,7 +450,41 @@ async function main() {
   console.log("OTP demo code: shown on screen in dev mode (no SMS provider configured).");
 }
 
-main()
+/**
+ * Transient Prisma error codes that justify retrying the whole seed:
+ * - P1008: socket timeout (query engine stopped responding — typical in
+ *   memory/CPU-constrained containers, e.g. right after a Docker build)
+ * - P2024: timed out fetching a connection from the pool
+ * - P1017: database server closed the connection
+ * - P1001: can't reach the database server
+ * main() clears every table first, so re-running it from scratch is safe.
+ */
+const TRANSIENT_ERROR_CODES = new Set(["P1008", "P2024", "P1017", "P1001"]);
+const MAX_SEED_ATTEMPTS = 3;
+
+function errorCodeOf(e: unknown): string {
+  return typeof e === "object" && e !== null && "code" in e
+    ? String((e as { code: unknown }).code)
+    : "";
+}
+
+async function runSeed(attempt = 1): Promise<void> {
+  try {
+    await main();
+  } catch (e) {
+    const code = errorCodeOf(e);
+    if (TRANSIENT_ERROR_CODES.has(code) && attempt < MAX_SEED_ATTEMPTS) {
+      console.warn(
+        `Transient database error ${code} (attempt ${attempt}/${MAX_SEED_ATTEMPTS}) — retrying in 3s…`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      return runSeed(attempt + 1);
+    }
+    throw e;
+  }
+}
+
+runSeed()
   .catch((e) => {
     console.error(e);
     process.exit(1);
