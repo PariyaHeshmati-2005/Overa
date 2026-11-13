@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { jsonError, jsonOk, requireUser } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
+import { normalizeBlockedRangesInput } from "@/lib/jalali";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -59,6 +60,10 @@ export async function PATCH(req: Request, ctx: Ctx) {
     if (body[f] !== undefined) data[f] = Boolean(body[f]);
   }
   if (typeof body.categoryId === "string" && body.categoryId) data.categoryId = body.categoryId;
+  // Owner-blocked availability (Jalali calendar in the create-listing wizard).
+  if (Array.isArray(body.blockedRanges)) {
+    data.blockedRanges = JSON.stringify(normalizeBlockedRangesInput(body.blockedRanges));
+  }
 
   // Status transitions (pause/resume/submit/archive) — validated server-side.
   const STATUS_FLOWS: Record<string, string[]> = {

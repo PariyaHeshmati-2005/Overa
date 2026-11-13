@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { jsonError, jsonOk, parseIntSafe, requireUser } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
+import { normalizeBlockedRangesInput } from "@/lib/jalali";
 
 /** GET /api/listings?q=&category=&city=&min=&max=&sort=&instant=&mine=&status= */
 export async function GET(req: Request) {
@@ -103,6 +104,7 @@ export async function POST(req: Request) {
         rules: body.rules ? String(body.rules) : null,
         minDays: Math.max(1, Math.floor(Number(body.minDays) || 1)),
         maxDays: Math.max(1, Math.floor(Number(body.maxDays) || 30)),
+        blockedRanges: JSON.stringify(normalizeBlockedRangesInput(body.blockedRanges)),
         instantBook: Boolean(body.instantBook),
         status,
         images: {

@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { jsonError, jsonOk, requireUser } from "@/lib/api";
 import { daysBetween } from "@/lib/format";
+import { parseBlockedRanges, rangeHitsBooked } from "@/lib/jalali";
 
 /**
  * GET /api/reservations — the caller's reservations (as renter and as host).
@@ -70,6 +71,19 @@ export async function POST(req: Request) {
     });
     if (overlap)
       return jsonError("این بازه با اجاره دیگری هم‌پوشانی دارد؛ بازه دیگری انتخاب کنید.", 409);
+
+    // Owner-blocked days (picked by the host in the create-listing wizard).
+    const blocked = parseBlockedRanges(listing.blockedRanges);
+    if (
+      blocked.length &&
+      rangeHitsBooked(
+        start.toISOString().slice(0, 10),
+        end.toISOString().slice(0, 10),
+        blocked,
+      )
+    ) {
+      return jsonError("برخی روزهای این بازه توسط میزبان مسدود شده است؛ بازه دیگری انتخاب کنید.", 422);
+    }
 
     const subtotal = listing.dailyPrice * days;
     const { generateReferenceCode } = await import("@/lib/rental-state");
