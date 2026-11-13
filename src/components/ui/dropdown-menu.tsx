@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 function DropdownMenu({
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
-  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+  return <DropdownMenuPrimitive.Root dir="rtl" data-slot="dropdown-menu" {...props} />
 }
 
 function DropdownMenuPortal({
@@ -39,7 +39,6 @@ function DropdownMenuContent({
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
-        dir="rtl"
         data-slot="dropdown-menu-content"
         sideOffset={sideOffset}
         className={cn(
