@@ -26,6 +26,14 @@ type Props = {
   onRangeChange: (startIso: string | null, endIso: string | null) => void;
   /** Reservation ranges already taken for this item (ISO dates, inclusive). */
   bookedRanges?: DateRange[];
+  /** Days the owner blocked from the create-listing wizard (ISO dates, inclusive). */
+  ownerBlockedRanges?: DateRange[];
+  /**
+   * "rental" (default): renter picks delivery/return days with min/max rules.
+   * "host": host blocks days they do not want to rent out; single-day
+   * blocking is allowed and already-blocked days render as locked highlights.
+   */
+  variant?: "rental" | "host";
   /** Show inline booking-window validation hints (min/max rental days). */
   minDays?: number;
   maxDays?: number;
@@ -43,18 +51,24 @@ const CELL =
  * - Selecting a range that crosses a booked day (or exceeds the listing's
  *   max rental days) is rejected with an inline message.
  * - Dates are exchanged as ISO strings, matching the reservation API.
+ * - variant="host" (create-listing wizard): the same calendar lets the host
+ *   block days they do not want to rent out — single-day blocks allowed,
+ *   already-blocked days show as violet locks and cannot be re-selected.
  */
 export default function JalaliCalendar({
   startIso,
   endIso,
   onRangeChange,
   bookedRanges = [],
+  ownerBlockedRanges = [],
+  variant = "rental",
   minDays,
   maxDays,
   className = "",
 }: Props) {
   const today = todayIsoTehran();
   const todayJ = todayJalaliTehran();
+  const isHost = variant === "host";
 
   // The calendar opens on the current month of ۱۴۰۵; navigation stays inside the year.
   const [viewMonth, setViewMonth] = useState(todayJ.jm);
@@ -80,6 +94,12 @@ export default function JalaliCalendar({
       return;
     }
 
+    // Host blocking: clicking the start day again blocks that single day.
+    if (isHost && iso === startIso) {
+      onRangeChange(startIso, startIso);
+      return;
+    }
+
     // Clicking before/at the current start restarts the selection.
     if (iso <= startIso) {
       onRangeChange(iso, null);
@@ -89,6 +109,12 @@ export default function JalaliCalendar({
     // Candidate range [start, iso].
     if (rangeHitsBooked(startIso, iso, bookedRanges)) {
       setHint("این بازه با اجارهٔ دیگری هم‌پوشانی دارد؛ روز پایان دیگری انتخاب کنید.");
+      return;
+    }
+    if (rangeHitsBooked(startIso, iso, ownerBlockedRanges)) {
+      setHint(isHost
+        ? "این بازه با روزهای مسدودشدهٔ قبلی هم‌پوشانی دارد."
+        : "برخی روزهای این بازه توسط میزبان مسدود شده است.");
       return;
     }
     const days = diffDaysIso(startIso, iso); // same semantics as the API's daysBetween
@@ -162,7 +188,8 @@ export default function JalaliCalendar({
         {grid.days.map(({ jd, iso }) => {
           const past = iso < today;
           const booked = isDayBooked(iso, bookedRanges);
-          const disabled = past || booked;
+          const ownerBlocked = isDayBooked(iso, ownerBlockedRanges);
+          const disabled = past || booked || ownerBlocked;
           const isStart = iso === startIso;
           const isEnd = iso === endIso;
           const selected = isStart || isEnd;
@@ -174,17 +201,25 @@ export default function JalaliCalendar({
             ? "bg-[#7c3aed] text-white font-bold shadow-sm shadow-[#8b5cf6]/30"
             : inRange
               ? "bg-[#ede9fe] text-[#6d28d9] font-semibold"
-              : booked
-                ? "bg-slate-100 text-slate-400 line-through cursor-not-allowed"
-                : past
-                  ? "text-slate-300 cursor-not-allowed"
-                  : "text-slate-700 hover:bg-[#f3efff] cursor-pointer";
+              : ownerBlocked && isHost
+                ? "bg-[#ede9fe] text-[#6d28d9] font-bold cursor-not-allowed"
+                : ownerBlocked
+                  ? "bg-amber-50 text-amber-400 line-through cursor-not-allowed"
+                  : booked
+                    ? "bg-slate-100 text-slate-400 line-through cursor-not-allowed"
+                    : past
+                      ? "text-slate-300 cursor-not-allowed"
+                      : "text-slate-700 hover:bg-[#f3efff] cursor-pointer";
 
-          const title = booked
-            ? "در حال اجاره"
-            : past
-              ? "گذشته"
-              : `${JALALI_WEEKDAY_NAMES[jalaliWeekdayOfIso(iso)]} ${toPersianDigits(jd)} ${JALALI_MONTH_NAMES[viewMonth - 1]}`;
+          const title = ownerBlocked
+            ? isHost
+              ? "مسدودشده توسط شما"
+              : "مسدود توسط میزبان"
+            : booked
+              ? "در حال اجاره"
+              : past
+                ? "گذشته"
+                : `${JALALI_WEEKDAY_NAMES[jalaliWeekdayOfIso(iso)]} ${toPersianDigits(jd)} ${JALALI_MONTH_NAMES[viewMonth - 1]}`;
 
           return (
             <button
@@ -216,15 +251,21 @@ export default function JalaliCalendar({
         </p>
       ) : startIso && endIso ? (
         <p className="mt-2 text-[11px] font-semibold text-emerald-600 text-center">
-          بازه انتخاب‌شده: {diffDaysIso(startIso, endIso)} روز اجاره
+          {isHost
+            ? `بازه مسدود شد: ${toPersianDigits(diffDaysIso(startIso, endIso) + 1)} روز غیرقابل اجاره`
+            : `بازه انتخاب‌شده: ${diffDaysIso(startIso, endIso)} روز اجاره`}
         </p>
       ) : startIso ? (
         <p className="mt-2 text-[11px] font-semibold text-[#7c3aed] text-center">
-          روز بازگشت را انتخاب کنید
+          {isHost
+            ? "روز پایانی مسدودی را انتخاب کنید (یا همان روز را دوباره بزنید)"
+            : "روز بازگشت را انتخاب کنید"}
         </p>
       ) : (
         <p className="mt-2 text-[11px] text-slate-400 text-center">
-          برای شروع، روز تحویل را انتخاب کنید
+          {isHost
+            ? "برای مسدودسازی، روز شروع را انتخاب کنید"
+            : "برای شروع، روز تحویل را انتخاب کنید"}
         </p>
       )}
 
