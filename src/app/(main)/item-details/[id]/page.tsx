@@ -91,6 +91,17 @@ export default async function ItemDetailsPage({
     imageUrl: o.images[0]?.url ?? "/assets/img/4bb41475c0e3.jpg",
   }));
 
+  // Non-cancelled reservations of this listing → booked days for the Jalali
+  // availability calendar (ISO calendar dates, inclusive on both ends).
+  const activeReservations = await db.reservation.findMany({
+    where: { listingId: id, status: { notIn: ["CANCELLED", "REJECTED"] } },
+    select: { startDate: true, endDate: true },
+  });
+  const bookedRanges = activeReservations.map((r) => ({
+    start: r.startDate.toISOString().slice(0, 10),
+    end: r.endDate.toISOString().slice(0, 10),
+  }));
+
   return (
     <>
       {/* Page-local styles ported from the source page */}
@@ -104,6 +115,7 @@ export default async function ItemDetailsPage({
         reviews={reviews}
         otherItems={otherItems}
         viewerId={viewer?.id ?? null}
+        bookedRanges={bookedRanges}
       />
       <SiteFooter />
     </>

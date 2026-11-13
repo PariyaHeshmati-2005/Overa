@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Toaster, toast } from "sonner";
 import { faNumber, faToman, faDate, daysBetween } from "@/lib/format";
+import { formatJalaliIso, type DateRange } from "@/lib/jalali";
+import JalaliCalendar from "@/components/overa/JalaliCalendar";
 
 export type ItemDetailData = {
   id: string;
@@ -97,10 +99,6 @@ function colorFor(name: string) {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
   return AVATAR_COLORS[h % AVATAR_COLORS.length];
-}
-
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 /* --------------------------------- Gallery --------------------------------- */
@@ -354,16 +352,24 @@ function ReviewsSection({
 function BookingBox({
   data,
   viewerId,
+  startIso,
+  endIso,
+  onRangeChange,
+  bookedRanges,
 }: {
   data: ItemDetailData;
   viewerId: string | null;
+  startIso: string | null;
+  endIso: string | null;
+  onRangeChange: (startIso: string | null, endIso: string | null) => void;
+  bookedRanges: DateRange[];
 }) {
   const router = useRouter();
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const isOwner = viewerId === data.owner.id;
 
+  const startDate = startIso ?? "";
+  const endDate = endIso ?? "";
   const nights =
     startDate && endDate && new Date(endDate) > new Date(startDate)
       ? daysBetween(startDate, endDate)
@@ -406,28 +412,33 @@ function BookingBox({
 
   return (
     <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-4 lg:sticky lg:top-24">
-      {/* Date pickers */}
+      {/* Jalali (Shamsi) date range picker — solar year ۱۴۰۵ */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-slate-800">انتخاب تاریخ اجاره</span>
+        <span className="text-[10px] font-semibold text-[#7c3aed]">تقویم شمسی ۱۴۰۵</span>
+      </div>
+      <JalaliCalendar
+        startIso={startIso}
+        endIso={endIso}
+        onRangeChange={onRangeChange}
+        bookedRanges={bookedRanges}
+        minDays={data.minDays}
+        maxDays={data.maxDays}
+      />
+      {/* Selected dates summary */}
       <div className="grid grid-cols-2 gap-2">
-        <label className="block">
-          <span className="text-[11px] font-bold text-slate-600 block mb-1">تاریخ تحویل</span>
-          <input
-            type="date"
-            value={startDate}
-            min={todayIso()}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:border-[#7c3aed] focus:ring-4 focus:ring-[#8b5cf6]/10 transition-all outline-none text-slate-800"
-          />
-        </label>
-        <label className="block">
-          <span className="text-[11px] font-bold text-slate-600 block mb-1">تاریخ بازگشت</span>
-          <input
-            type="date"
-            value={endDate}
-            min={startDate || todayIso()}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:border-[#7c3aed] focus:ring-4 focus:ring-[#8b5cf6]/10 transition-all outline-none text-slate-800"
-          />
-        </label>
+        <div className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+          <span className="text-[10px] text-slate-500 block">تاریخ تحویل</span>
+          <span className="text-xs font-bold text-slate-800">
+            {startIso ? formatJalaliIso(startIso) : "—"}
+          </span>
+        </div>
+        <div className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+          <span className="text-[10px] text-slate-500 block">تاریخ بازگشت</span>
+          <span className="text-xs font-bold text-slate-800">
+            {endIso ? formatJalaliIso(endIso) : "—"}
+          </span>
+        </div>
       </div>
       {invalidRange ? (
         <p className="text-[11px] font-semibold text-rose-500">تاریخ بازگشت باید بعد از تاریخ تحویل باشد.</p>
@@ -496,16 +507,28 @@ export default function ItemDetailsApp({
   reviews,
   otherItems,
   viewerId,
+  bookedRanges = [],
 }: {
   data: ItemDetailData;
   reviews: ReviewData[];
   otherItems: OwnerListingData[];
   viewerId: string | null;
+  /** Existing non-cancelled reservations of this listing (ISO dates). */
+  bookedRanges?: DateRange[];
 }) {
   const router = useRouter();
   const [contentTab, setContentTab] = useState<"desc" | "rules">("desc");
   const [faved, setFaved] = useState(false);
   const [chatting, setChatting] = useState(false);
+
+  // Shared booking range: the availability calendar and the checkout box
+  // both drive this state, and it is what gets POSTed to /api/reservations.
+  const [startIso, setStartIso] = useState<string | null>(null);
+  const [endIso, setEndIso] = useState<string | null>(null);
+  const handleRangeChange = (s: string | null, e: string | null) => {
+    setStartIso(s);
+    setEndIso(e);
+  };
 
   const specs = useMemo(
     () => (data.specs ?? "").split("•").map((s) => s.trim()).filter(Boolean),
@@ -962,14 +985,20 @@ export default function ItemDetailsApp({
             </div>
           </div>
 
-          {/* Availability Calendar Box */}
+          {/* Availability Calendar Box — interactive Jalali calendar wired to real reservations */}
           <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-800">تقویم دسترسی</h3>
-              <span className="text-xs font-semibold text-[#7c3aed]">
-                {new Intl.DateTimeFormat("fa-IR", { month: "long", year: "numeric" }).format(new Date())}
-              </span>
+              <span className="text-xs font-semibold text-[#7c3aed]">شمسی — سال ۱۴۰۵</span>
             </div>
+            <JalaliCalendar
+              startIso={startIso}
+              endIso={endIso}
+              onRangeChange={handleRangeChange}
+              bookedRanges={bookedRanges}
+              minDays={data.minDays}
+              maxDays={data.maxDays}
+            />
             <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
               <span className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
@@ -978,6 +1007,10 @@ export default function ItemDetailsApp({
               <span className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
                 در حال اجاره
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#7c3aed]"></span>
+                انتخاب‌شده
               </span>
             </div>
             {/* Rules / Rental Terms Notes */}
@@ -1003,7 +1036,14 @@ export default function ItemDetailsApp({
           </div>
 
           {/* Checkout Action Card (sticky) */}
-          <BookingBox data={data} viewerId={viewerId} />
+          <BookingBox
+            data={data}
+            viewerId={viewerId}
+            startIso={startIso}
+            endIso={endIso}
+            onRangeChange={handleRangeChange}
+            bookedRanges={bookedRanges}
+          />
         </div>
       </div>
     </main>
