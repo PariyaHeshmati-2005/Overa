@@ -20,9 +20,9 @@ WORKDIR /app
 COPY . .
 # Generate the Prisma client, then build the standalone Next.js output.
 # DATABASE_URL here is only used for build-time type generation.
-ENV DATABASE_URL=file:/app/db/custom.db
+ENV DATABASE_URL=postgresql://user:pass@localhost:5432/overa
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN mkdir -p db && bun run db:push && bun run build
+RUN bunx prisma generate && bun run build
 
 # NOTE: demo content is deliberately NOT seeded during the image build.
 # docker-compose mounts the overa_db volume over /app/db, shadowing anything

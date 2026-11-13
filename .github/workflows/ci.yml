@@ -39,13 +39,13 @@ jobs:
 
       - name: Production build
         env:
-          DATABASE_URL: file:/tmp/ci.db
+          DATABASE_URL: postgresql://user:pass@localhost:5432/overa
           NEXT_TELEMETRY_DISABLED: 1
         run: bun run build
 
       - name: Smoke-test production server
         env:
-          DATABASE_URL: file:/tmp/ci.db
+          DATABASE_URL: postgresql://user:pass@localhost:5432/overa
         run: |
           bun run start &
           SERVER_PID=$!
