@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import CreateListingWizard, { type WizardInitial } from "./CreateListingWizard";
+import { parseBlockedRanges } from "@/lib/jalali";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,12 @@ export default async function CreateListingPage({
       include: { images: { orderBy: { sortOrder: "asc" } } },
     });
     if (!listing || listing.ownerId !== user.id) redirect("/my-items");
+    // Existing reservations render as locked days on the host availability
+    // calendar so the owner cannot block already-rented days.
+    const activeReservations = await db.reservation.findMany({
+      where: { listingId: listing.id, status: { notIn: ["CANCELLED", "REJECTED"] } },
+      select: { startDate: true, endDate: true },
+    });
     initial = {
       id: listing.id,
       status: listing.status,
@@ -72,6 +79,11 @@ export default async function CreateListingPage({
       pickupInPerson: listing.pickupInPerson,
       deliveryCourier: listing.deliveryCourier,
       images: listing.images.map((i) => i.url),
+      blockedRanges: parseBlockedRanges(listing.blockedRanges),
+      reservedRanges: activeReservations.map((r) => ({
+        start: r.startDate.toISOString().slice(0, 10),
+        end: r.endDate.toISOString().slice(0, 10),
+      })),
     };
   }
 

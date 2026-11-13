@@ -5,6 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Toaster, toast } from "sonner";
 import { faNumber } from "@/lib/format";
+import JalaliCalendar from "@/components/overa/JalaliCalendar";
+import {
+  formatJalaliIso,
+  rangeHitsBooked,
+  rentalDaysIso,
+  type DateRange,
+} from "@/lib/jalali";
 
 type CategoryDTO = { id: string; name: string; icon: string | null };
 
@@ -28,6 +35,10 @@ export type WizardInitial = {
   pickupInPerson: boolean;
   deliveryCourier: boolean;
   images: string[];
+  /** Owner-blocked ranges already stored on the listing (edit mode). */
+  blockedRanges: DateRange[];
+  /** Inclusive ISO ranges of this listing's non-cancelled reservations. */
+  reservedRanges: DateRange[];
 } | null;
 
 type Props = {
@@ -61,6 +72,8 @@ type FormData = {
   deposit: string;
   minDays: string;
   maxDays: string;
+  /** Owner-blocked availability picked on the Jalali calendar (step 3). */
+  blockedRanges: DateRange[];
   discountPercent: number;
   acceptPromissoryNote: boolean;
   bufferHours: string;
@@ -94,6 +107,7 @@ const DEFAULT_FORM: FormData = {
   deposit: "",
   minDays: "1",
   maxDays: "30",
+  blockedRanges: [],
   discountPercent: 15,
   acceptPromissoryNote: true,
   bufferHours: "24",
@@ -166,7 +180,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
   const [showAllImages, setShowAllImages] = useState(false);
   const [rentalDaysEst, setRentalDaysEst] = useState(10);
   const [newAccessory, setNewAccessory] = useState("");
-  const [selectedDays, setSelectedDays] = useState<number[]>([19, 20, 21, 22]);
+  // In-progress Jalali block-range selection (first click = start, second = end).
+  const [blockStart, setBlockStart] = useState<string | null>(null);
+  const [blockEnd, setBlockEnd] = useState<string | null>(null);
 
   const [form, setForm] = useState<FormData>(() => {
     if (!initial) return { ...DEFAULT_FORM };
@@ -190,6 +206,7 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
       instantBook: initial.instantBook,
       minDays: String(initial.minDays ?? 1),
       maxDays: String(initial.maxDays ?? 30),
+      blockedRanges: initial.blockedRanges,
       customRules: initial.rules ?? "",
       images: initial.images,
     };
@@ -227,13 +244,40 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
     setNewAccessory("");
   }
 
-  function toggleDay(day: number) {
-    if (day === 4 || day === 11 || day === 18 || day === 25) return; // جمعه‌ها
-    if ([7, 8, 9].includes(day)) return; // رزرو شده (نمایشی)
-    if ([12, 13].includes(day)) return; // مسدود مالک (نمایشی)
-    setSelectedDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
-    );
+  // Non-cancelled reservations of the edited listing (empty for new listings);
+  // the host calendar renders them as locked days that cannot be blocked.
+  const reservedRanges = initial?.reservedRanges ?? [];
+
+  /** Completed Jalali block-range → append to the form (overlap-guarded). */
+  function handleBlockPick(s: string | null, e: string | null) {
+    setBlockStart(s);
+    setBlockEnd(e);
+    if (!s || !e) return;
+    if (rangeHitsBooked(s, e, reservedRanges)) {
+      toast.error("این بازه با اجاره‌های فعلی هم‌پوشانی دارد و قابل مسدودسازی نیست.");
+    } else if (rangeHitsBooked(s, e, form.blockedRanges)) {
+      toast.error("این روزها قبلاً مسدود شده‌اند.");
+    } else {
+      update({
+        blockedRanges: [...form.blockedRanges, { start: s, end: e }].sort((a, b) =>
+          a.start < b.start ? -1 : 1,
+        ),
+      });
+    }
+    setBlockStart(null);
+    setBlockEnd(null);
+  }
+
+  function removeBlockedRange(start: string, end: string) {
+    update({
+      blockedRanges: form.blockedRanges.filter((r) => r.start !== start || r.end !== end),
+    });
+  }
+
+  function clearBlockedRanges() {
+    update({ blockedRanges: [] });
+    setBlockStart(null);
+    setBlockEnd(null);
   }
 
   function validateStep(n: 1 | 2 | 3 | 4): boolean {
@@ -289,6 +333,7 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
       rules: form.customRules.trim() || undefined,
       minDays: Number(form.minDays) || 1,
       maxDays: Number(form.maxDays) || 30,
+      blockedRanges: form.blockedRanges,
       instantBook: form.instantBook,
       deliveryCourier: form.deliveryCourier,
       pickupInPerson: form.pickupInPerson,
@@ -1667,76 +1712,95 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 <div>
                   <h2 className="text-on-surface font-bold">۳. تقویم رزرو و زمان‌بندی تحویل</h2>
                   <p className="text-sm text-on-surface-variant">
-                    روزهایی که مایل نیستید کالا اجاره داده شود را با کلیک مسدود کنید.
+                    روزهایی که مایل نیستید کالا اجاره داده شود را در تقویم شمسی مسدود کنید؛ این
+                    روزها برای مستأجرها قابل رزرو نخواهد بود.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 text-xs font-medium">
-                <span className="flex items-center gap-1.5">
-                  <span className="size-3 rounded-full bg-m3-primary"></span>انتخاب شده
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="size-3 rounded-full bg-surface-container-highest"></span>مسدود مالک
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="size-3 rounded-full bg-emerald-500/30"></span>رزرو شده
-                </span>
-              </div>
+              <span className="text-xs font-semibold text-m3-primary bg-m3-primary/5 border border-m3-primary/25 px-2.5 py-1 rounded-full shrink-0">
+                تقویم شمسی ۱۴۰۵
+              </span>
             </div>
 
             <div className="p-4 rounded-xl bg-surface-container-low space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-on-surface">اردیبهشت ۱۴۰۳</span>
-                  <span className="text-xs text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full font-medium">
-                    ماه جاری
-                  </span>
-                  <span className="text-[10px] text-m3-tertiary bg-surface-container px-2 py-0.5 rounded-full">
-                    نمایشی
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-7 text-center text-on-surface-variant py-1 text-xs">
-                <span>شنبه</span>
-                <span>۱ش</span>
-                <span>۲ش</span>
-                <span>۳ش</span>
-                <span>۴ش</span>
-                <span>۵ش</span>
-                <span className="text-m3-error font-bold">جمعه</span>
-              </div>
-
-              <div className="grid grid-cols-7 gap-1.5 text-center text-sm">
-                <div className="h-10 rounded-lg flex items-center justify-center text-outline-variant opacity-30">
-                  ۲۹
-                </div>
-                <div className="h-10 rounded-lg flex items-center justify-center text-outline-variant opacity-30">
-                  ۳۰
-                </div>
-                <div className="h-10 rounded-lg flex items-center justify-center text-outline-variant opacity-30">
-                  ۳۱
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+                {/* Jalali (Shamsi) ۱۴۰۵ availability calendar — same calendar as item-details */}
+                <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/30">
+                  <JalaliCalendar
+                    variant="host"
+                    startIso={blockStart}
+                    endIso={blockEnd}
+                    onRangeChange={handleBlockPick}
+                    bookedRanges={reservedRanges}
+                    ownerBlockedRanges={form.blockedRanges}
+                  />
                 </div>
 
-                {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => {
-                  const isFriday = day === 4 || day === 11 || day === 18 || day === 25;
-                  const isRented = [7, 8, 9].includes(day);
-                  const isBlocked = [12, 13].includes(day);
-                  const isSelected = selectedDays.includes(day);
+                {/* Blocked ranges manager */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-on-surface">
+                      روزهای مسدودشده ({faNumber(form.blockedRanges.length)})
+                    </span>
+                    {form.blockedRanges.length > 0 ? (
+                      <button
+                        type="button"
+                        onClick={clearBlockedRanges}
+                        className="text-xs font-semibold text-m3-error hover:underline cursor-pointer"
+                      >
+                        پاک کردن همه
+                      </button>
+                    ) : null}
+                  </div>
 
-                  let btnClasses = "h-10 rounded-lg flex items-center justify-center transition-all ";
-                  if (isFriday) btnClasses += "bg-m3-error-container/40 text-m3-error font-bold cursor-not-allowed";
-                  else if (isRented) btnClasses += "bg-emerald-500/15 text-emerald-800 font-bold cursor-not-allowed";
-                  else if (isBlocked) btnClasses += "bg-surface-container-highest text-m3-tertiary line-through cursor-not-allowed";
-                  else if (isSelected) btnClasses += "bg-m3-primary text-on-primary font-bold shadow-sm cursor-pointer";
-                  else btnClasses += "bg-surface-container-lowest text-on-surface hover:bg-m3-primary/10 cursor-pointer";
+                  {form.blockedRanges.length === 0 ? (
+                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                      هنوز روزی مسدود نشده است. روز شروع و روز پایان را در تقویم انتخاب کنید تا
+                      آن بازه مسدود شود؛ برای مسدود کردن فقط یک روز، همان روز را دوباره بزنید.
+                    </p>
+                  ) : (
+                    <ul className="space-y-2 max-h-64 overflow-y-auto">
+                      {form.blockedRanges.map((r) => (
+                        <li
+                          key={`${r.start}..${r.end}`}
+                          className="flex items-center justify-between gap-2 rounded-lg bg-surface-container-lowest border border-outline-variant/30 px-3 py-2"
+                        >
+                          <span className="text-xs font-bold text-on-surface">
+                            {formatJalaliIso(r.start)}
+                            {r.end !== r.start ? ` تا ${formatJalaliIso(r.end)}` : " (یک روز)"}
+                            <span className="text-on-surface-variant font-medium">
+                              {" "}
+                              — {faNumber(rentalDaysIso(r.start, r.end))} روز
+                            </span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeBlockedRange(r.start, r.end)}
+                            aria-label="حذف بازه مسدود"
+                            className="size-7 rounded-full flex items-center justify-center text-m3-error hover:bg-m3-error/10 transition-colors cursor-pointer shrink-0"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">close</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
 
-                  return (
-                    <button key={day} type="button" onClick={() => toggleDay(day)} className={btnClasses}>
-                      {faNumber(day)}
-                    </button>
-                  );
-                })}
+                  <div className="flex items-center gap-3 text-[11px] text-on-surface-variant font-medium pt-1">
+                    <span className="flex items-center gap-1.5">
+                      <span className="size-2.5 rounded-full bg-[#ede9fe] border border-[#c4b5fd]"></span>
+                      مسدود شده
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="size-2.5 rounded-full bg-slate-200"></span>
+                      در حال اجاره
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="size-2.5 rounded-full bg-slate-100"></span>
+                      گذشته
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 
