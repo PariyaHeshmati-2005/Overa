@@ -34,6 +34,11 @@ docker compose up -d --build
 # app on http://localhost:3000, data in the overa_db volume
 ```
 
+Schema push and the demo seed run on the app container's **first start** (the
+entrypoint writes a `.seeded` marker into the volume once it succeeds). Seeding
+is retried automatically within the start; if it still fails, the app starts
+with an empty database and `docker compose restart app` retries the seed.
+
 Server deployment via CI: add repository variable
 `ENABLE_SERVER_DEPLOY=true` and secrets `SSH_HOST`, `SSH_USER`,
 `SSH_PRIVATE_KEY`; the `docker-publish.yml` workflow then pulls the fresh
