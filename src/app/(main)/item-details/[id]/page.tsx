@@ -8,6 +8,7 @@ import ItemDetailsApp, {
   type OwnerListingData,
   type ReviewData,
 } from "./ItemDetailsApp";
+import { parseBlockedRanges } from "@/lib/jalali";
 
 export const dynamic = "force-dynamic";
 
@@ -102,6 +103,9 @@ export default async function ItemDetailsPage({
     end: r.endDate.toISOString().slice(0, 10),
   }));
 
+  // Days the owner blocked from the create-listing wizard (Jalali calendar).
+  const ownerBlockedRanges = parseBlockedRanges(listing.blockedRanges);
+
   return (
     <>
       {/* Page-local styles ported from the source page */}
@@ -116,6 +120,7 @@ export default async function ItemDetailsPage({
         otherItems={otherItems}
         viewerId={viewer?.id ?? null}
         bookedRanges={bookedRanges}
+        ownerBlockedRanges={ownerBlockedRanges}
       />
       <SiteFooter />
     </>

@@ -356,6 +356,7 @@ function BookingBox({
   endIso,
   onRangeChange,
   bookedRanges,
+  ownerBlockedRanges,
 }: {
   data: ItemDetailData;
   viewerId: string | null;
@@ -363,6 +364,7 @@ function BookingBox({
   endIso: string | null;
   onRangeChange: (startIso: string | null, endIso: string | null) => void;
   bookedRanges: DateRange[];
+  ownerBlockedRanges: DateRange[];
 }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -422,6 +424,7 @@ function BookingBox({
         endIso={endIso}
         onRangeChange={onRangeChange}
         bookedRanges={bookedRanges}
+        ownerBlockedRanges={ownerBlockedRanges}
         minDays={data.minDays}
         maxDays={data.maxDays}
       />
@@ -508,6 +511,7 @@ export default function ItemDetailsApp({
   otherItems,
   viewerId,
   bookedRanges = [],
+  ownerBlockedRanges = [],
 }: {
   data: ItemDetailData;
   reviews: ReviewData[];
@@ -515,6 +519,8 @@ export default function ItemDetailsApp({
   viewerId: string | null;
   /** Existing non-cancelled reservations of this listing (ISO dates). */
   bookedRanges?: DateRange[];
+  /** Days the owner blocked from the create-listing wizard (ISO dates). */
+  ownerBlockedRanges?: DateRange[];
 }) {
   const router = useRouter();
   const [contentTab, setContentTab] = useState<"desc" | "rules">("desc");
@@ -996,6 +1002,7 @@ export default function ItemDetailsApp({
               endIso={endIso}
               onRangeChange={handleRangeChange}
               bookedRanges={bookedRanges}
+              ownerBlockedRanges={ownerBlockedRanges}
               minDays={data.minDays}
               maxDays={data.maxDays}
             />
@@ -1008,6 +1015,12 @@ export default function ItemDetailsApp({
                 <span className="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
                 در حال اجاره
               </span>
+              {ownerBlockedRanges.length > 0 ? (
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-300"></span>
+                  مسدود میزبان
+                </span>
+              ) : null}
               <span className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#7c3aed]"></span>
                 انتخاب‌شده
@@ -1043,6 +1056,7 @@ export default function ItemDetailsApp({
             endIso={endIso}
             onRangeChange={handleRangeChange}
             bookedRanges={bookedRanges}
+            ownerBlockedRanges={ownerBlockedRanges}
           />
         </div>
       </div>
