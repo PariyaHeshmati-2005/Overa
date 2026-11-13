@@ -73,4 +73,4 @@ jobs:
       - name: Validate schema
         run: bunx prisma validate
         env:
-          DATABASE_URL: "file:./dev.db"
+          DATABASE_URL: "postgresql://user:pass@localhost:5432/overa"
