@@ -103,6 +103,10 @@ model Listing {
   rules       String?
   minDays     Int     @default(1)
   maxDays     Int     @default(30)
+  // Owner-blocked availability: JSON array of inclusive ISO date ranges
+  // ([{"start":"2026-11-20","end":"2026-11-22"}, …]) picked on the Jalali
+  // calendar in the create-listing wizard. Renters cannot reserve these days.
+  blockedRanges String @default("[]")
   instantBook Boolean @default(false)
   // Moderation lifecycle: DRAFT | PENDING | ACTIVE | PAUSED | REJECTED | ARCHIVED
   status      String  @default("PENDING")
