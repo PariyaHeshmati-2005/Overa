@@ -250,6 +250,71 @@ export function rangeHitsBooked(
   return ranges.some((r) => aStart <= r.end && r.start <= aEnd);
 }
 
+/* --------------------------- owner-blocked ranges -------------------------- */
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Parse the Listing.blockedRanges JSON column into DateRange[].
+ * Tolerates malformed data (returns [] instead of throwing).
+ */
+export function parseBlockedRanges(json: string | null | undefined): DateRange[] {
+  if (!json) return [];
+  try {
+    const parsed: unknown = JSON.parse(json);
+    if (!Array.isArray(parsed)) return [];
+    const out: DateRange[] = [];
+    for (const item of parsed) {
+      if (typeof item !== "object" || item === null) continue;
+      const start = (item as { start?: unknown }).start;
+      const end = (item as { end?: unknown }).end;
+      if (
+        typeof start === "string" &&
+        typeof end === "string" &&
+        ISO_DATE_RE.test(start) &&
+        ISO_DATE_RE.test(end) &&
+        start <= end
+      ) {
+        out.push({ start, end });
+      }
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Validate/normalize untrusted input (API body) into a clean DateRange[]:
+ * keeps only well-formed ISO ranges with start <= end, sorted, deduplicated,
+ * capped at 60 ranges. Overlapping entries are preserved as provided.
+ */
+export function normalizeBlockedRangesInput(input: unknown): DateRange[] {
+  if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
+  const out: DateRange[] = [];
+  for (const item of input) {
+    if (typeof item !== "object" || item === null) continue;
+    const start = (item as { start?: unknown }).start;
+    const end = (item as { end?: unknown }).end;
+    if (
+      typeof start !== "string" ||
+      typeof end !== "string" ||
+      !ISO_DATE_RE.test(start) ||
+      !ISO_DATE_RE.test(end) ||
+      start > end
+    ) {
+      continue;
+    }
+    const key = `${start}..${end}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ start, end });
+    if (out.length >= 60) break;
+  }
+  return out.sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : 0));
+}
+
 /* ------------------------------ formatting ------------------------------- */
 
 /** "۲۲ آبان ۱۴۰۵" (or without the year when withYear=false). */

@@ -13,6 +13,8 @@ import {
   rangeHitsBooked,
   jalaliWeekdayOfIso,
   formatJalaliIso,
+  parseBlockedRanges,
+  normalizeBlockedRangesInput,
   JALALI_YEAR_LOCK,
 } from "../src/lib/jalali";
 
@@ -97,4 +99,48 @@ test("booked-range helpers", () => {
 test("today in Tehran is inside the locked year 1405 around build time", () => {
   const j = isoToJalali(todayIsoTehran(new Date("2026-11-13T10:00:00Z")));
   expect(j.jy).toBe(JALALI_YEAR_LOCK);
+});
+
+/* ------------------------- owner-blocked ranges -------------------------- */
+
+test("parseBlockedRanges: valid JSON roundtrip", () => {
+  const json = JSON.stringify([
+    { start: "2026-11-20", end: "2026-11-22" },
+    { start: "2026-12-01", end: "2026-12-01" },
+  ]);
+  expect(parseBlockedRanges(json)).toEqual([
+    { start: "2026-11-20", end: "2026-11-22" },
+    { start: "2026-12-01", end: "2026-12-01" },
+  ]);
+});
+
+test("parseBlockedRanges: tolerates malformed data", () => {
+  expect(parseBlockedRanges(null)).toEqual([]);
+  expect(parseBlockedRanges("")).toEqual([]);
+  expect(parseBlockedRanges("not json")).toEqual([]);
+  expect(parseBlockedRanges("42")).toEqual([]);
+  expect(parseBlockedRanges(JSON.stringify(["oops", { start: "x", end: "y" }]))).toEqual([]);
+  // start > end is dropped; reversed/non-ISO strings dropped
+  expect(
+    parseBlockedRanges(JSON.stringify([{ start: "2026-11-22", end: "2026-11-20" }]))
+  ).toEqual([]);
+});
+
+test("normalizeBlockedRangesInput: filters, dedupes and sorts", () => {
+  const out = normalizeBlockedRangesInput([
+    { start: "2026-12-10", end: "2026-12-12" },
+    { start: "2026-11-20", end: "2026-11-21" },
+    { start: "2026-12-10", end: "2026-12-12" }, // duplicate
+    { start: "2027-01-05", end: "2027-01-01" }, // reversed -> dropped
+    "junk",
+    null,
+    { start: "2026-11-22", end: "2026-11-22" },
+  ]);
+  expect(out).toEqual([
+    { start: "2026-11-20", end: "2026-11-21" },
+    { start: "2026-11-22", end: "2026-11-22" },
+    { start: "2026-12-10", end: "2026-12-12" },
+  ]);
+  expect(normalizeBlockedRangesInput(undefined)).toEqual([]);
+  expect(normalizeBlockedRangesInput("nope")).toEqual([]);
 });
