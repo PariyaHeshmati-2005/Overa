@@ -74,3 +74,4 @@ jobs:
         run: bunx prisma validate
         env:
           DATABASE_URL: "postgresql://user:pass@localhost:5432/overa"
+          DIRECT_URL: "postgresql://user:pass@localhost:5432/overa"
