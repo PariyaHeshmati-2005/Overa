@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { jsonError, jsonOk, requireUser } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { normalizeBlockedRangesInput } from "@/lib/jalali";
+import { buildListingSearchKey } from "@/lib/persian";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -103,6 +104,35 @@ export async function PATCH(req: Request, ctx: Ctx) {
   }
 
   const updated = await db.listing.update({ where: { id }, data, include: { images: true } });
+
+  // Keep the normalized search key in sync with editable text fields.
+  if (Object.keys(data).some((k) =>
+    ["title", "description", "brand", "specs", "city", "categoryId"].includes(k)
+  )) {
+    const fresh = await db.listing.findUnique({
+      where: { id },
+      select: {
+        title: true, brand: true, specs: true, description: true, city: true,
+        category: { select: { name: true } },
+      },
+    });
+    if (fresh) {
+      await db.listing.update({
+        where: { id },
+        data: {
+          searchKey: buildListingSearchKey({
+            title: fresh.title,
+            brand: fresh.brand,
+            specs: fresh.specs,
+            description: fresh.description,
+            city: fresh.city,
+            categoryName: fresh.category?.name ?? null,
+          }),
+        },
+      });
+    }
+  }
+
   await db.auditLog.create({
     data: { actorId: auth.user.id, action: "LISTING_UPDATE", entityType: "Listing", entityId: id, meta: JSON.stringify(body) },
   });

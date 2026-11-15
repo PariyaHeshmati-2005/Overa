@@ -512,6 +512,7 @@ export default function ItemDetailsApp({
   viewerId,
   bookedRanges = [],
   ownerBlockedRanges = [],
+  initialFaved = false,
 }: {
   data: ItemDetailData;
   reviews: ReviewData[];
@@ -521,10 +522,13 @@ export default function ItemDetailsApp({
   bookedRanges?: DateRange[];
   /** Days the owner blocked from the create-listing wizard (ISO dates). */
   ownerBlockedRanges?: DateRange[];
+  /** Whether the signed-in viewer already saved this listing (Favorite table). */
+  initialFaved?: boolean;
 }) {
   const router = useRouter();
   const [contentTab, setContentTab] = useState<"desc" | "rules">("desc");
-  const [faved, setFaved] = useState(false);
+  const [faved, setFaved] = useState(initialFaved);
+  const [faving, setFaving] = useState(false);
   const [chatting, setChatting] = useState(false);
 
   // Shared booking range: the availability calendar and the checkout box
@@ -553,6 +557,34 @@ export default function ItemDetailsApp({
       "اجاره‌دهنده مسئول سلامت و تمیزی وسیله در زمان تحویل است.",
     ];
   }, [data.rules]);
+
+  /** Persist the heart to the Favorite table (POST/DELETE /api/favorites).
+      Guests are sent to login like the chat button; failures roll the UI
+      back so the button never lies about the saved state. */
+  async function toggleFav() {
+    if (!viewerId) {
+      router.push(`/signin-otp?next=${encodeURIComponent(`/item-details/${data.id}`)}`);
+      return;
+    }
+    if (faving) return;
+    setFaving(true);
+    const next = !faved;
+    setFaved(next);
+    try {
+      const res = await fetch("/api/favorites", {
+        method: next ? "POST" : "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId: data.id }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(next ? "به علاقه‌مندی‌ها اضافه شد." : "از علاقه‌مندی‌ها حذف شد.");
+    } catch {
+      setFaved(!next);
+      toast.error("ثبت علاقه‌مندی انجام نشد؛ دوباره تلاش کنید.");
+    } finally {
+      setFaving(false);
+    }
+  }
 
   async function chatWithOwner() {
     if (!viewerId) {
@@ -971,8 +1003,9 @@ export default function ItemDetailsApp({
               </button>
               <button
                 type="button"
-                onClick={() => setFaved((f) => !f)}
-                className={`w-full font-semibold py-2 px-4 rounded-xl text-xs border flex items-center justify-center gap-1.5 transition-colors ${
+                onClick={toggleFav}
+                disabled={faving}
+                className={`w-full font-semibold py-2 px-4 rounded-xl text-xs border flex items-center justify-center gap-1.5 transition-colors disabled:opacity-60 ${
                   faved
                     ? "bg-rose-50 border-rose-200 text-rose-600"
                     : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"

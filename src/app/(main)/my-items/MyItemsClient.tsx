@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Toaster, toast } from "sonner";
-import UserMenu, { type HeaderUser } from "@/components/layout/UserMenu";
 import HostSidebar from "../host-dashboard/HostSidebar";
 import { faDate, faNumber } from "@/lib/format";
 
@@ -58,7 +57,6 @@ export type MyItemsStats = {
 };
 
 type Props = {
-  user: HeaderUser;
   stats: MyItemsStats;
   rentedMap: Record<string, { id: string; endDateLabel: string }>;
   initialListings: ApiListing[];
@@ -106,7 +104,7 @@ function draftProgress(l: ApiListing) {
   return { pct, step, nextHint };
 }
 
-export default function MyItemsClient({ user, stats, rentedMap, initialListings }: Props) {
+export default function MyItemsClient({ stats, rentedMap, initialListings }: Props) {
   const router = useRouter();
   const [tab, setTab] = useState<TabKey>("ALL");
   const [allListings, setAllListings] = useState<ApiListing[]>(initialListings);
@@ -520,114 +518,6 @@ export default function MyItemsClient({ user, stats, rentedMap, initialListings 
       <div className="flex min-h-screen w-full bg-m3-background items-stretch">
         <HostSidebar active="items" />
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Top App Bar */}
-          <header className="bg-surface-container-lowest border-b border-outline-variant/30 sticky top-0 z-30 shadow-xs">
-            <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between gap-4">
-              <Link
-                className="flex items-center gap-3 group shrink-0"
-                data-purpose="brand-logo"
-                href="/"
-              >
-                <div className="w-11 h-11 rounded-2xl from-primary to-primary-light flex items-center justify-center text-white shadow-md shadow-primary/20 group-hover:scale-105 transition-transform duration-200">
-                  { }
-                  <img src="/assets/img/overa_logo_transparent.png" alt="logo" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-2xl font-black tracking-tight text-[#801E76] mt-3 mb-1">
-                    اٌوِرا
-                  </span>
-                  <span className="text-[11px] font-medium text-neutral-muted -mt-1">
-                    وسایل بهتر، زندگی سبک‌تر
-                  </span>
-                </div>
-              </Link>
-
-              <div className="flex-1 max-w-xl mx-4 hidden md:block">
-                <form
-                  action="/categories"
-                  method="get"
-                  className="relative flex items-center w-full bg-surface-container-low border border-outline-variant/40 rounded-full pl-3 pr-2 py-1.5 focus-within:border-m3-primary focus-within:ring-2 focus-within:ring-m3-primary/20 transition-all"
-                >
-                  <button
-                    type="submit"
-                    className="size-9 rounded-full bg-m3-primary text-white flex items-center justify-center shrink-0 hover:bg-primary-container transition-colors shadow-sm"
-                    aria-label="جستجو"
-                  >
-                    <span className="material-symbols-outlined text-[19px]">search</span>
-                  </button>
-                  <input
-                    type="text"
-                    name="q"
-                    placeholder="جستجو در بین هزاران وسیله..."
-                    className="w-full bg-transparent border-0 focus:ring-0 text-xs sm:text-sm text-on-surface placeholder:text-m3-outline pr-3 outline-none"
-                  />
-                </form>
-              </div>
-
-              <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-                <Link
-                  className="size-10 rounded-full border border-outline-variant/30 hover:bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-m3-primary transition-colors"
-                  href="/live-chat"
-                  title="پیام‌ها"
-                >
-                  <span className="material-symbols-outlined text-[20px]">chat_bubble_outline</span>
-                </Link>
-                <button
-                  className="size-10 rounded-full border border-outline-variant/30 hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="به‌زودی"
-                  disabled
-                >
-                  <span className="material-symbols-outlined text-[20px]">favorite_border</span>
-                </button>
-                {user ? (
-                  <UserMenu user={user} />
-                ) : (
-                  <Link
-                    href="/signin-otp"
-                    className="flex items-center gap-2 px-3 py-2 rounded-full border border-outline-variant/40 bg-surface-container-lowest text-xs font-bold text-on-surface"
-                  >
-                    ورود | ثبت‌نام
-                  </Link>
-                )}
-              </div>
-            </div>
-
-            <div className="border-t border-outline-variant/20 bg-surface-container-lowest/80">
-              <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between overflow-x-auto">
-                <nav
-                  aria-label="منوی اصلی سایت"
-                  className="flex items-center gap-6 sm:gap-8 text-xs sm:text-sm font-semibold text-on-surface-variant whitespace-nowrap"
-                >
-                  <Link
-                    href="/"
-                    className="relative py-3 font-bold text-m3-primary transition-colors flex flex-col items-center"
-                  >
-                    <span className="">خانه</span>
-                    <span className="absolute bottom-0 inset-x-0 h-0.5 bg-m3-primary rounded-full"></span>
-                  </Link>
-                  <Link href="/categories" className="py-3 hover:text-m3-primary transition-colors">
-                    دسته‌بندی‌ها
-                  </Link>
-                  <Link href="/categories" className="py-3 hover:text-m3-primary transition-colors">
-                    اجاره وسایل
-                  </Link>
-                  <Link href="/create-listing" className="py-3 hover:text-m3-primary transition-colors">
-                    ثبت وسیله
-                  </Link>
-                  <Link href="/how-it-works" className="py-3 hover:text-m3-primary transition-colors">
-                    چگونه کار می‌کند؟
-                  </Link>
-                  <Link href="/about" className="py-3 hover:text-m3-primary transition-colors">
-                    درباره ما
-                  </Link>
-                </nav>
-                <div className="flex items-center gap-2 py-3 text-xs font-semibold text-emerald-600 whitespace-nowrap shrink-0">
-                  <span className="">پشتیبانی آنلاین فعال</span>
-                  <span className="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                </div>
-              </div>
-            </div>
-          </header>
 
           <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
             {/* 1. Hero header */}

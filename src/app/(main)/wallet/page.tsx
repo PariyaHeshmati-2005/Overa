@@ -2,21 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import UserMenu from "@/components/layout/UserMenu";
+import SiteHeader from "@/components/layout/SiteHeader";
 import M3Styles from "@/components/overa/M3Styles";
 import WalletClient from "./WalletClient";
 
 export const metadata: Metadata = { title: "کیف پول و صندوق امانی" };
 export const dynamic = "force-dynamic";
-
-const NAV_LINKS = [
-  { href: "/", label: "خانه" },
-  { href: "/categories", label: "دسته‌بندی‌ها" },
-  { href: "/categories", label: "اجاره وسایل" },
-  { href: "/create-listing", label: "ثبت وسیله" },
-  { href: "/how-it-works", label: "چگونه کار می‌کند؟" },
-  { href: "/about", label: "درباره ما" },
-];
 
 export default async function WalletPage() {
   const user = await getCurrentUser();
@@ -25,86 +16,12 @@ export default async function WalletPage() {
   return (
     <div className="bg-m3-surface font-body-md text-on-surface antialiased selection:bg-primary-fixed selection:text-on-primary-fixed min-h-screen flex flex-col">
       <M3Styles />
-      {/* Header — preserved from wallet.html (M3 shell) */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-m3-surface/90 backdrop-blur-xl shadow-[0_4px_20px_rgba(76,42,158,0.05)]">
-        <div className="h-20 w-full max-w-[1280px] mx-auto px-margin-mobile md:px-margin flex items-center justify-between gap-gutter">
-          {/* Brand Logo & Slogan */}
-          <Link className="flex items-center gap-3 group shrink-0" href="/">
-            <div className="w-11 h-11 rounded-2xl from-m3-primary to-primary-light flex items-center justify-center text-white shadow-md shadow-m3-primary/20 group-hover:scale-105 transition-transform duration-200 bg-gradient-to-br">
-              { }
-              <img src="/assets/img/overa_logo_transparent.png" alt="لوگوی اورا" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-black tracking-tight text-[#801E76] mt-3 mb-1">
-                اٌوِرا
-              </span>
-              <span className="text-[11px] font-medium text-neutral-muted -mt-1">
-                وسایل بهتر، زندگی سبک‌تر
-              </span>
-            </div>
-          </Link>
-          {/* Search (navigates to /categories) */}
-          <div className="hidden md:flex flex-1 max-w-md mx-space-lg">
-            <form action="/categories" className="relative w-full flex items-center bg-surface-container-low rounded-full px-space-md py-space-xs shadow-[0_2px_12px_rgba(76,42,158,0.03)] focus-within:shadow-[0_0_0_3px_rgba(124,58,237,0.15)] transition-all">
-              <span className="material-symbols-outlined text-m3-outline text-[20px] ml-space-xs">search</span>
-              <input
-                className="w-full bg-transparent border-0 outline-none text-on-surface text-body-sm placeholder:text-m3-outline"
-                placeholder="جستجوی دوربین، تجهیزات سفر، صوتی تصویری..."
-                type="text"
-                name="q"
-              />
-            </form>
-          </div>
-          <div className="flex items-center gap-space-sm sm:gap-space-md">
-            <div className="flex items-center gap-space-xs">
-              <Link
-                className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
-                href="/live-chat"
-                title="گفتگو و پیام‌ها"
-              >
-                <span className="material-symbols-outlined text-[22px]">chat_bubble_outline</span>
-              </Link>
-              <button
-                className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
-                disabled
-                title="به‌زودی"
-              >
-                <span className="material-symbols-outlined text-[22px]">favorite_border</span>
-              </button>
-              <button
-                className="relative w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
-                disabled
-                title="به‌زودی"
-              >
-                <span className="material-symbols-outlined text-[22px]">notifications</span>
-                <span className="absolute top-2 left-2 w-2 h-2 rounded-full bg-m3-error ring-2 ring-m3-surface"></span>
-              </button>
-            </div>
-            <div className="h-7 w-[1px] bg-outline-variant/40 hidden sm:block"></div>
-            {/* Signed-in user menu (guest state rule) */}
-            <UserMenu
-              user={{ name: user.name, avatarUrl: user.avatarUrl, isHost: user.isHost, isAdmin: user.isAdmin }}
-            />
-          </div>
-        </div>
-        <div className="h-12 w-full bg-surface-container-lowest/80 backdrop-blur-md">
-          <div className="h-full w-full max-w-[1280px] mx-auto px-margin-mobile md:px-margin flex items-center overflow-x-auto scrollbar-none">
-            <nav className="flex items-center gap-space-xs sm:gap-space-sm whitespace-nowrap">
-              {NAV_LINKS.map((l, i) => (
-                <Link
-                  key={l.label + i}
-                  href={l.href}
-                  className="px-space-md py-1.5 rounded-full text-label-md font-semibold text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all"
-                >
-                  {l.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </div>
-      </header>
+      {/* Shared site header — identical to the homepage (slide-out menu,
+          live DB search, session-aware user area). Replaces the former fixed
+          M3 header, so the compensating pt-32 on <main> is gone too. */}
+      <SiteHeader />
 
-      <main className="w-full pt-32 bg-m3-surface min-h-[calc(100vh-280px)] flex-1">
+      <main className="w-full pt-6 bg-m3-surface min-h-[calc(100vh-280px)] flex-1">
         <div className="flex flex-col w-full">
           <WalletClient userName={user.name} />
         </div>

@@ -1,3 +1,4 @@
+import SiteHeader from "@/components/layout/SiteHeader";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth";
@@ -60,57 +61,7 @@ export default async function SignInPage({
       </div>
 
       {/* Top Minimal Focused Navigation — preserved from source */}
-      <header className="w-full bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant/30 sticky top-0 z-50">
-        <div className="max-w-[1360px] mx-auto px-6 h-20 flex items-center justify-between">
-          {/* Brand Logo & Identity */}
-          <Link
-            className="flex items-center gap-3 group shrink-0"
-            data-purpose="brand-logo"
-            href="/"
-          >
-            <div className="w-11 h-11 rounded-2xl from-m3-primary to-primary-light flex items-center justify-center text-white shadow-md shadow-m3-primary/20 group-hover:scale-105 transition-transform duration-200">
-              <img src="/assets/img/overa_logo_transparent.png" alt="logo" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-black tracking-tight text-[#801E76] mt-3 mb-1">
-                اٌوِرا
-              </span>
-              <span className="text-[11px] font-medium text-neutral-muted -mt-1">
-                وسایل بهتر، زندگی سبک‌تر
-              </span>
-            </div>
-          </Link>
-          {/* Links & Back Button */}
-          <div className="flex items-center gap-6">
-            <Link
-              className="hidden md:flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant hover:text-m3-primary transition-colors"
-              href="/tos-support-faq"
-            >
-              <span className="material-symbols-outlined text-[18px]">
-                verified_user
-              </span>
-              راهنمای عضویت و قوانین
-            </Link>
-            <div className="h-4 w-px bg-outline-variant/50 hidden md:block"></div>
-            <a
-              className="hidden sm:flex items-center gap-2 text-xs font-semibold text-m3-secondary hover:text-m3-primary transition-colors bg-surface-container px-3 py-1.5 rounded-full"
-              href="tel:02191002424"
-            >
-              <span className="material-symbols-outlined text-[16px]">call</span>
-              پشتیبانی: ۰۲۱-۹۱۰۰۲۴۲۴
-            </a>
-            <Link
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-bold transition-all border border-outline-variant/30"
-              href="/"
-            >
-              <span className="material-symbols-outlined text-base">
-                arrow_forward
-              </span>
-              <span className="">بازگشت به خانه</span>
-            </Link>
-          </div>
-        </div>
-      </header>
+            <SiteHeader />
 
       {/* Main Split-Card View */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-10">

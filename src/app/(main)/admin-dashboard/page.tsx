@@ -3,10 +3,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import SiteHeader from "@/components/layout/SiteHeader";
 import M3Styles from "@/components/overa/M3Styles";
 import AdminDashboardClient, {
   type AdminClaim,
   type AdminListing,
+  type AdminCatalogListing,
   type AdminUser,
   type AuditEntry,
 } from "./AdminDashboardClient";
@@ -23,7 +25,9 @@ export default async function AdminDashboardPage() {
   /* -------- non-admin → access denied (no data rendered at all) -------- */
   if (!user.isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-m3-background p-6">
+      <>
+      <SiteHeader />
+      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-m3-background p-6">
         <M3Styles />
         <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/50 shadow-md p-8 max-w-md text-center flex flex-col items-center gap-4">
           <span className="size-14 rounded-2xl bg-m3-error-container text-m3-on-error-container flex items-center justify-center">
@@ -42,11 +46,12 @@ export default async function AdminDashboardPage() {
           </Link>
         </div>
       </div>
+      </>
     );
   }
 
   /* -------- admin: query moderation queues server-side -------- */
-  const [pendingListings, claims, users, auditLog] = await Promise.all([
+  const [pendingListings, claims, users, auditLog, allListings, reservationCounts] = await Promise.all([
     db.listing.findMany({
       where: { status: "PENDING" },
       include: {
@@ -77,7 +82,23 @@ export default async function AdminDashboardPage() {
       orderBy: { createdAt: "desc" },
       take: 20,
     }),
+    // Full catalog for the products management section (all statuses).
+    db.listing.findMany({
+      include: {
+        owner: { select: { id: true, name: true, kycStatus: true, isHost: true } },
+        images: { orderBy: { sortOrder: "asc" }, take: 1 },
+        category: { select: { name: true } },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 200,
+    }),
+    // Reservation counts per listing — drives the safe archive-vs-delete rule.
+    db.reservation.groupBy({ by: ["listingId"], _count: { _all: true } }),
   ]);
+
+  const reservationCountMap = new Map(
+    reservationCounts.map((r) => [r.listingId, r._count._all])
+  );
 
   const listings: AdminListing[] = pendingListings.map((l) => ({
     id: l.id,
@@ -86,6 +107,21 @@ export default async function AdminDashboardPage() {
     dailyPrice: l.dailyPrice,
     deposit: l.deposit,
     city: l.city,
+    imageUrl: l.images[0]?.url ?? "/assets/img/45fb8e31c9b9.jpg",
+    owner: { id: l.owner.id, name: l.owner.name, kycStatus: l.owner.kycStatus, isHost: l.owner.isHost },
+  }));
+
+  const catalog: AdminCatalogListing[] = allListings.map((l) => ({
+    id: l.id,
+    title: l.title,
+    category: l.category?.name ?? "—",
+    dailyPrice: l.dailyPrice,
+    city: l.city,
+    status: l.status,
+    rejectionReason: l.rejectionReason,
+    isDemo: l.isDemo,
+    createdAt: l.createdAt.toISOString(),
+    reservationsCount: reservationCountMap.get(l.id) ?? 0,
     imageUrl: l.images[0]?.url ?? "/assets/img/45fb8e31c9b9.jpg",
     owner: { id: l.owner.id, name: l.owner.name, kycStatus: l.owner.kycStatus, isHost: l.owner.isHost },
   }));
@@ -135,5 +171,11 @@ export default async function AdminDashboardPage() {
     createdAt: a.createdAt.toISOString(),
   }));
 
-  return <AdminDashboardClient listings={listings} claims={claimDtos} users={userDtos} auditLog={auditDtos} />;
+  return (
+    <>
+    {/* Shared site header — identical to the homepage (slide-out menu) */}
+    <SiteHeader />
+    <AdminDashboardClient listings={listings} catalog={catalog} claims={claimDtos} users={userDtos} auditLog={auditDtos} />
+    </>
+  );
 }

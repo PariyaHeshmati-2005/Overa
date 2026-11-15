@@ -1,5 +1,42 @@
 # Overa — Changelog
 
+## 2026-11-15 — Unified header/slide-out menu, homepage rhythm, carousel polish, Neon migration tooling
+
+### Fixed
+- `docker-entrypoint.sh`: removed the unsupported `--skip-generate` flag from
+  `prisma migrate deploy` (CLI hard-error since Prisma 3; the client is
+  generated at image build time anyway).
+
+### Changed
+- **One header everywhere**: the shared `SiteHeader` (homepage header with the
+  right slide-out menu, live DB search, session-aware user area) now renders
+  on ALL pages — wallet, rentals, my-items, host/admin dashboard, account
+  settings, reviews, live-chat, damage claims, rental lifecycle, promissory
+  notes, submit-review, static pages, auth pages (signin/signup/OTP), 404/500.
+  Page-local brand headers were removed; dashboard pages keep their own
+  context strip (admin controls, wizard draft actions) under the shared header.
+- **Slide-out menu account area** (signed-in only): user chip + داشبورد من،
+  اجاره‌های من، وسایل من، کیف پول، گفت‌وگوها، تنظیمات حساب، تخفیف‌ها، پنل مدیریت
+  (admin-only) and a real logout button (POST /api/auth/logout + refresh).
+- **Homepage rhythm**: products/banners/photos no longer touch the viewport
+  edges — content sits in a `max-w-[1440px] mx-auto px-4 md:px-6` container
+  shared with the header (mobile + desktop).
+- **Carousel polish**: bottom vignette, gold/purple glow orbs, gold accent
+  underline, glass badge with SVG gold sparkle; taller slide on lg. Same
+  identity, dots, autoplay and reduced-motion behaviour.
+
+### Added
+- `scripts/seed-categories.ts` + `bun run db:seed:categories` — safe,
+  create-only, idempotent seeding of the 8 platform categories for ANY
+  database (incl. production/Neon); fixes empty category grids in
+  /create-listing on fresh databases (wizard now also shows a helpful
+  Persian empty state).
+- `scripts/import-listings.ts` + `bun run db:import` — additive JSON importer
+  for legacy-site listings (owner must exist, duplicate-safe, builds
+  Persian search keys, keeps isDemo=false).
+- `docs/NEON-MIGRATION.md` — step-by-step Neon/Vercel database setup,
+  migrations, category seeding, legacy data import and safety table.
+
 ## 2026-11-12 — Full-stack conversion + Docker + CI/CD (initial implementation)
 
 ### Added

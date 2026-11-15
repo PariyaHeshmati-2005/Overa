@@ -1,3 +1,4 @@
+import SiteHeader from "@/components/layout/SiteHeader";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -111,24 +112,7 @@ export default async function SubmitReviewPage({
     return (
       <div className="min-h-screen bg-[#f8fafc] text-slate-800 antialiased selection:bg-m3-primary selection:text-white">
         {/* Minimal header — preserved from source */}
-        <header className="bg-white border-b border-purple-100">
-          <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
-            <Link className="flex items-center gap-2.5" href="/">
-              <img
-                alt="logo"
-                className="w-9 h-9"
-                src="/assets/img/overa_logo_transparent.png"
-              />
-              <span className="text-xl font-black text-[#801E76] mt-2">اٌوِرا</span>
-            </Link>
-            <Link
-              className="text-xs font-medium text-slate-500 hover:text-m3-primary transition-colors"
-              href="/"
-            >
-              بازگشت به صفحه‌ی اصلی
-            </Link>
-          </div>
-        </header>
+                <SiteHeader />
 
         <main className="max-w-xl mx-auto px-4 py-8 space-y-5">
           <InfoState
@@ -256,24 +240,7 @@ export default async function SubmitReviewPage({
   if (!reservation) {
     return (
       <div className="min-h-screen bg-[#f8fafc] text-slate-800 antialiased selection:bg-m3-primary selection:text-white">
-        <header className="bg-white border-b border-purple-100">
-          <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
-            <Link className="flex items-center gap-2.5" href="/">
-              <img
-                alt="logo"
-                className="w-9 h-9"
-                src="/assets/img/overa_logo_transparent.png"
-              />
-              <span className="text-xl font-black text-[#801E76] mt-2">اٌوِرا</span>
-            </Link>
-            <Link
-              className="text-xs font-medium text-slate-500 hover:text-m3-primary transition-colors"
-              href="/"
-            >
-              بازگشت به صفحه‌ی اصلی
-            </Link>
-          </div>
-        </header>
+                <SiteHeader />
         <main className="max-w-xl mx-auto px-4 py-8">{notFoundBlock}</main>
       </div>
     );
@@ -285,24 +252,7 @@ export default async function SubmitReviewPage({
   const renderShell = (inner: React.ReactNode) => (
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 antialiased selection:bg-m3-primary selection:text-white">
       {/* Minimal header — preserved from source */}
-      <header className="bg-white border-b border-purple-100">
-        <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link className="flex items-center gap-2.5" href="/">
-            <img
-              alt="logo"
-              className="w-9 h-9"
-              src="/assets/img/overa_logo_transparent.png"
-            />
-            <span className="text-xl font-black text-[#801E76] mt-2">اٌوِرا</span>
-          </Link>
-          <Link
-            className="text-xs font-medium text-slate-500 hover:text-m3-primary transition-colors"
-            href={`/item-details/${reservation.listing.id}`}
-          >
-            بازگشت به صفحه‌ی محصول
-          </Link>
-        </div>
-      </header>
+            <SiteHeader />
       <main className="max-w-xl mx-auto px-4 py-8">{inner}</main>
     </div>
   );

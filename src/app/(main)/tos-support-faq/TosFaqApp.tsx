@@ -312,7 +312,7 @@ export default function TosFaqApp() {
       <Toaster position="bottom-left" dir="rtl" />
       {/* Page heading */}
       <div className="flex flex-wrap justify-between gap-3 p-4">
-        <div className="flex min-w-72 flex-col gap-3">
+        <div className="flex w-full sm:min-w-72 flex-col gap-3">
           <p className="text-[#130e1b] text-4xl font-black leading-tight tracking-[-0.033em]">
             مرکز شفافیت، قوانین و سوالات متداول اورا
           </p>

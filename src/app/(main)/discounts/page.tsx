@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import SiteHeader from "@/components/layout/SiteHeader";
 import SiteFooter from "@/components/layout/SiteFooter";
+import { getCurrentUser } from "@/lib/auth";
 import CouponValidator from "./CouponValidator";
 import CouponsGrid, { type Coupon } from "./CouponsGrid";
 import HostCouponActions from "./HostCouponActions";
@@ -8,6 +10,7 @@ import HostCouponActions from "./HostCouponActions";
 export const metadata = {
   title: "تخفیف‌ها",
   description: "مرکز کوپن‌ها و کدهای تخفیف اورا (کوپن‌های نمایشی)",
+  robots: { index: false },
 };
 
 const COUPONS: Coupon[] = [
@@ -116,7 +119,15 @@ const COUPONS: Coupon[] = [
   },
 ];
 
-export default function DiscountsPage() {
+export default async function DiscountsPage() {
+  // Members-only area: server-side session check (not CSS hiding). Guests —
+  // including direct URL access — are redirected to sign-in and sent back
+  // here after a successful login.
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/signin-otp?next=" + encodeURIComponent("/discounts"));
+  }
+
   return (
     <>
       <SiteHeader />

@@ -84,49 +84,22 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
 
   return (
     <div className="bg-background-light text-slate-800 min-h-screen flex flex-col antialiased selection:bg-purple-100 selection:text-m3-primary">
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
-        {/* Tier 1: Main Platform Bar */}
-        <div className="border-b border-slate-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
-            <Link className="flex items-center gap-3 group shrink-0" href="/">
-              <div className="w-11 h-11 rounded-2xl from-m3-primary to-primary-light flex items-center justify-center text-white shadow-md shadow-m3-primary/20 group-hover:scale-105 transition-transform duration-200 bg-gradient-to-br">
-                { }
-                <img src="/assets/img/overa_logo_transparent.png" alt="لوگوی اورا" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-black tracking-tight text-[#801E76] mt-3 mb-1">اٌوِرا</span>
-                <span className="text-[11px] font-medium text-neutral-muted -mt-1">وسایل بهتر، زندگی سبک‌تر</span>
-              </div>
-            </Link>
-            <div className="hidden md:flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full text-[11px] font-semibold text-emerald-700">
-              <span className="material-symbols-outlined text-sm">verified</span>
-              تضمین اصالت و بیمه سپرده / تجهیزات
-            </div>
-            <div className="flex items-center gap-2">
-              <Link
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-m3-primary bg-m3-primary/10 hover:bg-m3-primary/20 transition-colors"
-                href="/admin-dashboard"
-              >
-                <span className="material-symbols-outlined text-base">dashboard</span>
-                بازگشت به داشبورد ادمین
-              </Link>
-            </div>
+{/* Admin context strip — sits under the shared site header */}
+      <div className="bg-white border-b border-slate-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-wrap items-center justify-between gap-2">
+          <div className="hidden md:flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full text-[11px] font-semibold text-emerald-700">
+            <span className="material-symbols-outlined text-sm">verified</span>
+            تضمین اصالت و بیمه سپرده / تجهیزات
           </div>
+          <Link
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-m3-primary bg-m3-primary/10 hover:bg-m3-primary/20 transition-colors"
+            href="/admin-dashboard"
+          >
+            <span className="material-symbols-outlined text-base">dashboard</span>
+            بازگشت به داشبورد ادمین
+          </Link>
         </div>
-        {/* Tier 2: Sub-Navigation Bar */}
-        <div className="bg-slate-50/70">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between text-xs py-2">
-            <nav className="flex items-center gap-5 sm:gap-6 font-medium text-slate-600">
-              <Link href="/" className="hover:text-m3-primary transition-colors text-slate-800 font-bold">خانه</Link>
-              <Link href="/categories" className="hover:text-m3-primary transition-colors">دسته‌بندی‌ها</Link>
-              <Link href="/categories" className="hover:text-m3-primary transition-colors">اجاره وسایل</Link>
-              <Link href="/create-listing" className="hover:text-m3-primary transition-colors">ثبت وسیله</Link>
-              <Link href="/how-it-works" className="hover:text-m3-primary transition-colors">چگونه کار می‌کند؟</Link>
-              <Link href="/about" className="hover:text-m3-primary transition-colors">درباره ما</Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      </div>
 
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 pt-5 sm:px-6 lg:px-8 py-2 flex items-center gap-1.5 text-xs text-slate-500">

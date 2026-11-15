@@ -348,11 +348,11 @@ export default function RentalsClient({
 
       {/* Role toggle — مستأجر / میزبان */}
       <div className="flex px-4 py-3">
-        <div className="flex h-10 flex-1 items-center justify-center rounded-lg bg-[#ece7f3] p-1 max-w-2xl mx-auto">
+        <div className="flex h-10 flex-1 min-w-0 w-full items-center justify-center rounded-lg bg-[#ece7f3] p-1 max-w-2xl mx-auto">
           <button
             type="button"
             onClick={() => setRole("renter")}
-            className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-medium leading-normal transition-all ${
+            className={`flex cursor-pointer h-full grow min-w-0 items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-medium leading-normal transition-all ${
               role === "renter"
                 ? "bg-[#f9f8fc] shadow-[0_0_4px_rgba(0,0,0,0.1)] text-[#130e1b]"
                 : "text-[#694d99]"
@@ -363,7 +363,7 @@ export default function RentalsClient({
           <button
             type="button"
             onClick={() => setRole("host")}
-            className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-medium leading-normal transition-all ${
+            className={`flex cursor-pointer h-full grow min-w-0 items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-medium leading-normal transition-all ${
               role === "host"
                 ? "bg-[#f9f8fc] shadow-[0_0_4px_rgba(0,0,0,0.1)] text-[#130e1b]"
                 : "text-[#694d99]"

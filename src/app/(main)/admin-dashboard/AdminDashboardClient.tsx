@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { faToman, faNumber, faDateTime, toPersianDigits } from "@/lib/format";
@@ -13,6 +13,22 @@ export type AdminListing = {
   dailyPrice: number;
   deposit: number;
   city: string;
+  imageUrl: string;
+  owner: { id: string; name: string; kycStatus: string; isHost: boolean };
+};
+
+/** Full catalog row for the products management section (all statuses). */
+export type AdminCatalogListing = {
+  id: string;
+  title: string;
+  category: string;
+  dailyPrice: number;
+  city: string;
+  status: string;
+  rejectionReason: string | null;
+  isDemo: boolean;
+  createdAt: string;
+  reservationsCount: number;
   imageUrl: string;
   owner: { id: string; name: string; kycStatus: string; isHost: boolean };
 };
@@ -89,6 +105,34 @@ const KYC_LABELS: Record<string, string> = {
   REJECTED: "احراز رد شده",
 };
 
+const LISTING_STATUS_LABELS: Record<string, string> = {
+  DRAFT: "پیش‌نویس",
+  PENDING: "در انتظار تایید",
+  ACTIVE: "منتشر شده",
+  PAUSED: "متوقف",
+  REJECTED: "رد شده",
+  ARCHIVED: "آرشیو شده",
+};
+
+const LISTING_STATUS_CLASSES: Record<string, string> = {
+  DRAFT: "bg-surface-container text-on-surface-variant border border-outline-variant/40",
+  PENDING: "bg-amber-50 text-amber-800 border border-amber-200",
+  ACTIVE: "bg-emerald-50 text-emerald-800 border border-emerald-200",
+  PAUSED: "bg-blue-50 text-blue-800 border border-blue-200",
+  REJECTED: "bg-m3-error-container text-m3-on-error-container border border-m3-error/20",
+  ARCHIVED: "bg-surface-container-highest text-on-surface-variant border border-outline-variant/40",
+};
+
+const CATALOG_FILTERS = [
+  { key: "ALL", label: "همه" },
+  { key: "PENDING", label: "در انتظار تایید" },
+  { key: "ACTIVE", label: "منتشر شده" },
+  { key: "PAUSED", label: "متوقف" },
+  { key: "REJECTED", label: "رد شده" },
+  { key: "DRAFT", label: "پیش‌نویس" },
+  { key: "ARCHIVED", label: "آرشیو" },
+] as const;
+
 function maskPhone(phone: string) {
   if (!phone || phone.length < 7) return phone;
   return `${phone.slice(0, 4)}***${phone.slice(-3)}`;
@@ -98,11 +142,13 @@ function maskPhone(phone: string) {
 
 export default function AdminDashboardClient({
   listings: initialListings,
+  catalog: initialCatalog,
   claims: initialClaims,
   users: initialUsers,
   auditLog,
 }: {
   listings: AdminListing[];
+  catalog: AdminCatalogListing[];
   claims: AdminClaim[];
   users: AdminUser[];
   auditLog: AuditEntry[];
@@ -110,8 +156,12 @@ export default function AdminDashboardClient({
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [listings, setListings] = useState(initialListings);
+  const [catalog, setCatalog] = useState(initialCatalog);
   const [claims, setClaims] = useState(initialClaims);
   const [users, setUsers] = useState(initialUsers);
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [catalogQuery, setCatalogQuery] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [decisionTarget, setDecisionTarget] = useState<string | null>(null);
@@ -157,7 +207,18 @@ export default function AdminDashboardClient({
     try {
       await patchJson(`/api/admin/listings/${id}`, { decision, reason });
       setListings((ls) => ls.filter((l) => l.id !== id));
-      showToast(decision === "approve" ? "آگهی تایید و منتشر شد (شبیه‌سازی)." : "آگهی رد شد و به مالک اطلاع داده شد.");
+      setCatalog((cs) =>
+        cs.map((l) =>
+          l.id === id
+            ? {
+                ...l,
+                status: decision === "approve" ? "ACTIVE" : "REJECTED",
+                rejectionReason: decision === "reject" ? (reason ?? "عدم تطابق با قوانین انتشار آگهی") : null,
+              }
+            : l
+        )
+      );
+      showToast(decision === "approve" ? "آگهی تایید و منتشر شد." : "آگهی رد شد و به مالک اطلاع‌رسانی شد.");
       loadStats();
       router.refresh();
     } catch (e) {
@@ -198,6 +259,53 @@ export default function AdminDashboardClient({
       showToast(e instanceof Error ? e.message : "خطای نامشخص", "err");
     } finally {
       setBusyId(null);
+    }
+  }
+
+  /* ---------------------- products management actions ---------------------- */
+
+  async function catalogAction(
+    id: string,
+    action: "pause" | "resume" | "archive" | "restore" | "delete"
+  ) {
+    setBusyId(id);
+    try {
+      const payload = await patchJson(`/api/admin/listings/${id}`, { action });
+      if (payload?.deleted) {
+        setCatalog((cs) => cs.filter((l) => l.id !== id));
+        setListings((ls) => ls.filter((l) => l.id !== id));
+        showToast("آگهی به‌طور کامل حذف شد.");
+      } else {
+        const nextStatus: string = payload?.listing?.status ?? (action === "archive" ? "ARCHIVED" : undefined);
+        const message: string | undefined = payload?.message;
+        if (nextStatus) {
+          setCatalog((cs) =>
+            cs.map((l) =>
+              l.id === id
+                ? { ...l, status: nextStatus, rejectionReason: payload?.listing?.rejectionReason ?? l.rejectionReason }
+                : l
+            )
+          );
+          setListings((ls) => ls.filter((l) => l.id !== id)); // left queue on any lifecycle change
+        }
+        showToast(
+          message ??
+            {
+              pause: "انتشار آگهی متوقف شد.",
+              resume: "آگهی دوباره منتشر شد.",
+              archive: "آگهی آرشیو شد.",
+              restore: "آگهی به صف تایید بازگشت.",
+              delete: "آگهی حذف شد.",
+            }[action]
+        );
+      }
+      loadStats();
+      router.refresh();
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "خطای نامشخص", "err");
+    } finally {
+      setBusyId(null);
+      setDeleteTarget(null);
     }
   }
 
@@ -263,42 +371,25 @@ export default function AdminDashboardClient({
 
   return (
     <div className="bg-m3-background text-on-background antialiased min-h-screen flex flex-col">
-      {/* ==================== TOP NAVIGATION HEADER ==================== */}
-      <header className="sticky top-0 z-50 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/40 px-4 lg:px-8 py-3.5 transition-all shadow-sm">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl from-m3-primary to-primary-light flex items-center justify-center text-white shadow-md shadow-m3-primary/20 group-hover:scale-105 transition-transform duration-200">
-                <img src="/assets/img/overa_logo_transparent.png" alt="logo"/>
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-base font-extrabold tracking-tight text-on-surface">
-                    اورا&nbsp;مرکز فرماندهی و نظارت
-                  </h1>
-                  <span className="px-2 py-0.5 text-[11px] font-bold bg-primary-container text-white rounded-full">
-                    ادمین کل v4.2
-                  </span>
-                </div>
-                <p className="text-xs text-on-surface-variant">
-                  سامانه نظارت زنده بر تجهیزات، صندوق امانی و امنیت معاملات
-                </p>
-              </div>
-            </div>
-            <div className="hidden xl:flex items-center bg-surface-container-low border border-outline-variant/60 rounded-xl px-3 py-1.5 w-72 focus-within:ring-2 focus-within:ring-m3-primary focus-within:border-m3-primary transition-all">
-              <span className="material-symbols-outlined text-m3-primary text-xl ml-2">search</span>
-              <input
-                className="bg-transparent border-none text-xs text-on-surface placeholder:text-on-surface-variant focus:outline-none w-full p-0"
-                placeholder="جستجوی سریع کد ملی، سفارش، کاربر..."
-                type="text"
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-2 bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-3 py-1 rounded-full text-xs font-semibold">
+      {/* ==================== ADMIN CONTEXT STRIP ====================
+          Sits directly under the shared site header (rendered by the server
+          page). Keeps the admin identity + live controls of the original
+          panel without duplicating the brand header. */}
+      <div className="bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/40 px-4 lg:px-8 py-2.5">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <h1 className="text-sm font-extrabold tracking-tight text-on-surface truncate">
+              اورا&nbsp;مرکز فرماندهی و نظارت
+            </h1>
+            <span className="hidden sm:inline-block px-2 py-0.5 text-[11px] font-bold bg-primary-container text-white rounded-full">
+              ادمین کل v4.2
+            </span>
+            <span className="hidden md:flex items-center gap-2 bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-3 py-1 rounded-full text-xs font-semibold">
               <span className="size-2 rounded-full bg-emerald-500 animate-ping"></span>
               <span>همگام‌سازی زنده با دیتابیس فعال</span>
-            </div>
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
             <button
               className="flex items-center gap-1.5 px-3 py-2 bg-primary-container text-white text-xs font-bold rounded-xl hover:bg-m3-primary shadow-sm hover:shadow-m3-primary/25 transition-all"
               onClick={() => {
@@ -307,7 +398,7 @@ export default function AdminDashboardClient({
               }}
             >
               <span className="material-symbols-outlined text-sm">autorenew</span>
-              <span>به‌روزرسانی آنی</span>
+              <span className="hidden sm:inline">به‌روزرسانی آنی</span>
             </button>
             <button
               className="flex items-center gap-1.5 px-3 py-2 bg-surface-container text-on-surface text-xs font-bold rounded-xl hover:bg-surface-container-highest border border-outline-variant/40 transition-all"
@@ -315,13 +406,13 @@ export default function AdminDashboardClient({
               title="به‌زودی"
             >
               <span className="material-symbols-outlined text-sm">download</span>
-              <span>خروجی اکسل و PDF</span>
+              <span className="hidden sm:inline">خروجی اکسل و PDF</span>
             </button>
           </div>
         </div>
-      </header>
+      </div>
       {/* ==================== SUB-NAVIGATION & MODULE TABS ==================== */}
-      <nav className="bg-surface-container-lowest border-b border-outline-variant/30 px-4 lg:px-8 py-2 sticky top-[65px] z-40">
+      <nav className="bg-surface-container-lowest border-b border-outline-variant/30 px-4 lg:px-8 py-2">
         <div className="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto gap-4 scrollbar-none">
           <div className="flex items-center gap-1.5 min-w-max">
             <Link
@@ -474,6 +565,277 @@ export default function AdminDashboardClient({
                 <span>درگاه‌ها و استعلام‌های بیرونی در این نسخه شبیه‌سازی هستند</span>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* 2.5 PRODUCTS MANAGEMENT — full catalog with search, filters and
+            lifecycle actions (server-side guarded; every action is audited). */}
+        <section className="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/50 shadow-sm">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-m3-primary">inventory_2</span>
+                  <h3 className="text-base font-extrabold text-on-surface">
+                    مدیریت محصولات و اطلاعات دیتابیس
+                  </h3>
+                  <span className="bg-m3-primary/10 text-m3-primary text-xs font-bold px-2 py-0.5 rounded-full">
+                    {faNumber(catalog.length)} آگهی
+                  </span>
+                </div>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  مشاهده، جستجو، فیلتر و مدیریت وضعیت تمام آگهی‌ها — از پیش‌نویس تا آرشیو. همه اقدامات در Audit Log ثبت می‌شود.
+                </p>
+              </div>
+              <div className="relative w-full sm:w-72">
+                <input
+                  type="text"
+                  value={catalogQuery}
+                  onChange={(e) => setCatalogQuery(e.target.value)}
+                  placeholder="جستجو بر اساس عنوان، مالک، دسته یا شهر…"
+                  aria-label="جستجوی محصولات در پنل مدیریت"
+                  className="w-full text-xs rounded-xl bg-surface-container border border-outline-variant/60 px-3 py-2.5 pr-9 text-on-surface focus:outline-none focus:ring-2 focus:ring-m3-primary/30"
+                />
+                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant">search</span>
+              </div>
+            </div>
+
+            {/* Status filter chips — horizontally scrollable on mobile */}
+            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">
+              {CATALOG_FILTERS.map((f) => {
+                const count = f.key === "ALL" ? catalog.length : catalog.filter((l) => l.status === f.key).length;
+                const active = statusFilter === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setStatusFilter(f.key)}
+                    className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors border ${
+                      active
+                        ? "bg-m3-primary text-white border-m3-primary"
+                        : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high border-outline-variant/40"
+                    }`}
+                  >
+                    {f.label}
+                    <span className={`ms-1.5 ${active ? "text-white/80" : "text-on-surface-variant/70"}`}>
+                      ({faNumber(count)})
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Rows — cards on mobile, table-like rows on desktop */}
+            {(() => {
+              const q = catalogQuery.trim().toLowerCase();
+              const filteredCatalog = catalog.filter((l) => {
+                if (statusFilter !== "ALL" && l.status !== statusFilter) return false;
+                if (!q) return true;
+                return `${l.title} ${l.owner.name} ${l.category} ${l.city}`.toLowerCase().includes(q);
+              });
+              if (filteredCatalog.length === 0) {
+                return (
+                  <div className="rounded-xl border border-outline-variant/40 bg-surface-container p-6 text-center text-xs text-on-surface-variant">
+                    آگهی‌ای مطابق فیلتر فعلی پیدا نشد.
+                  </div>
+                );
+              }
+              return (
+                <div className="flex flex-col gap-2">
+                  {filteredCatalog.map((l) => (
+                    <div
+                      key={l.id}
+                      className="rounded-xl border border-outline-variant/40 bg-surface-container p-3 flex flex-col md:flex-row md:items-center gap-3 hover:bg-surface-container-high/60 transition-colors"
+                    >
+                      {/* Thumb + identity */}
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <img
+                          src={l.imageUrl}
+                          alt={l.title}
+                          className="w-14 h-14 rounded-lg object-cover bg-surface-container shrink-0 border border-outline-variant/30"
+                        />
+                        <div className="min-w-0 flex flex-col gap-0.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${LISTING_STATUS_CLASSES[l.status] ?? ""}`}>
+                              {LISTING_STATUS_LABELS[l.status] ?? l.status}
+                            </span>
+                            {l.isDemo ? (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                                نمونه دمو
+                              </span>
+                            ) : null}
+                            {l.reservationsCount > 0 ? (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                                {faNumber(l.reservationsCount)} رزرو متصل
+                              </span>
+                            ) : null}
+                          </div>
+                          <span className="text-xs font-extrabold text-on-surface line-clamp-1">{l.title}</span>
+                          <span className="text-[11px] text-on-surface-variant line-clamp-1">
+                            {l.category} • {l.city} • مالک: {l.owner.name}
+                            {l.rejectionReason ? ` • علت رد: ${l.rejectionReason}` : ""}
+                          </span>
+                          <span className="text-[10px] text-on-surface-variant/80">
+                            {faToman(l.dailyPrice)} تومان / روز • ثبت: {faDateTime(l.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex flex-wrap items-center gap-1.5 md:justify-end shrink-0">
+                        {l.status === "PENDING" && rejectTarget !== l.id ? (
+                          <>
+                            <button
+                              type="button"
+                              disabled={busyId === l.id}
+                              onClick={() => decideListing(l.id, "approve")}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-colors disabled:opacity-60"
+                            >
+                              تایید
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busyId === l.id}
+                              onClick={() => setRejectTarget(l.id)}
+                              className="px-3 py-1.5 rounded-lg bg-m3-error/10 hover:bg-m3-error/20 text-m3-error text-[11px] font-bold transition-colors disabled:opacity-60"
+                            >
+                              رد
+                            </button>
+                          </>
+                        ) : null}
+                        {rejectTarget === l.id ? (
+                          <div className="flex items-center gap-1.5 w-full md:w-auto">
+                            <input
+                              className="flex-1 min-w-32 text-[11px] rounded-lg bg-surface-container-low border border-outline-variant/60 px-2.5 py-1.5 text-on-surface focus:outline-none focus:ring-2 focus:ring-m3-primary/30"
+                              placeholder="علت رد (برای مالک نمایش داده می‌شود)…"
+                              value={rejectReason}
+                              onChange={(e) => setRejectReason(e.target.value)}
+                            />
+                            <button
+                              type="button"
+                              disabled={busyId === l.id}
+                              onClick={() => decideListing(l.id, "reject", rejectReason || undefined)}
+                              className="px-3 py-1.5 rounded-lg bg-m3-error hover:brightness-110 text-white text-[11px] font-bold transition disabled:opacity-60"
+                            >
+                              ثبت رد
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRejectTarget(null);
+                                setRejectReason("");
+                              }}
+                              className="px-2.5 py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant text-[11px] font-bold"
+                            >
+                              انصراف
+                            </button>
+                          </div>
+                        ) : null}
+                        {l.status === "ACTIVE" ? (
+                          <button
+                            type="button"
+                            disabled={busyId === l.id}
+                            onClick={() => catalogAction(l.id, "pause")}
+                            className="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-[11px] font-bold transition-colors disabled:opacity-60"
+                          >
+                            توقف انتشار
+                          </button>
+                        ) : null}
+                        {l.status === "PAUSED" ? (
+                          <button
+                            type="button"
+                            disabled={busyId === l.id}
+                            onClick={() => catalogAction(l.id, "resume")}
+                            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-colors disabled:opacity-60"
+                          >
+                            انتشار مجدد
+                          </button>
+                        ) : null}
+                        {l.status === "REJECTED" ? (
+                          <button
+                            type="button"
+                            disabled={busyId === l.id}
+                            onClick={() => decideListing(l.id, "approve")}
+                            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-colors disabled:opacity-60"
+                          >
+                            تایید
+                          </button>
+                        ) : null}
+                        {l.status === "ARCHIVED" ? (
+                          <button
+                            type="button"
+                            disabled={busyId === l.id}
+                            onClick={() => catalogAction(l.id, "restore")}
+                            className="px-3 py-1.5 rounded-lg bg-surface-container-highest hover:brightness-95 text-on-surface text-[11px] font-bold transition disabled:opacity-60"
+                          >
+                            بازگردانی به صف
+                          </button>
+                        ) : null}
+                        {l.status !== "ARCHIVED" && l.status !== "DRAFT" ? (
+                          <button
+                            type="button"
+                            disabled={busyId === l.id}
+                            onClick={() => catalogAction(l.id, "archive")}
+                            className="px-3 py-1.5 rounded-lg bg-surface-container-highest hover:brightness-95 text-on-surface-variant text-[11px] font-bold transition disabled:opacity-60"
+                          >
+                            آرشیو
+                          </button>
+                        ) : null}
+                        {l.status === "DRAFT" ? (
+                          <button
+                            type="button"
+                            disabled={busyId === l.id}
+                            onClick={() => catalogAction(l.id, "archive")}
+                            className="px-3 py-1.5 rounded-lg bg-surface-container-highest hover:brightness-95 text-on-surface-variant text-[11px] font-bold transition disabled:opacity-60"
+                          >
+                            آرشیو
+                          </button>
+                        ) : null}
+                        {/* Hard delete only from archived state, with inline confirm */}
+                        {l.status === "ARCHIVED" && deleteTarget !== l.id ? (
+                          <button
+                            type="button"
+                            disabled={busyId === l.id}
+                            onClick={() => setDeleteTarget(l.id)}
+                            className="px-3 py-1.5 rounded-lg bg-m3-error/10 hover:bg-m3-error/20 text-m3-error text-[11px] font-bold transition-colors disabled:opacity-60"
+                          >
+                            حذف
+                          </button>
+                        ) : null}
+                        {l.status === "ARCHIVED" && deleteTarget === l.id ? (
+                          <span className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-on-surface-variant">
+                              {l.reservationsCount > 0 ? "با رزرو متصل → آرشیو می‌ماند" : "حذف قطعی؟"}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={busyId === l.id}
+                              onClick={() => catalogAction(l.id, "delete")}
+                              className="px-3 py-1.5 rounded-lg bg-m3-error hover:brightness-110 text-white text-[11px] font-bold transition disabled:opacity-60"
+                            >
+                              تایید حذف
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleteTarget(null)}
+                              className="px-2.5 py-1.5 rounded-lg bg-surface-container-highest text-on-surface-variant text-[11px] font-bold"
+                            >
+                              انصراف
+                            </button>
+                          </span>
+                        ) : null}
+                        <Link
+                          href={`/item-details/${l.id}`}
+                          className="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-highest text-on-surface text-[11px] font-bold transition-colors"
+                        >
+                          مشاهده
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         </section>
 

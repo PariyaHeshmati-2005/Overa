@@ -25,6 +25,10 @@ model User {
   // so a user can be both renter and host (per playbook 3.1).
   isHost        Boolean  @default(false)
   isAdmin       Boolean  @default(false)
+  // Marks accounts created by scripts/seed.ts as demo/sample content. Demo
+  // accounts stay visually labelled in the app and are never mixed with real
+  // user data (real users created via signup/OTP always have isDemo = false).
+  isDemo        Boolean  @default(false)
   kycStatus     String   @default("UNVERIFIED") // UNVERIFIED | PENDING | VERIFIED | REJECTED
   walletBalance Int      @default(0) // Toman, application ledger only (sandbox)
   createdAt     DateTime @default(now())
@@ -109,12 +113,20 @@ model Listing {
   // calendar in the create-listing wizard. Renters cannot reserve these days.
   blockedRanges String @default("[]")
   instantBook Boolean @default(false)
+  // Marks listings created by scripts/seed.ts as demo/sample content so real
+  // (user-verified) listings can always be told apart from showcase items.
+  isDemo      Boolean @default(false)
   // Moderation lifecycle: DRAFT | PENDING | ACTIVE | PAUSED | REJECTED | ARCHIVED
   status      String  @default("PENDING")
   rejectionReason String?
   rating      Float   @default(0)
   reviewsCount Int    @default(0)
   viewsCount  Int     @default(0)
+  // Normalized (Arabic→Persian, ZWNJ/diacritic-stripped, digit-folded) copy
+  // of title + brand + specs + description + city + category name, used by
+  // /api/search and /search. Maintained on every write path; rebuildable with
+  // scripts/backfill-search-keys.ts.
+  searchKey   String  @default("")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

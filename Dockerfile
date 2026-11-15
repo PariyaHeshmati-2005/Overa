@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # =============================================================================
-# Overa — production image (Next.js 16 + Prisma/SQLite)
+# Overa — production image (Next.js 16 + Prisma/PostgreSQL)
 # Multi-stage: deps -> build -> runtime. Bun is the package manager/runtime for
 # install & build; the server runs under bun in the final stage.
 # =============================================================================
@@ -11,8 +11,8 @@ WORKDIR /app
 
 # Install dependencies first (cached layer)
 COPY package.json bun.lock ./
-COPY prisma ./prisma
-RUN bun install --frozen-lockfile
+RUN bun install --frozen-lockfile --ignore-scripts \
+    || bun install --frozen-lockfile --ignore-scripts
 
 FROM deps AS build
 WORKDIR /app
@@ -21,15 +21,14 @@ COPY . .
 # Generate the Prisma client, then build the standalone Next.js output.
 # DATABASE_URL here is only used for build-time type generation.
 ENV DATABASE_URL=postgresql://user:pass@localhost:5432/overa
+ENV DIRECT_URL=postgresql://user:pass@localhost:5432/overa
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN bunx prisma generate && bun run build
 
 # NOTE: demo content is deliberately NOT seeded during the image build.
-# docker-compose mounts the overa_db volume over /app/db, shadowing anything
-# baked into the image, so build-time seeding is wasted work — and a fragile
-# build dependency (the SQLite query engine can stall under builder load and
-# fail with P1008 "Socket timeout"). The entrypoint pushes the schema and
-# seeds the volume on the container's first start instead (with retries).
+# The entrypoint applies controlled migrations (prisma migrate deploy) and
+# seeds DEMO content only when SEED_DEMO=1 — real production databases keep
+# their data across rebuilds (Postgres volume in docker-compose).
 
 FROM oven/bun:1-slim AS runtime
 WORKDIR /app

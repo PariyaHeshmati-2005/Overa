@@ -434,41 +434,24 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
 
   /* ------------------------------ header/stepper --------------------------- */
   const header = (
-    <header className="sticky top-0 z-40 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/40 px-6 lg:px-12 py-3.5">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-5">
-          <Link className="flex items-center gap-3 group shrink-0" href="/">
-            <div className="w-11 h-11 rounded-2xl from-primary to-primary-light flex items-center justify-center text-white shadow-md shadow-primary/20 group-hover:scale-105 transition-transform duration-200">
-              { }
-              <img src="/assets/img/overa_logo_transparent.png" alt="logo" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-black tracking-tight text-[#801E76] mt-3 mb-1">
-                اٌوِرا
+    <div className="sticky top-0 z-40 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/40 px-6 lg:px-12 py-2.5">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+        <div className="hidden sm:flex items-center gap-2 text-xs text-on-surface-variant">
+          {draftTime || initial ? (
+            <span className="inline-flex items-center gap-1 text-m3-primary font-medium bg-surface-container-high px-2.5 py-1 rounded-full">
+              <span
+                className="material-symbols-outlined text-[15px]"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                edit_document
               </span>
-              <span className="text-[11px] font-medium text-neutral-muted -mt-1">
-                وسایل بهتر، زندگی سبک‌تر
-              </span>
-            </div>
-          </Link>
-          <div className="h-5 w-[1px] bg-outline-variant hidden sm:block"></div>
-          <div className="hidden sm:flex items-center gap-2 text-xs text-on-surface-variant">
-            {draftTime || initial ? (
-              <span className="inline-flex items-center gap-1 text-m3-primary font-medium bg-surface-container-high px-2.5 py-1 rounded-full">
-                <span
-                  className="material-symbols-outlined text-[15px]"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  edit_document
-                </span>
-                {draftTime
-                  ? `پیش‌نویس ذخیره‌شده: ${draftTime}`
-                  : "ویرایش پیش‌نویس ذخیره‌شده"}
-              </span>
-            ) : null}
-          </div>
+              {draftTime
+                ? `پیش‌نویس ذخیره‌شده: ${draftTime}`
+                : "ویرایش پیش‌نویس ذخیره‌شده"}
+            </span>
+          ) : null}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mr-auto">
           <button
             onClick={saveDraft}
             disabled={savingDraft}
@@ -486,7 +469,7 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
           </Link>
         </div>
       </div>
-    </header>
+    </div>
   );
 
   const stepper = (
@@ -652,7 +635,19 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {categories.map((cat) => {
+              {categories.length === 0 ? (
+                <div className="col-span-2 sm:col-span-3 rounded-xl border border-m3-error/30 bg-m3-error-container/20 p-4 text-center flex flex-col gap-1.5">
+                  <p className="text-sm font-bold text-m3-error">
+                    دسته‌بندی‌ها هنوز در پایگاه داده ثبت نشده‌اند
+                  </p>
+                  <p className="text-[11px] text-on-surface-variant leading-relaxed">
+                    پایگاه داده متصل خالی است. برای مقداردهی اولیه دسته‌بندی‌ها یک‌بار دستور{" "}
+                    <code className="font-mono" dir="ltr">bun run db:seed:categories</code> را اجرا کنید و
+                    سپس این صفحه را دوباره باز کنید. راهنمای کامل در فایل docs/NEON-MIGRATION.md آمده است.
+                  </p>
+                </div>
+              ) : (
+              categories.map((cat) => {
                 const isSelected = form.categoryId === cat.id;
                 return (
                   <button
@@ -684,7 +679,8 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                     </span>
                   </button>
                 );
-              })}
+              })
+              )}
             </div>
             {errors.categoryId && (
               <p className="text-[11px] text-m3-error font-semibold">{errors.categoryId}</p>

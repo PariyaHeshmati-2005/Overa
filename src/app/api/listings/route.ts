@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { jsonError, jsonOk, parseIntSafe, requireUser } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { normalizeBlockedRangesInput } from "@/lib/jalali";
+import { buildListingSearchKey } from "@/lib/persian";
 
 /** GET /api/listings?q=&category=&city=&min=&max=&sort=&instant=&mine=&status= */
 export async function GET(req: Request) {
@@ -93,6 +94,14 @@ export async function POST(req: Request) {
         description,
         brand: body.brand ? String(body.brand) : null,
         specs: body.specs ? String(body.specs) : null,
+        searchKey: buildListingSearchKey({
+          title,
+          brand: body.brand ? String(body.brand) : null,
+          specs: body.specs ? String(body.specs) : null,
+          description,
+          city: String(body.city ?? user.city ?? "تهران"),
+          categoryName: category.name,
+        }),
         dailyPrice: Math.floor(dailyPrice),
         weeklyPrice: Number.isFinite(Number(body.weeklyPrice)) && Number(body.weeklyPrice) > 0
           ? Math.floor(Number(body.weeklyPrice)) : null,

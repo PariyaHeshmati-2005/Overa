@@ -5,16 +5,19 @@ export function toPersianDigits(value: string | number): string {
   return String(value).replace(/\d/g, (d) => PERSIAN_DIGITS[Number(d)]);
 }
 
-/** Format a number with thousand separators and Persian digits (۱۲۳,۴۵۶). */
-export function faNumber(value: number | string): string {
+/** Format a number with thousand separators and Persian digits (۱۲۳,۴۵۶).
+ *  Null/undefined/non-numeric inputs are treated as ۰ instead of crashing —
+ *  a previous `null.toLocaleString()` TypeError took whole pages down. */
+export function faNumber(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || value === "") return toPersianDigits(0);
   const n = typeof value === "string" ? Number(value.replace(/,/g, "")) : value;
   if (Number.isNaN(n)) return toPersianDigits(value);
   return toPersianDigits(n.toLocaleString("en-US"));
 }
 
-/** Format a Toman amount: ۴۵۰,۰۰۰ */
-export function faToman(value: number | string): string {
-  return faNumber(value);
+/** Format a Toman amount: ۴۵۰,۰۰۰ (null-safe). */
+export function faToman(value: number | string | null | undefined): string {
+  return faNumber(value ?? 0);
 }
 
 /** Format a date in Persian calendar via Intl. */

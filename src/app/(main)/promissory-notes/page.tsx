@@ -1,3 +1,4 @@
+import SiteHeader from "@/components/layout/SiteHeader";
 import type { Metadata } from "next";
 import Link from "next/link";
 import M3Styles from "@/components/overa/M3Styles";
@@ -11,46 +12,7 @@ export default function PromissoryNotesPage() {
     <div className="bg-m3-background text-on-surface antialiased min-h-screen flex flex-col justify-between">
       <M3Styles />
       {/* Header: Focused Task Header (Back to Main flow) — preserved from source */}
-      <header className="border-b border-outline-variant/40 bg-surface-container-lowest sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              className="inline-flex items-center justify-center size-9 rounded-lg hover:bg-surface-container transition-colors text-on-surface"
-              href="/rentals"
-              title="بازگشت به اجاره‌های من"
-            >
-              <span className="material-symbols-outlined text-[20px] rtl:rotate-180">arrow_forward</span>
-            </Link>
-            <div className="h-5 w-px bg-outline-variant/60"></div>
-            <div className="flex items-center gap-2">
-              {/* Brand Logo & Slogan */}
-              <Link className="flex items-center gap-3 group shrink-0" href="/">
-                <div className="w-11 h-11 rounded-2xl from-m3-primary to-primary-light flex items-center justify-center text-white shadow-md shadow-m3-primary/20 group-hover:scale-105 transition-transform duration-200 bg-gradient-to-br">
-                  { }
-                  <img src="/assets/img/overa_logo_transparent.png" alt="لوگوی اورا" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-2xl font-black tracking-tight text-[#801E76] mt-3 mb-1">اٌوِرا</span>
-                </div>
-              </Link>
-              <span className="font-bold text-base text-on-surface mt-2"> | ضمانت امن سفته الکترونیک</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-container-high text-m3-primary">
-              <span className="size-1.5 rounded-full bg-m3-primary animate-pulse"></span>
-              پرونده نمونه: OVR-89420
-            </span>
-            <Link
-              className="text-xs font-medium text-on-surface-variant hover:text-m3-primary transition-colors flex items-center gap-1"
-              href="/promissory-notes/registration"
-            >
-              <span className="material-symbols-outlined text-[18px]">help</span>
-              <span>راهنما</span>
-            </Link>
-          </div>
-        </div>
-      </header>
+            <SiteHeader />
 
       {/* Mandatory sandbox/legal notice */}
       <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-5">

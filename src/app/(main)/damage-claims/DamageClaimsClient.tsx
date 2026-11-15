@@ -179,7 +179,7 @@ export default function DamageClaimsClient() {
   const myClaimsCount = claims.length;
 
   return (
-    <main className="w-full pt-28 bg-primary-soft/40 min-h-[calc(80vh-280px)] flex-1">
+    <main className="w-full pt-6 bg-primary-soft/40 min-h-[calc(80vh-280px)] flex-1">
       <Toaster position="top-center" richColors />
       <div className="flex flex-col w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 w-full">

@@ -1,3 +1,4 @@
+import SiteHeader from "@/components/layout/SiteHeader";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
@@ -108,91 +109,7 @@ export default async function RentalLifecyclePage({ params, searchParams }: Prop
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       {/* Header — faithful to rental-lifecycle.html MainHeader, session-aware */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-purple-100 shadow-sm transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col gap-2.5">
-          <div className="flex items-center justify-between gap-4">
-            {/* Brand Logo */}
-            <Link className="flex items-center gap-3 group shrink-0" href="/">
-              <div className="w-11 h-11 rounded-2xl from-m3-primary to-primary-light flex items-center justify-center text-white shadow-md shadow-m3-primary/20 group-hover:scale-105 transition-transform duration-200">
-                <img src="/assets/img/overa_logo_transparent.png" alt="logo" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-black tracking-tight text-[#801E76] mt-3 mb-1">اٌوِرا</span>
-                <span className="text-[11px] font-medium text-neutral-muted -mt-1">وسایل بهتر، زندگی سبک‌تر</span>
-              </div>
-            </Link>
-
-            {/* Search Bar */}
-            <div className="flex-1 max-w-lg mx-2 hidden sm:block">
-              <form action="/categories" className="relative flex items-center">
-                <input
-                  name="q"
-                  className="w-full h-10 pr-4 pl-12 text-xs bg-slate-50 border border-purple-100 rounded-full focus:bg-white focus:border-m3-primary focus:ring-2 focus:ring-m3-primary/20 transition text-slate-800 placeholder:text-slate-400"
-                  placeholder="جستجو در بین هزاران وسیله، ابزار، دوربین..."
-                  type="text"
-                />
-                <button
-                  className="absolute left-1 w-8 h-8 rounded-full bg-m3-primary hover:bg-primary-container text-white flex items-center justify-center transition-colors"
-                  aria-label="جستجو"
-                  type="submit"
-                >
-                  <span className="material-symbols-outlined text-[16px]">search</span>
-                </button>
-              </form>
-            </div>
-
-            {/* User Bar — session-aware per guest-state rule */}
-            <div className="flex items-center gap-2 shrink-0">
-              <Link
-                href="/live-chat"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-m3-primary hover:bg-slate-100 transition-colors"
-                title="پیام‌ها"
-              >
-                <span className="material-symbols-outlined text-[20px]">chat</span>
-              </Link>
-              <button
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-m3-primary hover:bg-slate-100 transition-colors"
-                title="به‌زودی"
-                disabled
-                type="button"
-              >
-                <span className="material-symbols-outlined text-[20px]">favorite</span>
-              </button>
-              <div className="relative">
-                <button
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-m3-primary hover:bg-slate-100 transition-colors"
-                  title="به‌زودی"
-                  disabled
-                  type="button"
-                >
-                  <span className="material-symbols-outlined text-[20px]">notifications</span>
-                </button>
-              </div>
-              <div className="h-5 w-px bg-slate-200 mx-1"></div>
-              {user ? (
-                <UserMenu
-                  user={{ name: user.name, avatarUrl: user.avatarUrl, isHost: user.isHost, isAdmin: user.isAdmin }}
-                />
-              ) : (
-                <a
-                  href="/signin-otp"
-                  className="inline-flex items-center h-9 px-4 rounded-full bg-m3-primary text-on-primary text-xs font-bold shadow-sm hover:bg-surface-tint transition-colors"
-                >
-                  ورود | ثبت‌نام
-                </a>
-              )}
-            </div>
-          </div>
-
-          {/* Stepper Navigation tabs (same-page stage anchors) */}
-          <nav className="flex items-center gap-4 sm:gap-6 text-xs font-medium border-t border-purple-100/70 pt-2 overflow-x-auto">
-            <a href="#contract" className="py-1 shrink-0 text-slate-500 hover:text-m3-primary">۱. امضای قرارداد و ضمانت</a>
-            <a href="#payment" className="py-1 shrink-0 text-slate-500 hover:text-m3-primary">۲. پرداخت و تسویه امانی</a>
-            <a href="#delivery" className="py-1 shrink-0 text-slate-500 hover:text-m3-primary">۳. تحویل و بازرسی سلامت</a>
-            <a href="#protocol" className="py-1 shrink-0 text-slate-500 hover:text-m3-primary">۴. پروتکل دوطرفه و عودت</a>
-          </nav>
-        </div>
-      </header>
+            <SiteHeader />
 
       {!reservation || !isParticipant ? (
         /* Access-denied / not-found state (source-style error card) */

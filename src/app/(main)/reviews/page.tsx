@@ -1,3 +1,4 @@
+import SiteHeader from "@/components/layout/SiteHeader";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
@@ -51,91 +52,7 @@ export default async function ReviewsPage() {
   return (
     <>
       {/* Header — faithful to reviews.html, session-aware */}
-      <header className="sticky top-0 z-50 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/40 shadow-sm">
-        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-4">
-            {/* Brand */}
-            <Link className="flex items-center gap-3 group shrink-0" href="/">
-              <div className="w-11 h-11 rounded-2xl from-m3-primary to-primary-light flex items-center justify-center text-white shadow-md shadow-m3-primary/20 group-hover:scale-105 transition-transform duration-200">
-                <img src="/assets/img/overa_logo_transparent.png" alt="logo" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-black tracking-tight text-[#801E76] mt-3 mb-1">اٌوِرا</span>
-                <span className="text-[11px] font-medium text-neutral-muted -mt-1">وسایل بهتر، زندگی سبک‌تر</span>
-              </div>
-            </Link>
-
-            {/* Search */}
-            <div className="flex-1 max-w-[520px] mx-2 hidden md:block">
-              <form action="/categories" className="relative flex items-center">
-                <input
-                  name="q"
-                  className="w-full bg-[#f6f2fc] border border-outline-variant/40 rounded-full py-2.5 pr-5 pl-14 text-xs font-medium text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-m3-primary focus:bg-white transition-all text-right"
-                  placeholder="جستجو در بین هزاران وسیله..."
-                  type="text"
-                />
-                <button
-                  className="absolute left-1.5 size-8 bg-m3-primary hover:bg-primary-container text-white rounded-full flex items-center justify-center transition-transform active:scale-95 shadow-sm"
-                  title="جستجو"
-                  type="submit"
-                >
-                  <span className="material-symbols-outlined text-base">search</span>
-                </button>
-              </form>
-            </div>
-
-            {/* User profile & icons — session-aware per guest-state rule */}
-            <div className="flex flex-row-reverse items-center gap-2 sm:gap-3 shrink-0">
-              {user ? (
-                <UserMenu
-                  user={{ name: user.name, avatarUrl: user.avatarUrl, isHost: user.isHost, isAdmin: user.isAdmin }}
-                />
-              ) : (
-                <a
-                  href="/signin-otp"
-                  className="inline-flex items-center h-9 px-4 rounded-full bg-m3-primary text-on-primary text-xs font-bold shadow-sm hover:bg-surface-tint transition-colors"
-                >
-                  ورود | ثبت‌نام
-                </a>
-              )}
-              <div className="h-6 w-px bg-outline-variant/50 mx-1 hidden sm:block"></div>
-              <div className="relative">
-                <button
-                  className="size-9 rounded-full border border-outline-variant/40 flex items-center justify-center text-on-surface-variant hover:text-m3-primary hover:border-m3-primary/40 transition-colors"
-                  title="به‌زودی"
-                  disabled
-                  type="button"
-                >
-                  <span className="material-symbols-outlined text-lg">notifications</span>
-                </button>
-              </div>
-              <Link
-                href="/live-chat"
-                className="size-9 rounded-full border border-outline-variant/40 flex items-center justify-center text-on-surface-variant hover:text-m3-primary hover:border-m3-primary/40 transition-colors"
-                title="گفتگو و پیام‌ها"
-              >
-                <span className="material-symbols-outlined text-lg">chat</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Bottom Tier: Nav + status */}
-          <div className="flex items-center justify-between border-t border-outline-variant/20 pt-2.5 pb-2 text-xs font-semibold overflow-x-auto">
-            <nav className="flex items-center gap-4 sm:gap-8 shrink-0 text-on-surface/80">
-              <Link href="/" className="text-m3-primary border-b-2 border-m3-primary py-1 font-bold shrink-0">خانه</Link>
-              <Link href="/categories" className="text-on-surface-variant hover:text-m3-primary transition-colors py-1 shrink-0">دسته‌بندی‌ها</Link>
-              <Link href="/categories" className="text-on-surface-variant hover:text-m3-primary transition-colors py-1 shrink-0">اجاره وسایل</Link>
-              <Link href="/create-listing" className="text-on-surface-variant hover:text-m3-primary transition-colors py-1 shrink-0">ثبت وسیله</Link>
-              <Link href="/how-it-works" className="text-on-surface-variant hover:text-m3-primary transition-colors py-1 shrink-0">چگونه کار می‌کند؟</Link>
-              <Link href="/about" className="text-on-surface-variant hover:text-m3-primary transition-colors py-1 shrink-0">درباره ما</Link>
-            </nav>
-            <div className="flex items-center gap-1.5 text-emerald-600 font-bold shrink-0 mr-4">
-              <span className="size-2 rounded-full bg-emerald-600 animate-pulse"></span>
-              <span>پشتیبانی آنلاین فعال</span>
-            </div>
-          </div>
-        </div>
-      </header>
+            <SiteHeader />
 
       <main className="w-full max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pb-16 flex-1 w-full">
         {/* Breadcrumbs + Title */}

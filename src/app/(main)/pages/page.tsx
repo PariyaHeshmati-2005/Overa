@@ -1,3 +1,4 @@
+import SiteHeader from "@/components/layout/SiteHeader";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/lib/db";
@@ -68,30 +69,7 @@ export default async function PagesIndex() {
         }}
       />
       {/* Header */}
-      <header className="bg-white/90 backdrop-blur border-b border-neutral-border sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-primary to-primary-light flex items-center justify-center text-white shadow-glow">
-              <span className="material-symbols-outlined">favorite</span>
-            </div>
-            <div>
-              <p className="font-extrabold text-lg leading-5">
-                اورا <span className="text-primary">Overa</span>
-              </p>
-              <p className="text-[11px] text-neutral-muted">وسایل بهتر، زندگی سبک‌تر</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-soft text-primary text-xs font-bold">
-              <span className="material-symbols-outlined text-base">presentation</span>
-              نسخه ارائه فرانت‌اند — دموی لوکال
-            </span>
-            <Link href="/" className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary-dark transition">
-              مشاهده سایت ←
-            </Link>
-          </div>
-        </div>
-      </header>
+            <SiteHeader />
 
       <main className="max-w-7xl mx-auto px-6 py-10 flex-1 w-full">
         {/* Intro */}

@@ -1,3 +1,4 @@
+import SiteHeader from "@/components/layout/SiteHeader";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
@@ -23,142 +24,9 @@ export default async function PromissoryRegistrationPage() {
     <div className="bg-m3-surface text-body-md text-on-surface antialiased min-h-screen flex flex-col">
       <M3Styles />
       {/* Header — preserved from Registration-in-the-Treasury source */}
-      <header
-        className="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur-md border-b border-purple-100 shadow-sm transition-all"
-        data-purpose="top-header"
-      >
-        <div className="max-w-[1440px] mx-auto px-6 py-3 flex flex-col gap-2.5">
-          <div className="flex items-center justify-between gap-6">
-            {/* Brand Logo & Slogan */}
-            <Link className="flex items-center gap-3 group shrink-0" href="/">
-              <div className="w-11 h-11 rounded-2xl from-m3-primary to-primary-light flex items-center justify-center text-white shadow-md shadow-m3-primary/20 group-hover:scale-105 transition-transform duration-200 bg-gradient-to-br">
-                { }
-                <img src="/assets/img/overa_logo_transparent.png" alt="لوگوی اورا" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-black tracking-tight text-[#801E76] mt-3 mb-1">اٌوِرا</span>
-                <span className="text-[11px] font-medium text-neutral-muted -mt-1">
-                  وسایل بهتر، زندگی سبک‌تر
-                </span>
-              </div>
-            </Link>
-            {/* Big Search Bar */}
-            <div className="flex-1 max-w-xl mx-4 hidden md:block" data-purpose="global-search">
-              <form action="/categories" className="relative flex items-center">
-                <input
-                  className="w-full h-11 pr-5 pl-14 text-sm bg-surface-container-low border border-purple-100/90 rounded-full focus:bg-white focus:border-m3-primary focus:ring-4 focus:ring-m3-primary/10 transition-all text-on-surface placeholder:text-m3-outline"
-                  placeholder="جستجو در بین هزاران وسیله..."
-                  type="text"
-                  name="q"
-                />
-                <button
-                  aria-label="جستجو"
-                  className="absolute left-1.5 w-8 h-8 rounded-full bg-m3-primary hover:bg-primary-container text-white flex items-center justify-center shadow-sm transition-colors duration-150"
-                  type="submit"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
-                  </svg>
-                </button>
-              </form>
-            </div>
-            {/* User Profile & Action Icons — session aware (guest state rule) */}
-            <div className="flex items-center gap-3 shrink-0" data-purpose="user-actions">
-              <Link
-                aria-label="پیام‌ها"
-                className="w-10 h-10 rounded-full flex items-center justify-center text-m3-outline hover:text-m3-primary hover:bg-primary-fixed/30 transition-colors"
-                href="/live-chat"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.9" viewBox="0 0 24 24">
-                  <path
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  ></path>
-                </svg>
-              </Link>
-              <button
-                aria-label="علاقه‌مندی‌ها"
-                className="w-10 h-10 rounded-full flex items-center justify-center text-m3-outline hover:text-m3-primary hover:bg-primary-fixed/30 transition-colors"
-                disabled
-                title="به‌زودی"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.9" viewBox="0 0 24 24">
-                  <path
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  ></path>
-                </svg>
-              </button>
-              <div className="relative">
-                <button
-                  aria-label="اعلانات"
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-m3-outline hover:text-m3-primary hover:bg-primary-fixed/30 transition-colors"
-                  disabled
-                  title="به‌زودی"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.9" viewBox="0 0 24 24">
-                    <path
-                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    ></path>
-                  </svg>
-                </button>
-              </div>
-              <div className="h-6 w-px bg-purple-200/80 mx-1 hidden sm:block"></div>
-              {user ? (
-                <UserMenu
-                  user={{ name: user.name, avatarUrl: user.avatarUrl, isHost: user.isHost, isAdmin: user.isAdmin }}
-                />
-              ) : (
-                <Link
-                  className="px-4 py-2 rounded-xl bg-m3-primary text-white text-xs font-bold hover:bg-primary-container transition-colors"
-                  href="/signin-otp"
-                >
-                  ورود | ثبت‌نام
-                </Link>
-              )}
-            </div>
-          </div>
-          {/* Bottom Level Row: Navigation Links */}
-          <nav
-            className="hidden sm:flex items-center gap-8 text-sm font-medium border-t border-purple-100/60 pt-2 text-on-surface-variant"
-            data-purpose="sub-navigation"
-          >
-            {NAV_LINKS.map((l, i) => (
-              <Link key={l.label + i} className="text-on-surface hover:text-m3-primary transition-colors" href={l.href}>
-                {l.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-        {/* Breadcrumb sub-strip matching flow */}
-        <div className="bg-surface-container-low/70 border-t border-purple-100/60 py-1.5">
-          <div className="max-w-[1440px] mx-auto px-6 flex items-center gap-1.5 text-xs text-m3-outline font-medium">
-            <Link className="hover:text-m3-primary transition-colors flex items-center gap-1" href="/">
-              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path>
-              </svg>
-              <span>خانه</span>
-            </Link>
-            <svg className="w-3 h-3 text-outline-variant/60" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round"></path>
-            </svg>
-            <Link className="hover:text-m3-primary transition-colors" href="/promissory-notes">
-              صدور سفته الکترونیک
-            </Link>
-            <svg className="w-3 h-3 text-outline-variant/60" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round"></path>
-            </svg>
-            <span className="text-on-surface font-semibold">ثبت در خزانه‌داری و ضمانت</span>
-          </div>
-        </div>
-      </header>
+            <SiteHeader />
 
-      <main className="w-full bg-m3-surface pt-36 flex-1">
+      <main className="w-full bg-m3-surface pt-6 flex-1">
         <div className="flex flex-col w-full">
           {/* Mandatory sandbox/legal notice */}
           <div className="max-w-[1440px] mx-auto px-6 w-full">

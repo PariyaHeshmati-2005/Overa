@@ -1631,6 +1631,10 @@ export default function CategoriesApp({
   const sort = params.get("sort") ?? "new";
   const price = params.get("price") ?? "all";
   const instant = params.get("instant") === "1";
+  // Optional DB category slug (e.g. ?category=home from the hero carousel —
+  // covers categories that have no dedicated tab like «لوازم خانگی»). Applied
+  // before tab matching so both filters compose.
+  const categoryParam = params.get("category") ?? "";
 
   const [searchDraft, setSearchDraft] = useState(q);
   const [lastQ, setLastQ] = useState(q);
@@ -1664,8 +1668,13 @@ export default function CategoriesApp({
   }, [listings]);
 
   const tabItems = useMemo(
-    () => listings.filter((l) => matchesTab(l, tab)),
-    [listings, tab],
+    () =>
+      listings
+        .filter((l) =>
+          categoryParam ? l.categorySlug === categoryParam : true
+        )
+        .filter((l) => matchesTab(l, tab)),
+    [listings, tab, categoryParam],
   );
 
   const filtered = useMemo(() => {

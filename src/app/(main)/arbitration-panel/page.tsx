@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import M3Styles from "@/components/overa/M3Styles";
+import SiteHeader from "@/components/layout/SiteHeader";
 import ArbitrationPanelClient, { type PanelClaim } from "./ArbitrationPanelClient";
 
 export const metadata: Metadata = { title: "پنل داوری و مدیریت خسارت" };
@@ -16,7 +17,9 @@ export default async function ArbitrationPanelPage() {
   /* non-admin → access denied (no data rendered) */
   if (!user.isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-m3-background p-6">
+      <>
+      <SiteHeader />
+      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-m3-background p-6">
         <M3Styles />
         <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/50 shadow-md p-8 max-w-md text-center flex flex-col items-center gap-4">
           <span className="size-14 rounded-2xl bg-m3-error-container text-m3-on-error-container flex items-center justify-center">
@@ -35,6 +38,7 @@ export default async function ArbitrationPanelPage() {
           </Link>
         </div>
       </div>
+      </>
     );
   }
 
@@ -82,6 +86,7 @@ export default async function ArbitrationPanelPage() {
 
   return (
     <>
+      <SiteHeader />
       <M3Styles />
       <ArbitrationPanelClient claims={dto} />
     </>
