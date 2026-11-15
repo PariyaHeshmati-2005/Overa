@@ -678,7 +678,7 @@ export default async function PromissoryRegistrationPage() {
                 </svg>
               </div>
               <span className="font-bold text-on-surface">پلتفرم اجاره وسایل اورا (Overa)</span>
-              <span>— تمامی حقوق محفوظ است ۱۴۰۳</span>
+              <span>— تمامی حقوق محفوظ است ۱۴۰۵</span>
             </div>
             <div className="flex items-center gap-6">
               <Link className="hover:text-m3-primary transition-colors" href="/tos-support-faq">قوانین و مقررات</Link>

@@ -29,7 +29,7 @@ type Slide = {
 
 const SLIDES: Slide[] = [
   {
-    image: "/assets/img/75c37134b4d1.jpg",
+    image: "/assets/banner1.png",
     alt: "دوربین حرفه‌ای سونی برای اجاره در اورا",
     badge: "لوازم دیجیتال و دوربین",
     title: (
@@ -45,7 +45,7 @@ const SLIDES: Slide[] = [
     href: "/categories?tab=cameras",
   },
   {
-    image: "/assets/img/4e2c76ef8a36.jpg",
+    image: "/assets/img/banner2.png",
     alt: "چادر و تجهیزات کمپینگ در دل طبیعت",
     badge: "سفر و کمپینگ",
     title: "سفر سبک، طبیعت بی‌نهایت",
@@ -55,7 +55,7 @@ const SLIDES: Slide[] = [
     href: "/categories?tab=camping",
   },
   {
-    image: "/assets/img/8acd3309eb36.jpg",
+    image: "/assets/img/banner3.png",
     alt: "لوازم خانگی و وسایل خانه برای اجاره",
     badge: "وسایل خانه و لوازم خانگی",
     title: "خانه‌ای کامل، بدون خرید گران",
@@ -65,7 +65,7 @@ const SLIDES: Slide[] = [
     href: "/categories?category=home",
   },
   {
-    image: "/assets/img/46e703296228.jpg",
+    image: "/assets/img/banner4.png",
     alt: "ابزار و تجهیزات فنی برای اجاره کوتاه‌مدت",
     badge: "ابزار و تجهیزات فنی",
     title: "ابزار حرفه‌ای، فقط برای روزی که لازم داری",

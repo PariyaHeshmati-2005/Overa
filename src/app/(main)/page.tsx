@@ -125,11 +125,6 @@ export default async function HomePage() {
             />
           </div>
         </section>
-
-        <p className="text-[11px] text-neutral-muted text-center">
-          مجموعه‌ای از {toPersianDigits(activeCount)} وسیله فعال با قیمت‌های روز از{" "}
-          {faToman(110_000)} تومان
-        </p>
         </div>
       </main>
       <SiteFooter />
