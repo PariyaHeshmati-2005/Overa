@@ -29,7 +29,7 @@ type Slide = {
 
 const SLIDES: Slide[] = [
   {
-    image: "/assets/banner1.png",
+    image: "/assets/img/banner1.png",
     alt: "دوربین حرفه‌ای سونی برای اجاره در اورا",
     badge: "لوازم دیجیتال و دوربین",
     title: (
