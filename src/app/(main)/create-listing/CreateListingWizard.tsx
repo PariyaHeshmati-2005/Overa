@@ -685,22 +685,6 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             {errors.categoryId && (
               <p className="text-[11px] text-m3-error font-semibold">{errors.categoryId}</p>
             )}
-
-            <div className="flex flex-col gap-2 pt-2">
-              <label className="text-on-surface font-semibold text-sm" htmlFor="subCategory">
-                زیردسته تخصصی
-              </label>
-              <select
-                id="subCategory"
-                disabled
-                title="به‌زودی"
-                value=""
-                onChange={() => undefined}
-                className="w-full h-12 bg-surface-container-lowest text-on-surface rounded-lg px-8 appearance-none cursor-not-allowed border border-outline-variant/40 opacity-60"
-              >
-                <option>انتخاب زیردسته — به‌زودی</option>
-              </select>
-            </div>
           </section>
 
           <section className="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col gap-5">
