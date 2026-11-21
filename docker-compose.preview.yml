@@ -1,0 +1,26 @@
+# Overa — LOCAL PREVIEW override (docker compose)
+# فقط برای پیش‌نمایش محلیِ قابلیت تأیید دوطرفه — هرگز روی سرور استفاده نشود.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.preview.yml up -d --build
+#
+# What this changes versus the production compose file:
+#   1. DATABASE_URL/DIRECT_URL are pinned (literally) to the containerized
+#      Postgres — so even if a project-root .env (e.g. pointing at a real
+#      Neon database) is present, the preview container can never touch it.
+#   2. SEED_DEMO=1 fills the preview database with the labelled demo content.
+#   3. OVERA_SEED_ALLOW_REMOTE=1 is required because, inside the compose
+#      network, the database host is "db" (not localhost) and scripts/seed.ts
+#      refuses non-local targets by default. Local preview only — on a real
+#      server leave this unset.
+services:
+  app:
+    environment:
+      DATABASE_URL: postgresql://overa:overa_pg_password@db:5432/overa?sslmode=disable
+      DIRECT_URL: postgresql://overa:overa_pg_password@db:5432/overa?sslmode=disable
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      SEED_DEMO: "1"
+      OVERA_SEED_ALLOW_REMOTE: "1"
+      ADMIN_PHONE: ""
+      ADMIN_PASSWORD: ""
+      # SMS key stays unset → OTP runs in the visible demo mode (code on screen).

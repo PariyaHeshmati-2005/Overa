@@ -6,6 +6,8 @@ import { useState } from "react";
 import { toast, Toaster } from "sonner";
 import { faDate, faDateTime, faNumber, faToman, toPersianDigits } from "@/lib/format";
 import type { ReservationAction } from "@/lib/rental-state";
+import DeliveryConfirmCard from "@/components/overa/DeliveryConfirmCard";
+import ReturnConfirmCard from "@/components/overa/ReturnConfirmCard";
 
 /* ------------------------------------------------------------------ types */
 
@@ -23,6 +25,7 @@ export type LifecycleReservation = {
   pickupMethod: string;
   renterProtocol: string | null;
   hostProtocol: string | null;
+  depositStatus?: string | null;
   listing: {
     id: string;
     title: string;
@@ -56,6 +59,8 @@ const STAGE_BY_STATUS: Record<string, number> = {
   PAYMENT: 3,
   PAID: 3,
   DELIVERED: 4,
+  RENTAL_ACTIVE: 4,
+  RETURN_REQUESTED: 5,
   RETURNED: 5,
   INSPECTION: 5,
   DISPUTED: 5,
@@ -115,6 +120,11 @@ const ACTION_META: Record<string, { label: string; icon: string; className: stri
     icon: "local_shipping",
     className: "bg-m3-primary text-white hover:bg-primary-container shadow-md shadow-m3-primary/25",
   },
+  confirm_delivery: {
+    label: "تأیید دریافت کالا",
+    icon: "package_2",
+    className: "bg-m3-primary text-white hover:bg-primary-container shadow-md shadow-m3-primary/25",
+  },
   request_return: {
     label: "درخواست بازگشت",
     icon: "replay",
@@ -153,6 +163,7 @@ const ACTION_ORDER: ReservationAction[] = [
   "confirm_agreement",
   "pay",
   "deliver",
+  "confirm_delivery",
   "request_return",
   "confirm_return",
   "complete_inspection",
@@ -185,7 +196,16 @@ export default function RentalLifecycleClient({
   const statusLabel = statusLabels[status] ?? status;
   const statusColor = statusColors[status] ?? "bg-surface-container-high text-on-surface";
   const can = (a: string) => actions.includes(a as ReservationAction);
-  const visibleActions = ACTION_ORDER.filter((a) => can(a));
+  /* OTP-gated actions never render as plain buttons: the renter's delivery
+     confirmation and the host's RETURN_REQUESTED confirmation go through the
+     confirmation cards (OtpConfirmFlow). The legacy RETURNED → INSPECTION
+     confirm_return stays a plain action for old reservations. */
+  const visibleActions = ACTION_ORDER.filter(
+    (a) =>
+      can(a) &&
+      a !== "confirm_delivery" &&
+      !(a === "confirm_return" && status === "RETURN_REQUESTED"),
+  );
   const image = r.listing.images[0] ?? null;
 
   async function act(action: ReservationAction, extra?: Record<string, string>) {
@@ -265,12 +285,29 @@ export default function RentalLifecycleClient({
   /* Section states: done | active | locked */
   const contractDone = stage > 2 && !terminal;
   const contractActive = !terminal && ["REQUESTED", "APPROVED", "AGREEMENT"].includes(status);
-  const paymentDone = ["PAID", "DELIVERED", "RETURNED", "INSPECTION", "COMPLETED", "DISPUTED"].includes(status);
+  const paymentDone = [
+    "PAID",
+    "DELIVERED",
+    "RENTAL_ACTIVE",
+    "RETURN_REQUESTED",
+    "RETURNED",
+    "INSPECTION",
+    "COMPLETED",
+    "DISPUTED",
+  ].includes(status);
   const paymentActive = can("pay");
-  const deliveryDone = ["RETURNED", "INSPECTION", "COMPLETED"].includes(status);
+  const deliveryDone = [
+    "RENTAL_ACTIVE",
+    "RETURN_REQUESTED",
+    "RETURNED",
+    "INSPECTION",
+    "COMPLETED",
+  ].includes(status);
   const deliveryActive = ["PAID", "DELIVERED"].includes(status);
   const protocolDone = status === "COMPLETED";
-  const protocolActive = ["RETURNED", "INSPECTION", "DISPUTED"].includes(status);
+  const protocolActive = ["RETURN_REQUESTED", "RETURNED", "INSPECTION", "DISPUTED"].includes(status);
+  /* Deposit-aware copy for completed orders (new OTP flow vs legacy data). */
+  const depositPendingRefund = status === "COMPLETED" && r.depositStatus === "REFUND_PENDING";
 
   const contractTerms = `این قرارداد بین ${r.renter.name} (مستأجر) و ${r.host.name} (میزبان)، بر اساس قوانین پلتفرم اورا و شرایط توافق‌شده، تنظیم گردیده و برای هر دو طرف لازم‌الاجرا می‌باشد. کلیه پرداخت‌ها و ودیعه‌ها در حالت شبیه‌سازی (Sandbox) ثبت می‌شوند و هیچ پول واقعی جابه‌جا نمی‌شود.`;
 
@@ -347,7 +384,9 @@ export default function RentalLifecycleClient({
       {status === "COMPLETED" && (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 font-bold flex items-center gap-2">
           <span className="material-symbols-outlined">task_alt</span>
-          اجاره تکمیل شد؛ ودیعه در حالت شبیه‌سازی آزاد شد.
+          {depositPendingRefund
+            ? "اجاره تکمیل شد؛ فرآیند بازگشت ودیعه در حالت شبیه‌سازی آغاز گردید."
+            : "اجاره تکمیل شد؛ ودیعه در حالت شبیه‌سازی آزاد شد."}
         </div>
       )}
 
@@ -682,6 +721,14 @@ export default function RentalLifecycleClient({
       {/* Stage 3: تحویل و بازرسی */}
       <section id="delivery" className="scroll-mt-32 space-y-4">
         <SectionHeading title="تحویل و بازرسی سلامت کالا" state={deliveryDone ? "done" : deliveryActive ? "active" : "locked"} />
+        {role === "renter" && status === "DELIVERED" && (
+          <DeliveryConfirmCard
+            reservationId={r.id}
+            code={r.code}
+            listingTitle={r.listing.title}
+            hostName={r.host.name}
+          />
+        )}
         {deliveryActive && (
           <>
             <div className="bg-white rounded-xl p-5 border border-outline-variant/30 shadow-sm space-y-4">
@@ -733,9 +780,14 @@ export default function RentalLifecycleClient({
                 این فرآیند جایگزین مراجع قانونی نیست.
               </p>
             </div>
+            {/* Available actions in DELIVERED (dispute escape hatch — the renter's
+                delivery confirmation itself is OTP-gated and lives in the card above). */}
+            {status === "DELIVERED" && visibleActions.length > 0 && (
+              <ActionRow busy={busy} visible={visibleActions} onAction={handleAction} />
+            )}
           </>
         )}
-        {deliveryDone && <CompactDone text="وسیله تحویل داده شد و دوران استفاده آغاز شد؛ عودت و صورت‌جلسه در مرحله بعد انجام می‌شود." />}
+        {deliveryDone && <CompactDone text="دریافت کالا تأیید شد و دوره اجاره فعال است؛ عودت و صورت‌جلسه در مرحله بعد انجام می‌شود." />}
         {!deliveryDone && !deliveryActive && <CompactLocked text="تحویل کالا پس از انجام پرداخت توسط مستأجر فعال می‌شود." />}
       </section>
 
@@ -744,7 +796,13 @@ export default function RentalLifecycleClient({
         <SectionHeading title="پروتکل تایید دوطرفه و عودت کالا" state={protocolDone ? "done" : protocolActive ? "active" : "locked"} />
         {protocolDone && (
           <div className="space-y-3">
-            <CompactDone text="صورت‌جلسه تحویل ثبت و ودیعه در حالت شبیه‌سازی آزاد شد؛ اجاره تکمیل شد." />
+            <CompactDone
+              text={
+                depositPendingRefund
+                  ? "بازگشت کالا با کد یک‌بارمصرف تأیید و سفارش تکمیل شد؛ فرآیند بازگشت ودیعه در حالت شبیه‌سازی آغاز گردید."
+                  : "صورت‌جلسه تحویل ثبت و ودیعه در حالت شبیه‌سازی آزاد شد؛ اجاره تکمیل شد."
+              }
+            />
             {(r.renterProtocol || r.hostProtocol) && (
               <div className="bg-white rounded-2xl border border-purple-100 shadow-sm p-5 space-y-2 text-xs">
                 {r.renterProtocol && (
@@ -763,6 +821,15 @@ export default function RentalLifecycleClient({
         )}
         {protocolActive && (
           <>
+            {/* Host decision card (OTP healthy-return / damage declaration). */}
+            {role === "host" && status === "RETURN_REQUESTED" && (
+              <ReturnConfirmCard
+                reservationId={r.id}
+                code={r.code}
+                listingTitle={r.listing.title}
+                renterName={r.renter.name}
+              />
+            )}
             <div className="bg-white rounded-2xl border border-purple-100 shadow-sm overflow-hidden">
               <div className="p-4 bg-gradient-to-r from-purple-50 via-indigo-50/40 to-white border-b border-purple-100 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -789,7 +856,7 @@ export default function RentalLifecycleClient({
                   <ul className="space-y-2 text-slate-600">
                     <li className="flex items-center gap-2">۱. ثبت درخواست بازگشت توسط مستأجر</li>
                     <li className="flex items-center gap-2">۲. تایید بازگشت و بررسی سلامت توسط میزبان</li>
-                    <li className="flex items-center gap-2">۳. ثبت صورت‌جلسه دوطرفه و آزادسازی ودیعه (شبیه‌سازی)</li>
+                    <li className="flex items-center gap-2">۳. تکمیل سفارش و آغاز فرآیند بازگشت ودیعه (شبیه‌سازی)</li>
                   </ul>
                 </div>
               </div>

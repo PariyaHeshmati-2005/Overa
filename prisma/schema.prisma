@@ -167,7 +167,9 @@ model Favorite {
 // ---------------------------------------------------------------------------
 
 // REQUESTED -> APPROVED -> AGREEMENT -> PAYMENT -> PAID -> DELIVERED ->
-// RETURNED -> INSPECTION -> COMPLETED ; plus REJECTED / CANCELLED / DISPUTED
+// RENTAL_ACTIVE -> RETURN_REQUESTED -> COMPLETED ; legacy path
+// RETURNED -> INSPECTION -> COMPLETED (old data) ; plus
+// REJECTED / CANCELLED / DISPUTED
 // (see src/lib/rental-state.ts for the exact transition table)
 model Reservation {
   id         String @id @default(cuid())
@@ -189,6 +191,21 @@ model Reservation {
   // Two-sided condition/inspection protocol
   renterProtocol   String? // free text taken at return/inspection
   hostProtocol     String?
+  // Two-sided OTP confirmation timeline (see src/lib/reservation-otp.ts):
+  // deliveredAt       — host recorded the hand-over (PAID → DELIVERED)
+  // actualStartAt     — renter OTP-confirmed receipt; the REAL rental start
+  // returnRequestedAt — renter announced the return (RENTAL_ACTIVE → RETURN_REQUESTED)
+  // returnConfirmedAt — host OTP-confirmed the healthy return (→ COMPLETED)
+  // disputeOpenedAt   — damage/dispute declared by either side
+  deliveredAt       DateTime?
+  actualStartAt     DateTime?
+  returnRequestedAt DateTime?
+  returnConfirmedAt DateTime?
+  disputeOpenedAt   DateTime?
+  // Deposit refund pipeline (application ledger only, sandbox):
+  // NONE (nothing paid) | HELD (paid & held) | REFUND_PENDING
+  // (order completed — refund process started) | REFUNDED (released)
+  depositStatus String @default("NONE")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -196,12 +213,36 @@ model Reservation {
   renter   User    @relation("RenterReservations", fields: [renterId], references: [id])
   host     User    @relation("HostReservations", fields: [hostId], references: [id])
   events   ReservationEvent[]
+  otps     ReservationOtp[]
   conversation Conversation?
   claims   DamageClaim[]
   reviews  Review[]
 
   @@index([renterId, status])
   @@index([hostId, status])
+}
+
+// One-time codes for the two-sided delivery/return confirmation. Codes are
+// stored HASHED (scrypt, never plain text), bound to exactly one reservation +
+// user + stage (DELIVERY_RECEIVED | RETURN_RECEIVED), expire after 5 minutes,
+// allow 5 wrong attempts, and are single-use (consumed). Verification and the
+// resulting reservation status change always run inside one transaction.
+model ReservationOtp {
+  id            String    @id @default(cuid())
+  reservationId String
+  userId        String
+  stage         String    // DELIVERY_RECEIVED | RETURN_RECEIVED
+  phone         String    // phone of the authenticated user, read server-side at issue time
+  codeHash      String    // scrypt "salt:hash" — the plain code is never stored
+  attempts      Int       @default(0)
+  consumed      Boolean   @default(false)
+  consumedAt    DateTime?
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+  @@index([reservationId, userId, stage, createdAt])
 }
 
 model ReservationEvent {

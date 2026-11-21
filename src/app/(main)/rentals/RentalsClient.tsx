@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { daysBetween, faDate, faNumber, faToman } from "@/lib/format";
+import DeliveryConfirmCard from "@/components/overa/DeliveryConfirmCard";
+import ReturnConfirmCard from "@/components/overa/ReturnConfirmCard";
 
 /* ------------------------------------------------------------------ types */
 
@@ -23,6 +25,7 @@ type ApiReservation = {
   total: number;
   pickupMethod: string;
   renterNote: string | null;
+  depositStatus?: string | null;
   createdAt: string;
   updatedAt: string;
   listing: {
@@ -49,13 +52,33 @@ type Props = {
 const TABS: { key: string; label: string; statuses: string[] }[] = [
   { key: "pending", label: "در انتظار پاسخ", statuses: ["REQUESTED"] },
   { key: "delivery", label: "در انتظار تحویل", statuses: ["APPROVED", "AGREEMENT", "PAYMENT"] },
-  { key: "active", label: "فعال", statuses: ["PAID", "DELIVERED", "RETURNED", "INSPECTION"] },
+  {
+    key: "active",
+    label: "فعال",
+    statuses: [
+      "PAID",
+      "DELIVERED",
+      "RENTAL_ACTIVE",
+      "RETURN_REQUESTED",
+      "RETURNED",
+      "INSPECTION",
+    ],
+  },
   { key: "completed", label: "تکمیل‌شده", statuses: ["COMPLETED"] },
   { key: "closed", label: "لغو/رد", statuses: ["CANCELLED", "REJECTED"] },
   { key: "disputed", label: "اختلاف", statuses: ["DISPUTED"] },
 ];
 
-const ESCROWED_STATUSES = ["AGREEMENT", "PAYMENT", "PAID", "DELIVERED", "RETURNED", "INSPECTION"];
+const ESCROWED_STATUSES = [
+  "AGREEMENT",
+  "PAYMENT",
+  "PAID",
+  "DELIVERED",
+  "RENTAL_ACTIVE",
+  "RETURN_REQUESTED",
+  "RETURNED",
+  "INSPECTION",
+];
 const CANCELABLE = ["REQUESTED", "APPROVED", "AGREEMENT", "PAYMENT", "PAID"];
 
 const SORTS: { key: string; label: string }[] = [
@@ -174,6 +197,18 @@ export default function RentalsClient({
     [mine],
   );
   const dealsCount = useMemo(() => mine.filter((r) => r.status === "COMPLETED").length, [mine]);
+
+  /* Two-sided confirmation cards (OTP flow):
+     renter → orders delivered by the host awaiting receipt confirmation;
+     host → orders whose return was announced by the renter. */
+  const deliveryPending = useMemo(
+    () => (role === "renter" ? mine.filter((r) => r.status === "DELIVERED") : []),
+    [mine, role],
+  );
+  const returnPending = useMemo(
+    () => (role === "host" ? mine.filter((r) => r.status === "RETURN_REQUESTED") : []),
+    [mine, role],
+  );
 
   /* ------------------------------------------------------------- actions */
 
@@ -403,6 +438,46 @@ export default function RentalsClient({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mt-2">
         {/* Main cards column */}
         <section className="lg:col-span-8 flex flex-col gap-6">
+          {/* Action-needed: renter delivery confirmations (OTP) */}
+          {deliveryPending.length > 0 && (
+            <div className="flex flex-col gap-4">
+              <h2 className="text-sm font-bold text-on-surface flex items-center gap-2">
+                <span className="material-symbols-outlined text-m3-primary text-lg">package_2</span>
+                نیازمند تأیید شما
+              </h2>
+              {deliveryPending.map((r) => (
+                <DeliveryConfirmCard
+                  key={r.id}
+                  reservationId={r.id}
+                  code={r.code}
+                  listingTitle={r.listing.title}
+                  hostName={r.host.name}
+                  onSettled={() => void load()}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Action-needed: host return confirmations (OTP / damage) */}
+          {returnPending.length > 0 && (
+            <div className="flex flex-col gap-4">
+              <h2 className="text-sm font-bold text-on-surface flex items-center gap-2">
+                <span className="material-symbols-outlined text-m3-primary text-lg">local_shipping</span>
+                نیازمند بررسی و تأیید شما
+              </h2>
+              {returnPending.map((r) => (
+                <ReturnConfirmCard
+                  key={r.id}
+                  reservationId={r.id}
+                  code={r.code}
+                  listingTitle={r.listing.title}
+                  renterName={r.renter.name}
+                  onSettled={() => void load()}
+                />
+              ))}
+            </div>
+          )}
+
           {/* Sort / refresh bar */}
           <div className="flex flex-wrap items-center justify-between gap-3 bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/60 shadow-sm">
             <div className="flex items-center gap-3">
@@ -484,7 +559,9 @@ export default function RentalsClient({
                       {r.status === "COMPLETED" ? (
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
                           <span className="material-symbols-outlined text-sm">verified_user</span>
-                          ودیعه مسترد شد (شبیه‌سازی)
+                          {r.depositStatus === "REFUND_PENDING"
+                            ? "در انتظار بازگشت ودیعه (شبیه‌سازی)"
+                            : "ودیعه مسترد شد (شبیه‌سازی)"}
                         </span>
                       ) : (
                         <span className="text-xs text-on-surface font-semibold bg-primary-fixed/40 px-2.5 py-1 rounded-md">

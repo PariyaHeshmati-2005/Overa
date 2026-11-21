@@ -102,6 +102,7 @@ export default async function RentalLifecyclePage({
           pickupMethod: reservation.pickupMethod,
           renterProtocol: reservation.renterProtocol,
           hostProtocol: reservation.hostProtocol,
+          depositStatus: reservation.depositStatus,
           listing: {
             id: reservation.listing.id,
             title: reservation.listing.title,

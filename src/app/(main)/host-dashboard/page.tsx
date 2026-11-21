@@ -14,6 +14,7 @@ import { faDate, faNumber, faToman } from "@/lib/format";
 import HostSidebar from "./HostSidebar";
 import ReservationsCard, { type ReservationRow } from "./ReservationsCard";
 import RevenueChart, { type ChartBucket, type ChartRanges } from "./RevenueChart";
+import ReturnConfirmCard from "@/components/overa/ReturnConfirmCard";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +62,12 @@ export default async function HostDashboardPage() {
   const [requestedCount, activeRentals, completedCount, revenueAgg, paymentsCount, reviewsAgg] =
     await Promise.all([
       db.reservation.count({ where: { hostId: user.id, status: "REQUESTED" } }),
-      db.reservation.count({ where: { hostId: user.id, status: { in: ["PAID", "DELIVERED"] } } }),
+      db.reservation.count({
+        where: {
+          hostId: user.id,
+          status: { in: ["PAID", "DELIVERED", "RENTAL_ACTIVE", "RETURN_REQUESTED"] },
+        },
+      }),
       db.reservation.count({ where: { hostId: user.id, status: "COMPLETED" } }),
       db.walletTransaction.aggregate({
         _sum: { amount: true },
@@ -122,6 +128,18 @@ export default async function HostDashboardPage() {
     "30d": buildBuckets(30, 6, chartRows),
     "90d": buildBuckets(90, 6, chartRows),
   };
+
+  /* Two-sided confirmation: rentals whose return was announced by the renter
+     and now await the host's OTP-verified decision (healthy return / damage). */
+  const pendingReturns = await db.reservation.findMany({
+    where: { hostId: user.id, status: "RETURN_REQUESTED" },
+    orderBy: { returnRequestedAt: "desc" },
+    take: 3,
+    include: {
+      listing: { include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } } },
+      renter: { select: { id: true, name: true } },
+    },
+  });
 
   const reservationRows: ReservationRow[] = recentReservations.map((r) => {
     const status = r.status as ReservationStatus;
@@ -603,6 +621,25 @@ export default async function HostDashboardPage() {
 
               <RevenueChart ranges={ranges} />
             </section>
+
+            {/* Two-sided confirmation: return decisions awaiting the host */}
+            {pendingReturns.length > 0 && (
+              <section className="space-y-4" data-purpose="return-confirmation-list">
+                <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-m3-primary">local_shipping</span>
+                  در انتظار تأیید بازگشت کالا
+                </h2>
+                {pendingReturns.map((r) => (
+                  <ReturnConfirmCard
+                    key={r.id}
+                    reservationId={r.id}
+                    code={r.code}
+                    listingTitle={r.listing.title}
+                    renterName={r.renter.name}
+                  />
+                ))}
+              </section>
+            )}
 
             {/* BottomRow */}
             <section

@@ -3,6 +3,8 @@ import { jsonError, jsonOk, requireUser } from "@/lib/api";
 import {
   assertTransition,
   canAct,
+  OTP_ONLY_ACTIONS,
+  OTP_STAGE_BY_STATUS,
   RESERVATION_STATUS_LABELS,
   TransitionError,
   type ReservationAction,
@@ -61,6 +63,27 @@ export async function PATCH(req: Request, ctx: Ctx) {
   const action = body.action as ReservationAction;
   if (!action) return jsonError("کنش (action) مشخص نشده است.");
 
+  // OTP-gated actions must never run through this generic endpoint: the
+  // renter's delivery confirmation and the host's return confirmation from
+  // RETURN_REQUESTED require a verified one-time code
+  // (POST /api/reservations/[id]/otp/verify). The legacy RETURNED →
+  // INSPECTION confirm_return path stays available for old data.
+  if (OTP_ONLY_ACTIONS.includes(action)) {
+    return jsonError(
+      "این کنش فقط با کد یک‌بارمصرف و از کارت تأیید دریافت کالا قابل ثبت است.",
+      422,
+    );
+  }
+  if (
+    action === "confirm_return" &&
+    OTP_STAGE_BY_STATUS[reservation.status as ReservationStatus] === "RETURN_RECEIVED"
+  ) {
+    return jsonError(
+      "تأیید بازگشت این سفارش فقط با کد یک‌بارمصرف و از کارت تأیید بازگشت کالا انجام می‌شود.",
+      422,
+    );
+  }
+
   const actor: "renter" | "host" | "admin" = isAdmin && !isRenter && !isHost
     ? "admin"
     : isHost
@@ -89,6 +112,13 @@ export async function PATCH(req: Request, ctx: Ctx) {
     userId: string; type: string; amount: number; reference: string; description: string; status?: string;
   }[] = [];
   const balanceDelta: Record<string, number> = {};
+  // Timeline / pipeline fields written alongside the status transition.
+  const dataExtra: {
+    deliveredAt?: Date;
+    returnRequestedAt?: Date;
+    disputeOpenedAt?: Date;
+    depositStatus?: string;
+  } = {};
 
   const addEvent = (message: string) => { events[0].message = message; };
 
@@ -107,6 +137,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
     case "pay": {
       // SANDBOX payment adapter — visibly labelled everywhere.
       addEvent("پرداخت در حالت آزمایشی (Sandbox) انجام شد. هیچ پول واقعی جابه‌جا نشده است.");
+      dataExtra.depositStatus = "HELD";
       walletEntries.push(
         { userId: reservation.renterId, type: "RENTAL_PAYMENT", amount: -reservation.subtotal, reference: reservation.code, description: `پرداخت اجاره ${reservation.listing.title} — حالت شبیه‌سازی` },
         { userId: reservation.renterId, type: "DEPOSIT_HOLD", amount: -reservation.deposit, reference: reservation.code, description: `بلوکه شدن ودیعه — حالت شبیه‌سازی` },
@@ -118,10 +149,16 @@ export async function PATCH(req: Request, ctx: Ctx) {
       break;
     }
     case "deliver":
-      addEvent("وسیله تحویل داده شد؛ دوران استفاده آغاز شد.");
+      // Host recorded the hand-over; the rental activates only after the
+      // renter confirms receipt with a one-time code (OTP card).
+      dataExtra.deliveredAt = new Date();
+      addEvent("میزبان تحویل کالا را ثبت کرد؛ منتظر تأیید دریافت مستأجر با کد یک‌بارمصرف.");
+      await db.notification.create({ data: { userId: reservation.renterId, type: "RESERVATION", title: "کالا تحویل ثبت شد", body: `میزبان تحویل «${reservation.code}» را ثبت کرد؛ لطفاً سلامت کالا را در کارت «تأیید دریافت کالا» با کد یک‌بارمصرف تأیید کنید.`, link: "/rentals" } });
       break;
     case "request_return":
-      addEvent("درخواست بازگشت ثبت شد؛ منتظر بررسی مالک.");
+      dataExtra.returnRequestedAt = new Date();
+      addEvent("مستأجر بازگشت کالا را ثبت کرد؛ منتظر بررسی و تأیید میزبان.");
+      await db.notification.create({ data: { userId: reservation.hostId, type: "RESERVATION", title: "بازگشت کالا ثبت شد", body: `مستأجر برای «${reservation.code}» بازگشت کالا را ثبت کرد؛ سلامت کالا را بررسی و در کارت تأیید بازگشت اعلام کنید.`, link: "/host-dashboard" } });
       break;
     case "confirm_return":
       addEvent("بازگشت وسیله تایید شد؛ صورت‌جلسه تحویل در حال تکمیل.");
@@ -135,13 +172,15 @@ export async function PATCH(req: Request, ctx: Ctx) {
     }
     case "release_deposit":
       addEvent("ودیعه آزاد شد و اجاره تکمیل شد (شبیه‌سازی).");
+      dataExtra.depositStatus = "REFUNDED";
       walletEntries.push(
         { userId: reservation.renterId, type: "DEPOSIT_RELEASE", amount: reservation.deposit, reference: reservation.code, description: "آزادسازی ودیعه — حالت شبیه‌سازی" },
       );
       balanceDelta[reservation.renterId] = (balanceDelta[reservation.renterId] ?? 0) + reservation.deposit;
       break;
     case "dispute":
-      addEvent(String(body.note ?? "اعلام اختلاف/خسارت برای این اجاره."));
+      dataExtra.disputeOpenedAt = new Date();
+      addEvent(String(body.note ?? "اعلام اختلاف/خسارت برای این اجاره؛ سفارش به مرحله بررسی اختلاف منتقل شد."));
       break;
     case "cancel": {
       addEvent("رزرو لغو شد.");
@@ -169,6 +208,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
         status: next,
         renterProtocol: reservation.renterProtocol ?? undefined,
         hostProtocol: reservation.hostProtocol ?? undefined,
+        ...dataExtra,
         events: { create: events },
       },
     });
