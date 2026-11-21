@@ -10,10 +10,12 @@ set -e
 # 4. Start the Next.js server.
 
 echo "[overa] applying database migrations…"
-# NOTE: `prisma migrate deploy` supports only --schema/--config. It never
-# generates the Prisma Client (that happens at image build: `prisma generate`),
-# so there is no --skip-generate flag here — passing it is a hard CLI error.
-bunx prisma migrate deploy
+# NOTE: migrations go through scripts/migrate-deploy.sh (same script the
+# buildpack `build`/`start` hooks use) — production-safe, idempotent, with a
+# baseline fallback for databases created without migration history.
+# `prisma migrate deploy` never generates the Prisma Client (that happens at
+# image build: `prisma generate`).
+sh scripts/migrate-deploy.sh
 
 if [ -n "$ADMIN_PHONE" ] && [ -n "$ADMIN_PASSWORD" ]; then
   echo "[overa] ensuring platform admin account…"

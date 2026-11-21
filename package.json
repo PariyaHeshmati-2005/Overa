@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "bash scripts/env-run.sh prisma generate && bash scripts/env-run.sh next dev -p 3000 2>&1 | tee dev.log",
-    "build": "bash scripts/env-run.sh prisma generate && bash scripts/env-run.sh next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
-    "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
+    "build": "bash scripts/env-run.sh prisma generate && bash scripts/env-run.sh next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/ && sh scripts/migrate-deploy.sh",
+    "start": "sh scripts/migrate-deploy.sh && NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
     "db:push": "bash scripts/env-run.sh prisma db push",
     "db:generate": "bash scripts/env-run.sh prisma generate",
@@ -13,7 +13,7 @@
     "db:reset": "bash scripts/env-run.sh prisma migrate reset",
     "test": "bun test",
     "seed": "bash scripts/env-run.sh bun run scripts/seed.ts",
-    "db:migrate:deploy": "bash scripts/env-run.sh prisma migrate deploy",
+    "db:migrate:deploy": "bash scripts/env-run.sh sh scripts/migrate-deploy.sh",
     "db:seed:categories": "bash scripts/env-run.sh bun run scripts/seed-categories.ts",
     "db:import": "bash scripts/env-run.sh bun run scripts/import-listings.ts",
     "db:seed": "bash scripts/env-run.sh bun run scripts/seed.ts"

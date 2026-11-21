@@ -107,3 +107,30 @@ src/components/overa/ReturnConfirmCard.tsx   کارت تأیید بازگشت م
   `09122222222`، رمز `overa1234`)، ثبت و طی سفارش تا پرداخت، «تحویل شد» توسط
   میزبان، سپس کارت تأیید در پنل مستأجر → کد نمایشی → تأیید؛ پس از «درخواست
   بازگشت» توسط مستأجر، کارت میزبان در داشبورد میزبان ظاهر می‌شود.
+
+## استقرار و عیب‌یابی
+
+- **مهاجرت خودکار:** از این نسخه `scripts/migrate-deploy.sh` به هر سه مسیر
+  راه‌اندازی وصل است (اسکریپت `build`، اسکریپت `start` و `docker-entrypoint.sh`)
+  تا هر پلتفرمی که اپ را بالا می‌آورد، قبل از شروع سرور `prisma migrate deploy`
+  را اجرا کند. اسکریپت idempotent است (اجرای مکرر بی‌خطر) و فقط migrationهای
+  افزایشی را اعمال می‌کند؛ هیچ داده‌ای حذف یا بازنویسی نمی‌شود. اگر
+  `DATABASE_URL` ست نشده باشد (مثلاً build محلی) با هشدار رد می‌شود و build را
+  نمی‌شکند.
+- **fallback با baseline:** اگر دیتابیس قبلاً با `prisma db push` ساخته شده
+  باشد و جدول تاریخچه `_prisma_migrations` نداشته باشد، اسکریپت سه migration
+  قبلی را «اعمال‌شده» علامت می‌زند (baseline) و فقط migrationهای جدید را اجرا
+  می‌کند.
+- **خطای `P2022 — The column "Reservation.deliveredAt" does not exist`:** یعنی
+  کدِ جدید deploy شده ولی migration متناظر روی دیتابیس اعمال نشده است. با نسخهٔ
+  فعلی redeploy کنید تا خودکار اعمال شود؛ یا برای اصلاح فوری بدون redeploy، از
+  روی ماشین محلی:
+  ```bash
+  cd Overa/Overa
+  DATABASE_URL="postgresql://…?sslmode=require" DIRECT_URL="postgresql://…?sslmode=require" bunx prisma migrate deploy
+  bunx prisma migrate status   # باید «Database is now up to date» بدهد
+  ```
+  این دستور فقط-افزایشی است (ستون‌های جدید جدول `Reservation` + جدول
+  `ReservationOtp`) و پس از اجرا، صفحات بدون ری‌استارت اپ درست می‌شوند.
+- هشدار `NODE_ENV was incorrectly set to "development"` روی پلتفرم بی‌ضرر است؛
+  برای حذف آن در متغیرهای محیطی پلتفرم `NODE_ENV=production` را تنظیم کنید.
