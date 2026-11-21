@@ -178,7 +178,7 @@ export default function HeaderClient({
               </SheetTrigger>
               <SheetContent side="right" className="w-72 p-6 overflow-y-auto">
                 <SheetHeader className="text-right">
-                  <SheetTitle className="text-lg font-black text-primary">منوی اورا</SheetTitle>
+                  <SheetTitle className="text-2xl font-black tracking-tight text-[#801E76] mt-3 mb-1">منوی اٌوِرا</SheetTitle>
                 </SheetHeader>
                 {/* Live database search (same system as the desktop header) —
                     placed right above the خانه option; selecting a result

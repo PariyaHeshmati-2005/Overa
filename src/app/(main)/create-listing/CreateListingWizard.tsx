@@ -130,23 +130,47 @@ const WIDTHS = ["25%", "50%", "75%", "100%"];
 
 const PROVINCES = ["تهران", "البرز", "اصفهان", "فارس", "خراسان رضوی"];
 const PROVINCE_CITIES: Record<string, string[]> = {
-  "تهران": ["تهران", "شمیرانات", "ری", "پردیس"],
-  "البرز": ["کرج", "مهرشهر"],
-  "اصفهان": ["اصفهان", "کاشان"],
-  "فارس": ["شیراز"],
+  تهران: ["تهران", "شمیرانات", "ری", "پردیس"],
+  البرز: ["کرج", "مهرشهر"],
+  اصفهان: ["اصفهان", "کاشان"],
+  فارس: ["شیراز"],
   "خراسان رضوی": ["مشهد", "نیشابور"],
 };
 
 const CONDITIONS = [
-  { val: "like_new", label: "در حد نو / بدون خط و خش", desc: "مشابه وسیله نو، بدون عیب ظاهری یا سنسوری" },
-  { val: "very_clean", label: "بسیار تمیز با کارکرد جزئی", desc: "دارای رد کارکرد مختصر، کاملاً تست‌شده و سالم" },
-  { val: "used_good", label: "کارکرده و کاملاً سالم", desc: "دارای خط و خش یا ساییدگی اما عملکرد فنی بی‌نقص" },
+  {
+    val: "like_new",
+    label: "در حد نو / بدون خط و خش",
+    desc: "مشابه وسیله نو، بدون عیب ظاهری یا سنسوری",
+  },
+  {
+    val: "very_clean",
+    label: "بسیار تمیز با کارکرد جزئی",
+    desc: "دارای رد کارکرد مختصر، کاملاً تست‌شده و سالم",
+  },
+  {
+    val: "used_good",
+    label: "کارکرده و کاملاً سالم",
+    desc: "دارای خط و خش یا ساییدگی اما عملکرد فنی بی‌نقص",
+  },
 ];
 
 const CANCELLATION_POLICIES = [
-  { id: "flexible", title: "انعطاف‌پذیر (پیشنهادی)", desc: "استرداد ۱۰۰٪ وجه تا ۲۴ ساعت قبل از شروع رزرو، کسر ۱۰٪ در صورت لغو در روز تحویل." },
-  { id: "moderate", title: "نیمه‌سخت‌گیرانه", desc: "استرداد کامل تا ۳ روز قبل؛ بازگشت ۵۰٪ وجه در صورت لغو در کمتر از ۷۲ ساعت مانده به اجاره." },
-  { id: "strict", title: "سخت‌گیرانه", desc: "استرداد ۷۰٪ وجه فقط تا ۵ روز قبل؛ در صورت کنسلی بعد از آن مبلغی مسترد نمی‌شود." },
+  {
+    id: "flexible",
+    title: "انعطاف‌پذیر (پیشنهادی)",
+    desc: "استرداد ۱۰۰٪ وجه تا ۲۴ ساعت قبل از شروع رزرو، کسر ۱۰٪ در صورت لغو در روز تحویل.",
+  },
+  {
+    id: "moderate",
+    title: "نیمه‌سخت‌گیرانه",
+    desc: "استرداد کامل تا ۳ روز قبل؛ بازگشت ۵۰٪ وجه در صورت لغو در کمتر از ۷۲ ساعت مانده به اجاره.",
+  },
+  {
+    id: "strict",
+    title: "سخت‌گیرانه",
+    desc: "استرداد ۷۰٪ وجه فقط تا ۵ روز قبل؛ در صورت کنسلی بعد از آن مبلغی مسترد نمی‌شود.",
+  },
 ];
 
 const TOP_BRANDS = ["Sony", "Canon", "DJI", "Blackmagic"];
@@ -169,7 +193,13 @@ function priceDisplay(s: string): string {
   return Number.isFinite(n) && n > 0 ? faNumber(n) : s;
 }
 
-export default function CreateListingWizard({ categories, sampleImages, initial, userName, categoryAvgPrice }: Props) {
+export default function CreateListingWizard({
+  categories,
+  sampleImages,
+  initial,
+  userName,
+  categoryAvgPrice,
+}: Props) {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [published, setPublished] = useState<{ id: string } | null>(null);
@@ -187,7 +217,8 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
   const [form, setForm] = useState<FormData>(() => {
     if (!initial) return { ...DEFAULT_FORM };
     const province =
-      PROVINCES.find((p) => PROVINCE_CITIES[p]?.includes(initial.city)) ?? "تهران";
+      PROVINCES.find((p) => PROVINCE_CITIES[p]?.includes(initial.city)) ??
+      "تهران";
     return {
       ...DEFAULT_FORM,
       categoryId: initial.categoryId,
@@ -212,7 +243,8 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
     };
   });
 
-  const update = (fields: Partial<FormData>) => setForm((prev) => ({ ...prev, ...fields }));
+  const update = (fields: Partial<FormData>) =>
+    setForm((prev) => ({ ...prev, ...fields }));
 
   const dailyNum = parseNum(form.dailyPrice);
   const depositNum = parseNum(form.deposit);
@@ -254,13 +286,15 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
     setBlockEnd(e);
     if (!s || !e) return;
     if (rangeHitsBooked(s, e, reservedRanges)) {
-      toast.error("این بازه با اجاره‌های فعلی هم‌پوشانی دارد و قابل مسدودسازی نیست.");
+      toast.error(
+        "این بازه با اجاره‌های فعلی هم‌پوشانی دارد و قابل مسدودسازی نیست.",
+      );
     } else if (rangeHitsBooked(s, e, form.blockedRanges)) {
       toast.error("این روزها قبلاً مسدود شده‌اند.");
     } else {
       update({
-        blockedRanges: [...form.blockedRanges, { start: s, end: e }].sort((a, b) =>
-          a.start < b.start ? -1 : 1,
+        blockedRanges: [...form.blockedRanges, { start: s, end: e }].sort(
+          (a, b) => (a.start < b.start ? -1 : 1),
         ),
       });
     }
@@ -270,7 +304,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
 
   function removeBlockedRange(start: string, end: string) {
     update({
-      blockedRanges: form.blockedRanges.filter((r) => r.start !== start || r.end !== end),
+      blockedRanges: form.blockedRanges.filter(
+        (r) => r.start !== start || r.end !== end,
+      ),
     });
   }
 
@@ -326,8 +362,12 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
       brand: form.brand.trim() || undefined,
       specs: specs || undefined,
       dailyPrice: Math.floor(dailyNum),
-      weeklyPrice: Number.isFinite(weekly) && weekly > 0 ? Math.floor(weekly) : undefined,
-      deposit: Number.isFinite(depositNum) && depositNum > 0 ? Math.floor(depositNum) : 0,
+      weeklyPrice:
+        Number.isFinite(weekly) && weekly > 0 ? Math.floor(weekly) : undefined,
+      deposit:
+        Number.isFinite(depositNum) && depositNum > 0
+          ? Math.floor(depositNum)
+          : 0,
       city: form.city,
       area: form.area.trim() || undefined,
       rules: form.customRules.trim() || undefined,
@@ -362,20 +402,21 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
     setSavingDraft(true);
     try {
       const editing = Boolean(initial);
-      const res = await fetch(editing ? `/api/listings/${initial!.id}` : "/api/listings", {
-        method: editing ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildBody(false)),
-      });
+      const res = await fetch(
+        editing ? `/api/listings/${initial!.id}` : "/api/listings",
+        {
+          method: editing ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(buildBody(false)),
+        },
+      );
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.error ?? "ذخیره پیش‌نویس ممکن نشد.");
         return;
       }
       const now = new Date();
-      setDraftTime(
-        `${toFa(now.getHours())}:${toFa(now.getMinutes())}`,
-      );
+      setDraftTime(`${toFa(now.getHours())}:${toFa(now.getMinutes())}`);
       toast.success("پیش‌نویس شما با موفقیت ذخیره شد.");
       router.push("/my-items");
     } catch {
@@ -396,22 +437,32 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
     try {
       const editing = Boolean(initial);
       const body: Record<string, unknown> = { ...buildBody(true) };
-      if (editing && (initial!.status === "DRAFT" || initial!.status === "REJECTED")) {
+      if (
+        editing &&
+        (initial!.status === "DRAFT" || initial!.status === "REJECTED")
+      ) {
         body.status = "PENDING";
       }
-      const res = await fetch(editing ? `/api/listings/${initial!.id}` : "/api/listings", {
-        method: editing ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      const res = await fetch(
+        editing ? `/api/listings/${initial!.id}` : "/api/listings",
+        {
+          method: editing ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.error ?? "ثبت نهایی آگهی ممکن نشد.");
         return;
       }
-      const id = editing ? initial!.id : (data.listing?.id as string | undefined);
+      const id = editing
+        ? initial!.id
+        : (data.listing?.id as string | undefined);
       setPublished({ id: id ?? "—" });
-      toast.success("آگهی شما با موفقیت ثبت شد و در صف تایید کارشناسان قرار گرفت!");
+      toast.success(
+        "آگهی شما با موفقیت ثبت شد و در صف تایید کارشناسان قرار گرفت!",
+      );
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
       toast.error("خطای شبکه — دوباره تلاش کنید.");
@@ -430,7 +481,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
 
   const previewImage = form.images[0] ?? null;
   const selectedCategory = categories.find((c) => c.id === form.categoryId);
-  const avgPrice = form.categoryId ? categoryAvgPrice[form.categoryId] : undefined;
+  const avgPrice = form.categoryId
+    ? categoryAvgPrice[form.categoryId]
+    : undefined;
 
   /* ------------------------------ header/stepper --------------------------- */
   const header = (
@@ -496,9 +549,12 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 </div>
                 <div className="flex flex-col text-right min-w-0">
                   <span className="text-[11px] font-medium text-on-surface-variant truncate">
-                    مرحله {st.num === 1 ? "اول" : st.num === 2 ? "دوم" : "سوم"} (تکمیل شد)
+                    مرحله {st.num === 1 ? "اول" : st.num === 2 ? "دوم" : "سوم"}{" "}
+                    (تکمیل شد)
                   </span>
-                  <span className="text-[13px] font-bold text-on-surface truncate">{st.title}</span>
+                  <span className="text-[13px] font-bold text-on-surface truncate">
+                    {st.title}
+                  </span>
                 </div>
               </button>
             );
@@ -514,7 +570,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 </div>
                 <div className="flex flex-col text-right min-w-0">
                   <span className="text-[11px] text-on-primary-container font-medium truncate">
-                    {st.num === 4 ? "مرحله نهایی (در حال انجام)" : "مرحله در حال انجام"}
+                    {st.num === 4
+                      ? "مرحله نهایی (در حال انجام)"
+                      : "مرحله در حال انجام"}
                   </span>
                   <span className="text-[13px] font-extrabold text-on-primary truncate">
                     {st.title}
@@ -554,21 +612,33 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             style={{ width: WIDTHS[step - 1] }}
           ></div>
         </div>
-        <span className="font-bold text-m3-primary">{PERCENTS[step - 1]} تکمیل شده</span>
+        <span className="font-bold text-m3-primary">
+          {PERCENTS[step - 1]} تکمیل شده
+        </span>
       </div>
     </section>
   );
 
   const heroHeader = (
     <section className="space-y-4 mb-6">
-      <nav aria-label="مسیر راهنما" className="flex items-center gap-2 text-xs font-medium text-m3-tertiary">
-        <Link className="hover:text-m3-primary transition-colors flex items-center gap-1" href="/">
+      <nav
+        aria-label="مسیر راهنما"
+        className="flex items-center gap-2 text-xs font-medium text-m3-tertiary"
+      >
+        <Link
+          className="hover:text-m3-primary transition-colors flex items-center gap-1"
+          href="/"
+        >
           <span className="material-symbols-outlined text-[16px]">home</span>
           <span>خانه</span>
         </Link>
-        <span className="material-symbols-outlined text-[14px] text-outline-variant">chevron_left</span>
+        <span className="material-symbols-outlined text-[14px] text-outline-variant">
+          chevron_left
+        </span>
         <span className="text-m3-tertiary">اجاره‌های من</span>
-        <span className="material-symbols-outlined text-[14px] text-outline-variant">chevron_left</span>
+        <span className="material-symbols-outlined text-[14px] text-outline-variant">
+          chevron_left
+        </span>
         <span className="text-on-surface font-bold">
           {initial ? "ویرایش وسیله" : "ثبت وسیله جدید"}
         </span>
@@ -580,8 +650,8 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             {initial ? "ویرایش و تکمیل وسیله" : "ثبت و اجاره دادن وسیله جدید"}
           </h1>
           <p className="text-sm text-m3-tertiary max-w-2xl leading-relaxed">
-            وسیله‌های کم‌استفاده خود را به جریان بیندازید و به سادگی کسب درآمد کنید.
-            پس از ثبت، آگهی شما برای تایید کارشناس اورا ارسال می‌شود.
+            وسیله‌های کم‌استفاده خود را به جریان بیندازید و به سادگی کسب درآمد
+            کنید. پس از ثبت، آگهی شما برای تایید کارشناس اورا ارسال می‌شود.
           </p>
         </div>
         {initial && (
@@ -598,16 +668,26 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
     <footer className="mt-16 border-t border-outline-variant/30 bg-surface-container-lowest py-6 text-center text-xs text-m3-tertiary">
       <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
         <span>
-          تمامی حقوق مادی و معنوی متعلق به پلتفرم اجاره کالای «اورا» (Overa) می‌باشد © ۱۴۰۳
+          تمامی حقوق مادی و معنوی متعلق به پلتفرم اجاره کالای «اورا» (Overa)
+          می‌باشد © ۱۴۰۵
         </span>
         <div className="flex items-center gap-4">
-          <Link className="hover:text-m3-primary transition-colors" href="/tos-support-faq">
+          <Link
+            className="hover:text-m3-primary transition-colors"
+            href="/tos-support-faq"
+          >
             قوانین و مقررات میزبانی
           </Link>
-          <Link className="hover:text-m3-primary transition-colors" href="/tos-support-faq">
+          <Link
+            className="hover:text-m3-primary transition-colors"
+            href="/tos-support-faq"
+          >
             حریم خصوصی
           </Link>
-          <Link className="hover:text-m3-primary transition-colors" href="/tos-support-faq">
+          <Link
+            className="hover:text-m3-primary transition-colors"
+            href="/tos-support-faq"
+          >
             پوشش بیمه اوراگارد
           </Link>
         </div>
@@ -627,9 +707,13 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="size-7 rounded-lg bg-primary-fixed flex items-center justify-center text-m3-primary">
-                  <span className="material-symbols-outlined text-[18px]">grid_view</span>
+                  <span className="material-symbols-outlined text-[18px]">
+                    grid_view
+                  </span>
                 </span>
-                <h2 className="text-on-surface font-bold">دسته‌بندی اصلی کالا</h2>
+                <h2 className="text-on-surface font-bold">
+                  دسته‌بندی اصلی کالا
+                </h2>
               </div>
               <span className="text-m3-tertiary text-sm">انتخاب الزامی</span>
             </div>
@@ -641,66 +725,87 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                     دسته‌بندی‌ها هنوز در پایگاه داده ثبت نشده‌اند
                   </p>
                   <p className="text-[11px] text-on-surface-variant leading-relaxed">
-                    پایگاه داده متصل خالی است. برای مقداردهی اولیه دسته‌بندی‌ها یک‌بار دستور{" "}
-                    <code className="font-mono" dir="ltr">bun run db:seed:categories</code> را اجرا کنید و
-                    سپس این صفحه را دوباره باز کنید. راهنمای کامل در فایل docs/NEON-MIGRATION.md آمده است.
+                    پایگاه داده متصل خالی است. برای مقداردهی اولیه دسته‌بندی‌ها
+                    یک‌بار دستور{" "}
+                    <code className="font-mono" dir="ltr">
+                      bun run db:seed:categories
+                    </code>{" "}
+                    را اجرا کنید و سپس این صفحه را دوباره باز کنید. راهنمای کامل
+                    در فایل docs/NEON-MIGRATION.md آمده است.
                   </p>
                 </div>
               ) : (
-              categories.map((cat) => {
-                const isSelected = form.categoryId === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => update({ categoryId: cat.id })}
-                    className={`group relative flex flex-col items-center justify-center p-4 rounded-xl text-right transition-all duration-200 cursor-pointer ${
-                      isSelected
-                        ? "bg-m3-primary/10 border-2 border-m3-primary shadow-sm"
-                        : "bg-surface-container-low hover:bg-surface-container border-2 border-transparent"
-                    }`}
-                  >
-                    {isSelected && (
-                      <span className="absolute top-2.5 left-2.5 size-5 rounded-full bg-m3-primary text-on-primary flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[14px]">check</span>
-                      </span>
-                    )}
-                    <div
-                      className={`size-12 rounded-full flex items-center justify-center mb-2 shadow-sm ${
-                        isSelected ? "bg-m3-primary text-on-primary" : "bg-surface-container-high text-m3-primary"
+                categories.map((cat) => {
+                  const isSelected = form.categoryId === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => update({ categoryId: cat.id })}
+                      className={`group relative flex flex-col items-center justify-center p-4 rounded-xl text-right transition-all duration-200 cursor-pointer ${
+                        isSelected
+                          ? "bg-m3-primary/10 border-2 border-m3-primary shadow-sm"
+                          : "bg-surface-container-low hover:bg-surface-container border-2 border-transparent"
                       }`}
                     >
-                      <span className="material-symbols-outlined text-[24px]">{cat.icon ?? "category"}</span>
-                    </div>
-                    <span
-                      className={`text-sm text-center ${isSelected ? "text-m3-primary font-bold" : "text-on-surface"}`}
-                    >
-                      {cat.name}
-                    </span>
-                  </button>
-                );
-              })
+                      {isSelected && (
+                        <span className="absolute top-2.5 left-2.5 size-5 rounded-full bg-m3-primary text-on-primary flex items-center justify-center">
+                          <span className="material-symbols-outlined text-[14px]">
+                            check
+                          </span>
+                        </span>
+                      )}
+                      <div
+                        className={`size-12 rounded-full flex items-center justify-center mb-2 shadow-sm ${
+                          isSelected
+                            ? "bg-m3-primary text-on-primary"
+                            : "bg-surface-container-high text-m3-primary"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[24px]">
+                          {cat.icon ?? "category"}
+                        </span>
+                      </div>
+                      <span
+                        className={`text-sm text-center ${isSelected ? "text-m3-primary font-bold" : "text-on-surface"}`}
+                      >
+                        {cat.name}
+                      </span>
+                    </button>
+                  );
+                })
               )}
             </div>
             {errors.categoryId && (
-              <p className="text-[11px] text-m3-error font-semibold">{errors.categoryId}</p>
+              <p className="text-[11px] text-m3-error font-semibold">
+                {errors.categoryId}
+              </p>
             )}
           </section>
 
           <section className="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col gap-5">
             <div className="flex items-center gap-2">
               <span className="size-7 rounded-lg bg-primary-fixed flex items-center justify-center text-m3-primary">
-                <span className="material-symbols-outlined text-[18px]">badge</span>
+                <span className="material-symbols-outlined text-[18px]">
+                  badge
+                </span>
               </span>
-              <h2 className="text-on-surface font-bold">مشخصات اصلی و هویت وسیله</h2>
+              <h2 className="text-on-surface font-bold">
+                مشخصات اصلی و هویت وسیله
+              </h2>
             </div>
 
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-on-surface font-semibold text-sm" htmlFor="itemTitle">
+                <label
+                  className="text-on-surface font-semibold text-sm"
+                  htmlFor="itemTitle"
+                >
                   عنوان آگهی اجاره
                 </label>
-                <span className="text-m3-tertiary text-sm">حداقل ۱۵ کاراکتر</span>
+                <span className="text-m3-tertiary text-sm">
+                  حداقل ۱۵ کاراکتر
+                </span>
               </div>
               <input
                 id="itemTitle"
@@ -711,17 +816,22 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 placeholder="مثال: دوربین سونی Alpha 7 IV به همراه کیف و دو عدد باتری اورجینال"
               />
               {errors.title ? (
-                <p className="text-[12px] text-m3-error font-semibold">{errors.title}</p>
+                <p className="text-[12px] text-m3-error font-semibold">
+                  {errors.title}
+                </p>
               ) : (
                 <p className="text-[12px] text-m3-tertiary">
-                  عنوانی واضح شامل برند، مدل دقیق و متعلقات همراه بنویسید تا جستجوی کاربران افزایش یابد.
+                  عنوانی واضح شامل برند، مدل دقیق و متعلقات همراه بنویسید تا
+                  جستجوی کاربران افزایش یابد.
                 </p>
               )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-on-surface font-semibold text-sm">برند سازنده</label>
+                <label className="text-on-surface font-semibold text-sm">
+                  برند سازنده
+                </label>
                 <div className="relative">
                   <input
                     type="text"
@@ -734,7 +844,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                  <span className="text-[11px] text-m3-tertiary">برندهای برتر:</span>
+                  <span className="text-[11px] text-m3-tertiary">
+                    برندهای برتر:
+                  </span>
                   {TOP_BRANDS.map((b) => (
                     <button
                       key={b}
@@ -753,7 +865,10 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-on-surface font-semibold text-sm" htmlFor="modelExact">
+                <label
+                  className="text-on-surface font-semibold text-sm"
+                  htmlFor="modelExact"
+                >
                   مدل دقیق کالا (Model)
                 </label>
                 <input
@@ -769,7 +884,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-on-surface font-semibold text-sm">سال ساخت / خرید</label>
+                <label className="text-on-surface font-semibold text-sm">
+                  سال ساخت / خرید
+                </label>
                 <select
                   value={form.buildYear}
                   onChange={(e) => update({ buildYear: e.target.value })}
@@ -788,9 +905,13 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="size-7 rounded-lg bg-primary-fixed flex items-center justify-center text-m3-primary">
-                  <span className="material-symbols-outlined text-[18px]">location_on</span>
+                  <span className="material-symbols-outlined text-[18px]">
+                    location_on
+                  </span>
                 </span>
-                <h2 className="text-on-surface font-bold">موقعیت استقرار و محدوده تحویل کالا</h2>
+                <h2 className="text-on-surface font-bold">
+                  موقعیت استقرار و محدوده تحویل کالا
+                </h2>
               </div>
               <span className="text-m3-tertiary text-sm hidden md:block">
                 حفظ حریم خصوصی: آدرس دقیق پس از رزرو نمایش داده می‌شود
@@ -799,12 +920,17 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-on-surface font-semibold text-sm">استان</label>
+                <label className="text-on-surface font-semibold text-sm">
+                  استان
+                </label>
                 <select
                   value={form.province}
                   onChange={(e) => {
                     const p = e.target.value;
-                    update({ province: p, city: PROVINCE_CITIES[p]?.[0] ?? "تهران" });
+                    update({
+                      province: p,
+                      city: PROVINCE_CITIES[p]?.[0] ?? "تهران",
+                    });
                   }}
                   className="w-full h-12 bg-surface-container-lowest text-on-surface rounded-lg px-8 border border-outline-variant/40 focus:ring-2 focus:ring-m3-primary"
                 >
@@ -814,7 +940,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 </select>
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-on-surface font-semibold text-sm">شهر</label>
+                <label className="text-on-surface font-semibold text-sm">
+                  شهر
+                </label>
                 <select
                   value={form.city}
                   onChange={(e) => update({ city: e.target.value })}
@@ -826,7 +954,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 </select>
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-on-surface font-semibold text-sm">محله یا محدوده</label>
+                <label className="text-on-surface font-semibold text-sm">
+                  محله یا محدوده
+                </label>
                 <input
                   type="text"
                   value={form.area}
@@ -837,7 +967,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             </div>
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
-              <span className="text-on-surface font-semibold text-sm">گزینه‌های دریافت و تحویل:</span>
+              <span className="text-on-surface font-semibold text-sm">
+                گزینه‌های دریافت و تحویل:
+              </span>
               <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container cursor-pointer text-on-surface text-sm">
                 <input
                   type="checkbox"
@@ -851,7 +983,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 <input
                   type="checkbox"
                   checked={form.deliveryCourier}
-                  onChange={(e) => update({ deliveryCourier: e.target.checked })}
+                  onChange={(e) =>
+                    update({ deliveryCourier: e.target.checked })
+                  }
                   className="rounded text-m3-primary focus:ring-m3-primary"
                 />
                 <span>ارسال با پیک اکسپرس اورا (هزینه به عهده مستاجر)</span>
@@ -861,11 +995,15 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             <div className="relative w-full h-48 rounded-xl overflow-hidden shadow-inner mt-2">
               <div
                 className="w-full h-full bg-cover bg-center"
-                style={{ backgroundImage: "url('/assets/img/ee288b739678.jpg')" }}
+                style={{
+                  backgroundImage: "url('/assets/img/ee288b739678.jpg')",
+                }}
               ></div>
               <div className="absolute inset-0 bg-gradient-to-t from-m3-inverse-surface/60 via-transparent to-transparent pointer-events-none"></div>
               <div className="absolute bottom-3 right-3 flex items-center gap-2 bg-surface-container-lowest/95 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-sm">
-                <span className="material-symbols-outlined text-m3-primary text-[18px]">my_location</span>
+                <span className="material-symbols-outlined text-m3-primary text-[18px]">
+                  my_location
+                </span>
                 <span className="text-on-surface text-sm">
                   محدوده شعاع تقریبی ۲ کیلومتری {form.area || form.city}
                 </span>
@@ -880,7 +1018,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 h-12 rounded-lg bg-m3-primary text-on-primary shadow-md hover:bg-primary-container active:scale-[0.98] transition-all cursor-pointer"
             >
               <span>ادامه: بارگذاری تصاویر و مشخصات فنی</span>
-              <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+              <span className="material-symbols-outlined text-[20px]">
+                arrow_back
+              </span>
             </button>
           </section>
         </div>
@@ -889,7 +1029,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
           <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col gap-4">
             <div className="flex items-center gap-2 text-on-surface">
               <span className="size-8 rounded-lg bg-surface-container flex items-center justify-center text-m3-primary">
-                <span className="material-symbols-outlined text-[20px]">lightbulb</span>
+                <span className="material-symbols-outlined text-[20px]">
+                  lightbulb
+                </span>
               </span>
               <h3 className="font-bold">راهنمایی بهبود بازدید آگهی</h3>
             </div>
@@ -902,8 +1044,8 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                   check_circle
                 </span>
                 <span>
-                  <strong>دسته‌بندی دقیق:</strong> انتخاب درست دسته‌بندی نرخ کلیک آگهی را
-                  به‌طور محسوس ارتقا می‌دهد.
+                  <strong>دسته‌بندی دقیق:</strong> انتخاب درست دسته‌بندی نرخ
+                  کلیک آگهی را به‌طور محسوس ارتقا می‌دهد.
                 </span>
               </div>
               <div className="flex items-start gap-2.5">
@@ -914,8 +1056,8 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                   check_circle
                 </span>
                 <span>
-                  <strong>ذکر اقلام جانبی:</strong> قرار دادن کیف، شارژر و لوازم همراه،
-                  کالا را برای پروژه‌های فوری جذاب‌تر می‌کند.
+                  <strong>ذکر اقلام جانبی:</strong> قرار دادن کیف، شارژر و لوازم
+                  همراه، کالا را برای پروژه‌های فوری جذاب‌تر می‌کند.
                 </span>
               </div>
               <div className="flex items-start gap-2.5">
@@ -926,8 +1068,8 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                   check_circle
                 </span>
                 <span>
-                  <strong>محدوده مشخص:</strong> تعیین محله به مستاجران نزدیک شما اجازه
-                  می‌دهد وسیله را سریع‌تر و بدون کرایه حمل تحویل بگیرند.
+                  <strong>محدوده مشخص:</strong> تعیین محله به مستاجران نزدیک شما
+                  اجازه می‌دهد وسیله را سریع‌تر و بدون کرایه حمل تحویل بگیرند.
                 </span>
               </div>
             </div>
@@ -948,28 +1090,37 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
           <section className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 shadow-sm space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-outline-variant/20">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-m3-primary text-[24px]">photo_library</span>
-                <h2 className="text-base font-bold text-on-surface">تصاویر واقعی و باکیفیت وسیله</h2>
+                <span className="material-symbols-outlined text-m3-primary text-[24px]">
+                  photo_library
+                </span>
+                <h2 className="text-base font-bold text-on-surface">
+                  تصاویر واقعی و باکیفیت وسیله
+                </h2>
               </div>
               <span className="text-xs font-semibold text-m3-tertiary bg-surface-container-low px-2.5 py-1 rounded-full">
                 {faNumber(form.images.length)} از ۸ تصویر انتخاب شده
               </span>
             </div>
             {errors.images && (
-              <p className="text-[12px] text-m3-error font-semibold">{errors.images}</p>
+              <p className="text-[12px] text-m3-error font-semibold">
+                {errors.images}
+              </p>
             )}
 
             <div className="border-2 border-dashed border-m3-primary/40 hover:border-m3-primary bg-surface-container-low/40 hover:bg-surface-container/60 transition-all rounded-xl p-6 text-center flex flex-col items-center justify-center gap-2.5">
               <div className="w-12 h-12 rounded-full bg-m3-primary/10 text-m3-primary flex items-center justify-center">
-                <span className="material-symbols-outlined text-[28px]">add_a_photo</span>
+                <span className="material-symbols-outlined text-[28px]">
+                  add_a_photo
+                </span>
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-bold text-on-surface">
-                  انتخاب از نمونه‌ها — آپلود اختصاصی پس از اتصال فضای ذخیره‌سازی فعال می‌شود
+                  انتخاب از نمونه‌ها — آپلود اختصاصی پس از اتصال فضای ذخیره‌سازی
+                  فعال می‌شود
                 </p>
                 <p className="text-xs text-m3-tertiary">
-                  از بانک نمونه‌های زیر حداکثر ۸ تصویر برای وسیله انتخاب کنید (حداقل ۱ تصویر
-                  برای ثبت نهایی)
+                  از بانک نمونه‌های زیر حداکثر ۸ تصویر برای وسیله انتخاب کنید
+                  (حداقل ۱ تصویر برای ثبت نهایی)
                 </p>
               </div>
             </div>
@@ -982,8 +1133,12 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                     key={url}
                     className="relative group rounded-xl overflow-hidden border border-outline-variant/40 aspect-[4/3] bg-surface-container shadow-xs"
                   >
-                    { }
-                    <img className="w-full h-full object-cover" src={url} alt={`تصویر ${idx + 1}`} />
+                    {}
+                    <img
+                      className="w-full h-full object-cover"
+                      src={url}
+                      alt={`تصویر ${idx + 1}`}
+                    />
                     {idx === 0 && (
                       <div className="absolute top-2 right-2 bg-m3-primary text-on-primary text-[10px] font-bold px-2 py-0.5 rounded shadow">
                         عکس کاور
@@ -996,7 +1151,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                         title="حذف"
                         onClick={() => toggleImage(url)}
                       >
-                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                        <span className="material-symbols-outlined text-[16px]">
+                          delete
+                        </span>
                       </button>
                     </div>
                   </div>
@@ -1008,7 +1165,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-on-surface flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[16px] text-m3-primary">collections</span>
+                  <span className="material-symbols-outlined text-[16px] text-m3-primary">
+                    collections
+                  </span>
                   بانک نمونه تصاویر اورا
                 </span>
                 <button
@@ -1016,7 +1175,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                   onClick={() => setShowAllImages((v) => !v)}
                   className="text-[11px] font-bold text-m3-primary hover:text-primary-container"
                 >
-                  {showAllImages ? "نمایش کمتر" : `نمایش همه ${faNumber(sampleImages.length)} نمونه`}
+                  {showAllImages
+                    ? "نمایش کمتر"
+                    : `نمایش همه ${faNumber(sampleImages.length)} نمونه`}
                 </button>
               </div>
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -1032,13 +1193,21 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                           ? "border-m3-primary ring-2 ring-m3-primary/40"
                           : "border-outline-variant/40 hover:border-m3-primary/60"
                       }`}
-                      title={selected ? "حذف از انتخاب‌ها" : "افزودن به تصاویر وسیله"}
+                      title={
+                        selected ? "حذف از انتخاب‌ها" : "افزودن به تصاویر وسیله"
+                      }
                     >
-                      { }
-                      <img className="w-full h-full object-cover" src={url} alt="نمونه" />
+                      {}
+                      <img
+                        className="w-full h-full object-cover"
+                        src={url}
+                        alt="نمونه"
+                      />
                       {selected && (
                         <span className="absolute top-1 left-1 size-5 rounded-full bg-m3-primary text-on-primary flex items-center justify-center">
-                          <span className="material-symbols-outlined text-[13px]">check</span>
+                          <span className="material-symbols-outlined text-[13px]">
+                            check
+                          </span>
                         </span>
                       )}
                     </button>
@@ -1055,18 +1224,24 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 lightbulb
               </span>
               <p>
-                <strong className="font-bold">راهنمای هوشمند عکاسی اورا:</strong>
-                نور طبیعی روز، پس‌زمینه مرتب، و نمایش صادقانه خط و خش‌های احتمالی احتمال
-                اجاره موفق وسیله را تا ۳ برابر افزایش داده و از هرگونه اختلاف هنگام عودت
-                جلوگیری می‌کند.
+                <strong className="font-bold">
+                  راهنمای هوشمند عکاسی اورا:
+                </strong>
+                نور طبیعی روز، پس‌زمینه مرتب، و نمایش صادقانه خط و خش‌های
+                احتمالی احتمال اجاره موفق وسیله را تا ۳ برابر افزایش داده و از
+                هرگونه اختلاف هنگام عودت جلوگیری می‌کند.
               </p>
             </div>
           </section>
 
           <section className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 shadow-sm space-y-5">
             <div className="flex items-center gap-2 pb-3 border-b border-outline-variant/20">
-              <span className="material-symbols-outlined text-m3-primary text-[24px]">tune</span>
-              <h2 className="text-base font-bold text-on-surface">مشخصات فنی و توصیف کالا</h2>
+              <span className="material-symbols-outlined text-m3-primary text-[24px]">
+                tune
+              </span>
+              <h2 className="text-base font-bold text-on-surface">
+                مشخصات فنی و توصیف کالا
+              </h2>
             </div>
 
             <div className="space-y-2">
@@ -1108,7 +1283,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                         <span className="w-4 h-4 rounded-full border border-outline-variant"></span>
                       )}
                     </div>
-                    <span className="text-[11px] text-m3-tertiary mt-1">{opt.desc}</span>
+                    <span className="text-[11px] text-m3-tertiary mt-1">
+                      {opt.desc}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -1120,7 +1297,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                   شماره سریال یا کد اختصاصی دستگاه
                 </label>
                 <span className="inline-flex items-center gap-1 text-[11px] text-m3-secondary font-medium">
-                  <span className="material-symbols-outlined text-[14px]">lock</span>
+                  <span className="material-symbols-outlined text-[14px]">
+                    lock
+                  </span>
                   محرمانه نزد اورا
                 </span>
               </div>
@@ -1134,7 +1313,10 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-on-surface" htmlFor="specsInput">
+              <label
+                className="block text-xs font-bold text-on-surface"
+                htmlFor="specsInput"
+              >
                 مشخصات فنی خلاصه (با | جدا کنید)
               </label>
               <input
@@ -1148,8 +1330,12 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-on-surface" htmlFor="descInput">
-                توضیحات جامع، نکات و شرایط استفاده <span className="text-m3-error">*</span>
+              <label
+                className="block text-xs font-bold text-on-surface"
+                htmlFor="descInput"
+              >
+                توضیحات جامع، نکات و شرایط استفاده{" "}
+                <span className="text-m3-error">*</span>
               </label>
               <textarea
                 id="descInput"
@@ -1159,7 +1345,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-4 py-2.5 text-xs lg:text-sm text-on-surface leading-relaxed focus:border-m3-primary focus:ring-2 focus:ring-m3-primary/20 outline-none"
               ></textarea>
               {errors.description && (
-                <p className="text-[12px] text-m3-error font-semibold">{errors.description}</p>
+                <p className="text-[12px] text-m3-error font-semibold">
+                  {errors.description}
+                </p>
               )}
             </div>
 
@@ -1177,11 +1365,17 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                     <button
                       type="button"
                       onClick={() =>
-                        update({ accessories: form.accessories.filter((_, i) => i !== index) })
+                        update({
+                          accessories: form.accessories.filter(
+                            (_, i) => i !== index,
+                          ),
+                        })
                       }
                       className="hover:text-m3-error transition-colors cursor-pointer"
                     >
-                      <span className="material-symbols-outlined text-[14px]">close</span>
+                      <span className="material-symbols-outlined text-[14px]">
+                        close
+                      </span>
                     </button>
                   </span>
                 ))}
@@ -1204,7 +1398,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                     onClick={addAccessory}
                     className="w-6 h-6 rounded-full bg-m3-primary text-on-primary flex items-center justify-center text-xs hover:bg-primary-container cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-[16px]">add</span>
+                    <span className="material-symbols-outlined text-[16px]">
+                      add
+                    </span>
                   </button>
                 </div>
               </div>
@@ -1213,7 +1409,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
 
           <section className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 shadow-sm space-y-5">
             <div className="flex items-center gap-2 pb-3 border-b border-outline-variant/20">
-              <span className="material-symbols-outlined text-m3-primary text-[24px]">payments</span>
+              <span className="material-symbols-outlined text-m3-primary text-[24px]">
+                payments
+              </span>
               <h2 className="text-base font-bold text-on-surface">
                 شیوه‌های تحویل و احراز هویت تحویل کالا
               </h2>
@@ -1222,13 +1420,16 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             <div className="space-y-2.5">
               <label className="flex items-center justify-between p-3 rounded-xl border border-outline-variant/40 bg-surface-container-lowest cursor-pointer hover:bg-surface-container-low/30 transition-colors">
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-m3-primary text-[22px]">location_on</span>
+                  <span className="material-symbols-outlined text-m3-primary text-[22px]">
+                    location_on
+                  </span>
                   <div>
                     <span className="text-xs font-bold text-on-surface block">
                       تحویل حضوری در محل مالک
                     </span>
                     <span className="text-[11px] text-m3-tertiary">
-                      {form.city}، {form.area || "—"} (آدرس دقیق فقط پس از قطعی شدن رزرو نمایش داده خواهد شد)
+                      {form.city}، {form.area || "—"} (آدرس دقیق فقط پس از قطعی
+                      شدن رزرو نمایش داده خواهد شد)
                     </span>
                   </div>
                 </div>
@@ -1242,33 +1443,41 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
 
               <label className="flex items-center justify-between p-3 rounded-xl border border-outline-variant/40 bg-surface-container-lowest cursor-pointer hover:bg-surface-container-low/30 transition-colors">
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-m3-secondary text-[22px]">local_shipping</span>
+                  <span className="material-symbols-outlined text-m3-secondary text-[22px]">
+                    local_shipping
+                  </span>
                   <div>
                     <span className="text-xs font-bold text-on-surface block">
                       ارسال با پیک اکسپرس و سفیر اختصاصی اورا
                     </span>
                     <span className="text-[11px] text-m3-tertiary">
-                      سفیر بیمه‌شده کالا را تست و درب منزل مستاجر تحویل می‌دهد (هزینه پیک بر عهده مستاجر)
+                      سفیر بیمه‌شده کالا را تست و درب منزل مستاجر تحویل می‌دهد
+                      (هزینه پیک بر عهده مستاجر)
                     </span>
                   </div>
                 </div>
                 <input
                   type="checkbox"
                   checked={form.deliveryCourier}
-                  onChange={(e) => update({ deliveryCourier: e.target.checked })}
+                  onChange={(e) =>
+                    update({ deliveryCourier: e.target.checked })
+                  }
                   className="rounded text-m3-primary focus:ring-m3-primary"
                 />
               </label>
 
               <label className="flex items-center justify-between p-3 rounded-xl border border-outline-variant/40 bg-surface-container-lowest cursor-pointer hover:bg-surface-container-low/30 transition-colors">
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-emerald-600 text-[22px]">badge</span>
+                  <span className="material-symbols-outlined text-emerald-600 text-[22px]">
+                    badge
+                  </span>
                   <div>
                     <span className="text-xs font-bold text-on-surface block">
                       احراز هویت بیومتریک و تطبیق چهره در زمان تحویل
                     </span>
                     <span className="text-[11px] text-m3-tertiary">
-                      مستاجر موظف به ثبت امضای دیجیتال و تطبیق کارت ملی هوشمند خواهد بود
+                      مستاجر موظف به ثبت امضای دیجیتال و تطبیق کارت ملی هوشمند
+                      خواهد بود
                     </span>
                   </div>
                 </div>
@@ -1288,7 +1497,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
               onClick={() => goStep(1)}
               className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-outline-variant text-on-surface hover:bg-surface-container font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+              <span className="material-symbols-outlined text-[18px]">
+                arrow_forward
+              </span>
               <span>مرحله قبل: اطلاعات پایه</span>
             </button>
             <button
@@ -1297,7 +1508,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
               className="w-full sm:w-auto px-8 py-3 rounded-xl bg-m3-primary text-on-primary hover:bg-primary-container font-extrabold text-sm shadow-md shadow-m3-primary/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>ادامه: تنظیم تقویم و دسترسی‌پذیری</span>
-              <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+              <span className="material-symbols-outlined text-[20px]">
+                arrow_back
+              </span>
             </button>
           </div>
         </div>
@@ -1307,7 +1520,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
           <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-4 space-y-3 lg:sticky lg:top-20">
             <div className="flex items-center justify-between pb-2 border-b border-outline-variant/20">
               <span className="text-xs font-extrabold text-on-surface flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-m3-primary text-[18px]">visibility</span>
+                <span className="material-symbols-outlined text-m3-primary text-[18px]">
+                  visibility
+                </span>
                 پیش‌نمایش زنده در نتایج جستجو
               </span>
               <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded-full">
@@ -1317,7 +1532,7 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
 
             <div className="rounded-xl overflow-hidden border border-outline-variant/40 bg-surface-container-lowest shadow-sm hover:shadow-md transition-shadow">
               <div className="relative aspect-[16/10] bg-surface-container overflow-hidden">
-                { }
+                {}
                 <img
                   className="w-full h-full object-cover"
                   src={previewImage ?? "/assets/img/30b557be7b01.jpg"}
@@ -1349,21 +1564,28 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                     <div className="w-5 h-5 rounded-full bg-secondary-fixed text-m3-primary flex items-center justify-center font-bold text-[10px]">
                       {userName?.trim()?.[0] ?? "م"}
                     </div>
-                    <span className="font-medium text-on-surface-variant">{userName}</span>
+                    <span className="font-medium text-on-surface-variant">
+                      {userName}
+                    </span>
                   </div>
                   <span className="text-on-surface-variant">میزبان اورا</span>
                 </div>
                 <div className="pt-2 border-t border-outline-variant/20 flex items-center justify-between">
                   <div>
                     <span className="text-[10px] text-m3-tertiary block">
-                      ودیعه: {Number.isFinite(depositNum) ? faNumber(depositNum) : 0} تومان
+                      ودیعه:{" "}
+                      {Number.isFinite(depositNum) ? faNumber(depositNum) : 0}{" "}
+                      تومان
                     </span>
                   </div>
                   <div className="text-left">
                     <span className="text-sm font-extrabold text-m3-primary">
                       {Number.isFinite(dailyNum) ? faNumber(dailyNum) : "—"}
                     </span>
-                    <span className="text-[10px] text-m3-tertiary"> تومان / روز</span>
+                    <span className="text-[10px] text-m3-tertiary">
+                      {" "}
+                      تومان / روز
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1372,7 +1594,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             <div className="p-4 rounded-xl bg-gradient-to-br from-secondary-fixed/50 via-surface-container-high/40 to-primary-fixed/30 border border-primary-fixed space-y-3.5">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-m3-primary text-on-primary flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[16px]">trending_up</span>
+                  <span className="material-symbols-outlined text-[16px]">
+                    trending_up
+                  </span>
                 </div>
                 <h3 className="text-xs font-extrabold text-on-surface">
                   ماشین‌حساب هوشمند تخمین درآمد ماهانه
@@ -1400,14 +1624,18 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 </div>
               </div>
               <div className="bg-surface-container-lowest/90 p-3 rounded-lg border border-m3-primary/20 flex items-center justify-between">
-                <span className="text-xs font-bold text-on-surface">درآمد تخمینی خالص شما:</span>
+                <span className="text-xs font-bold text-on-surface">
+                  درآمد تخمینی خالص شما:
+                </span>
                 <div className="text-left">
                   <span className="text-base font-black text-m3-primary">
                     {Number.isFinite(dailyNum)
                       ? faNumber(Math.round(dailyNum * rentalDaysEst * 0.85))
                       : "—"}
                   </span>
-                  <span className="text-[10px] font-medium text-m3-tertiary mr-1">تومان / ماه</span>
+                  <span className="text-[10px] font-medium text-m3-tertiary mr-1">
+                    تومان / ماه
+                  </span>
                 </div>
               </div>
             </div>
@@ -1419,9 +1647,17 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
 
   /* --------------------------------- step 3 -------------------------------- */
   const gross = Number.isFinite(dailyNum) ? dailyNum * 3 : NaN;
-  const discountAmt = Number.isFinite(gross) ? Math.round((gross * form.discountPercent) / 100) : NaN;
-  const fee = Number.isFinite(gross) && Number.isFinite(discountAmt) ? Math.round((gross - discountAmt) * 0.1) : NaN;
-  const net = Number.isFinite(gross) && Number.isFinite(fee) ? gross - discountAmt - fee : NaN;
+  const discountAmt = Number.isFinite(gross)
+    ? Math.round((gross * form.discountPercent) / 100)
+    : NaN;
+  const fee =
+    Number.isFinite(gross) && Number.isFinite(discountAmt)
+      ? Math.round((gross - discountAmt) * 0.1)
+      : NaN;
+  const net =
+    Number.isFinite(gross) && Number.isFinite(fee)
+      ? gross - discountAmt - fee
+      : NaN;
 
   const step3 = (
     <div className="flex flex-col w-full">
@@ -1434,12 +1670,17 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             <div className="flex items-start justify-between gap-4 border-b border-surface-container-high pb-4">
               <div className="flex items-center gap-3">
                 <span className="size-10 rounded-xl bg-surface-container-high text-m3-primary flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[22px]">payments</span>
+                  <span className="material-symbols-outlined text-[22px]">
+                    payments
+                  </span>
                 </span>
                 <div>
-                  <h2 className="text-on-surface font-bold">۱. نرخ اجاره و سیاست‌های تخفیف</h2>
+                  <h2 className="text-on-surface font-bold">
+                    ۱. نرخ اجاره و سیاست‌های تخفیف
+                  </h2>
                   <p className="text-sm text-on-surface-variant">
-                    تعیین قیمت منطقی و پایدار شانس دریافت درخواست را تا ۳ برابر افزایش می‌دهد.
+                    تعیین قیمت منطقی و پایدار شانس دریافت درخواست را تا ۳ برابر
+                    افزایش می‌دهد.
                   </p>
                 </div>
               </div>
@@ -1451,7 +1692,8 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                   className="text-on-surface block font-semibold text-sm"
                   htmlFor="daily-rate-input"
                 >
-                  اجاره روزانه پایه (تومان) <span className="text-m3-error">*</span>
+                  اجاره روزانه پایه (تومان){" "}
+                  <span className="text-m3-error">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -1466,13 +1708,17 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                   </span>
                 </div>
                 {errors.dailyPrice && (
-                  <p className="text-[12px] text-m3-error font-semibold">{errors.dailyPrice}</p>
+                  <p className="text-[12px] text-m3-error font-semibold">
+                    {errors.dailyPrice}
+                  </p>
                 )}
               </div>
 
               <div className="p-3.5 rounded-lg bg-surface-container-low flex items-center justify-between gap-3">
                 <div className="space-y-0.5">
-                  <span className="text-on-surface-variant block text-sm">میانگین نرخ این دسته در اورا</span>
+                  <span className="text-on-surface-variant block text-sm">
+                    میانگین نرخ این دسته در اورا
+                  </span>
                   <span className="font-bold text-on-surface text-sm">
                     {avgPrice ? `${faNumber(avgPrice)} تومان` : "—"}
                   </span>
@@ -1480,8 +1726,7 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 <button
                   type="button"
                   onClick={() =>
-                    avgPrice &&
-                    update({ dailyPrice: String(avgPrice) })
+                    avgPrice && update({ dailyPrice: String(avgPrice) })
                   }
                   disabled={!avgPrice}
                   className="px-3 py-1.5 rounded-lg bg-primary-fixed text-on-primary-fixed-variant hover:bg-primary-fixed-dim transition-colors font-bold shrink-0 cursor-pointer disabled:opacity-50"
@@ -1493,7 +1738,10 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-end">
               <div className="space-y-2">
-                <label className="text-on-surface block font-semibold text-sm" htmlFor="weekly-rate-input">
+                <label
+                  className="text-on-surface block font-semibold text-sm"
+                  htmlFor="weekly-rate-input"
+                >
                   اجاره هفتگی (اختیاری)
                 </label>
                 <div className="relative">
@@ -1510,7 +1758,10 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-on-surface block font-semibold text-sm" htmlFor="deposit-amount">
+                <label
+                  className="text-on-surface block font-semibold text-sm"
+                  htmlFor="deposit-amount"
+                >
                   میزان ودیعه نقدی پیشنهادی (تومان)
                 </label>
                 <div className="relative">
@@ -1531,7 +1782,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             {/* Limits */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div className="space-y-1.5">
-                <label className="text-on-surface font-semibold text-sm">حداقل مدت زمان رزرو</label>
+                <label className="text-on-surface font-semibold text-sm">
+                  حداقل مدت زمان رزرو
+                </label>
                 <select
                   value={form.minDays}
                   onChange={(e) => update({ minDays: e.target.value })}
@@ -1563,13 +1816,16 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             {/* Instant book */}
             <label className="flex items-center justify-between p-3.5 rounded-xl border border-m3-primary/30 bg-m3-primary/5 cursor-pointer transition-colors">
               <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-m3-primary text-[22px]">bolt</span>
+                <span className="material-symbols-outlined text-m3-primary text-[22px]">
+                  bolt
+                </span>
                 <div>
                   <span className="text-xs font-bold text-on-surface block">
                     رزرو آنی (Instant Book)
                   </span>
                   <span className="text-[11px] text-m3-tertiary">
-                    درخواست‌ها بدون نیاز به تایید شما، به‌صورت خودکار قطعی می‌شوند
+                    درخواست‌ها بدون نیاز به تایید شما، به‌صورت خودکار قطعی
+                    می‌شوند
                   </span>
                 </div>
               </div>
@@ -1584,7 +1840,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             {/* Discount */}
             <div className="space-y-3 pt-3">
               <div className="flex items-center justify-between">
-                <span className="text-on-surface block font-bold text-base">تخفیف‌ها</span>
+                <span className="text-on-surface block font-bold text-base">
+                  تخفیف‌ها
+                </span>
                 <span className="px-2.5 py-1 rounded-full bg-m3-primary text-on-primary text-xs font-bold shadow-sm">
                   {faNumber(form.discountPercent)}٪ تخفیف
                 </span>
@@ -1594,7 +1852,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                   <span className="font-medium">
                     درصد تخفیف اعمالی برای رزروهای بیش از ۳ روز
                   </span>
-                  <span className="text-m3-primary font-bold">(نمایشی — در تقویم رزرو اعمال می‌شود)</span>
+                  <span className="text-m3-primary font-bold">
+                    (نمایشی — در تقویم رزرو اعمال می‌شود)
+                  </span>
                 </div>
                 <div className="relative pt-1">
                   <input
@@ -1602,7 +1862,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                     min={1}
                     max={50}
                     value={form.discountPercent}
-                    onChange={(e) => update({ discountPercent: Number(e.target.value) })}
+                    onChange={(e) =>
+                      update({ discountPercent: Number(e.target.value) })
+                    }
                     className="w-full h-2 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-m3-primary focus:outline-none"
                   />
                   <div className="flex justify-between items-center text-xs text-on-surface-variant font-medium mt-2 px-1">
@@ -1618,13 +1880,17 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
           <section className="bg-surface-container-lowest rounded-xl p-6 shadow-sm space-y-6">
             <div className="flex items-center gap-3 border-b border-surface-container-high pb-4">
               <span className="size-10 rounded-xl bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center">
-                <span className="material-symbols-outlined text-[22px]">security</span>
+                <span className="material-symbols-outlined text-[22px]">
+                  security
+                </span>
               </span>
               <div>
-                <h2 className="text-on-surface font-bold">۲. ودیعه ضمانت امانت و شرایط اسکرو</h2>
+                <h2 className="text-on-surface font-bold">
+                  ۲. ودیعه ضمانت امانت و شرایط اسکرو
+                </h2>
                 <p className="text-sm text-on-surface-variant">
-                  مبلغ امانی در حساب واسط اورا مسدود می‌ماند و پس از تست سلامت به مستاجر
-                  عودت داده می‌شود.
+                  مبلغ امانی در حساب واسط اورا مسدود می‌ماند و پس از تست سلامت
+                  به مستاجر عودت داده می‌شود.
                 </p>
                 <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-full">
                   پرداخت آزمایشی (Sandbox) — هیچ پول واقعی جابه‌جا نمی‌شود
@@ -1649,21 +1915,25 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                   <span>تعهد اوراگارد (OveraGuard)</span>
                 </div>
                 <p className="text-sm text-on-surface-variant mt-2 leading-relaxed">
-                  ودیعه نقدی در صورت بروز خسارت یا تاخیر، پس از ارائه صورت‌جلسه دیجیتال
-                  تحویل به حساب شما بازگردانده می‌شود (شبیه‌سازی).
+                  ودیعه نقدی در صورت بروز خسارت یا تاخیر، پس از ارائه صورت‌جلسه
+                  دیجیتال تحویل به حساب شما بازگردانده می‌شود (شبیه‌سازی).
                 </p>
               </div>
             </div>
 
             <div className="space-y-3 pt-2">
-              <span className="text-on-surface block font-bold">روش‌های جایگزین ودیعه نقدی:</span>
+              <span className="text-on-surface block font-bold">
+                روش‌های جایگزین ودیعه نقدی:
+              </span>
               <div className="space-y-2.5">
                 <label className="flex items-center justify-between p-3.5 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
                   <div className="flex items-center gap-3">
                     <input
                       type="checkbox"
                       checked={form.acceptPromissoryNote}
-                      onChange={(e) => update({ acceptPromissoryNote: e.target.checked })}
+                      onChange={(e) =>
+                        update({ acceptPromissoryNote: e.target.checked })
+                      }
                       className="rounded text-m3-primary focus:ring-m3-primary"
                     />
                     <div>
@@ -1671,7 +1941,8 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                         پذیرش سفته الکترونیک بانکی
                       </span>
                       <span className="text-sm text-on-surface-variant">
-                        مستاجر بدون بلوکه کردن پول نقد، سفته رسمی با امضای دیجیتال ثبت می‌کند.
+                        مستاجر بدون بلوکه کردن پول نقد، سفته رسمی با امضای
+                        دیجیتال ثبت می‌کند.
                       </span>
                     </div>
                   </div>
@@ -1687,13 +1958,17 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-container-high pb-4">
               <div className="flex items-center gap-3">
                 <span className="size-10 rounded-xl bg-surface-container-high text-m3-primary flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[22px]">calendar_month</span>
+                  <span className="material-symbols-outlined text-[22px]">
+                    calendar_month
+                  </span>
                 </span>
                 <div>
-                  <h2 className="text-on-surface font-bold">۳. تقویم رزرو و زمان‌بندی تحویل</h2>
+                  <h2 className="text-on-surface font-bold">
+                    ۳. تقویم رزرو و زمان‌بندی تحویل
+                  </h2>
                   <p className="text-sm text-on-surface-variant">
-                    روزهایی که مایل نیستید کالا اجاره داده شود را در تقویم شمسی مسدود کنید؛ این
-                    روزها برای مستأجرها قابل رزرو نخواهد بود.
+                    روزهایی که مایل نیستید کالا اجاره داده شود را در تقویم شمسی
+                    مسدود کنید؛ این روزها برای مستأجرها قابل رزرو نخواهد بود.
                   </p>
                 </div>
               </div>
@@ -1735,8 +2010,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
 
                   {form.blockedRanges.length === 0 ? (
                     <p className="text-xs text-on-surface-variant leading-relaxed">
-                      هنوز روزی مسدود نشده است. روز شروع و روز پایان را در تقویم انتخاب کنید تا
-                      آن بازه مسدود شود؛ برای مسدود کردن فقط یک روز، همان روز را دوباره بزنید.
+                      هنوز روزی مسدود نشده است. روز شروع و روز پایان را در تقویم
+                      انتخاب کنید تا آن بازه مسدود شود؛ برای مسدود کردن فقط یک
+                      روز، همان روز را دوباره بزنید.
                     </p>
                   ) : (
                     <ul className="space-y-2 max-h-64 overflow-y-auto">
@@ -1747,7 +2023,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                         >
                           <span className="text-xs font-bold text-on-surface">
                             {formatJalaliIso(r.start)}
-                            {r.end !== r.start ? ` تا ${formatJalaliIso(r.end)}` : " (یک روز)"}
+                            {r.end !== r.start
+                              ? ` تا ${formatJalaliIso(r.end)}`
+                              : " (یک روز)"}
                             <span className="text-on-surface-variant font-medium">
                               {" "}
                               — {faNumber(rentalDaysIso(r.start, r.end))} روز
@@ -1759,7 +2037,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                             aria-label="حذف بازه مسدود"
                             className="size-7 rounded-full flex items-center justify-center text-m3-error hover:bg-m3-error/10 transition-colors cursor-pointer shrink-0"
                           >
-                            <span className="material-symbols-outlined text-[16px]">close</span>
+                            <span className="material-symbols-outlined text-[16px]">
+                              close
+                            </span>
                           </button>
                         </li>
                       ))}
@@ -1787,8 +2067,12 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
               <div className="p-4 rounded-xl bg-surface-container-low space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-on-surface text-sm">فاصله تنفس بین دو رزرو</span>
-                  <span className="material-symbols-outlined text-m3-primary text-[20px]">timelapse</span>
+                  <span className="font-bold text-on-surface text-sm">
+                    فاصله تنفس بین دو رزرو
+                  </span>
+                  <span className="material-symbols-outlined text-m3-primary text-[20px]">
+                    timelapse
+                  </span>
                 </div>
                 <p className="text-sm text-on-surface-variant">
                   زمان مورد نیاز برای تست عملکرد و نظافت قبل از مشتری بعدی.
@@ -1813,7 +2097,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
               onClick={() => goStep(2)}
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-semibold transition-colors cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+              <span className="material-symbols-outlined text-[20px]">
+                arrow_forward
+              </span>
               <span>مرحله قبلی: مشخصات فنی</span>
             </button>
             <button
@@ -1822,7 +2108,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
               className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-m3-primary hover:bg-primary-container text-on-primary font-bold shadow-md shadow-m3-primary/25 active:scale-[0.98] transition-all cursor-pointer"
             >
               <span>ادامه: قوانین تحویل و تایید نهایی</span>
-              <span className="material-symbols-outlined text-[22px]">arrow_back</span>
+              <span className="material-symbols-outlined text-[22px]">
+                arrow_back
+              </span>
             </button>
           </section>
         </div>
@@ -1832,8 +2120,12 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
           <div className="bg-surface-container-lowest rounded-xl p-5 md:p-6 shadow-md border-0 space-y-5">
             <div className="flex items-center justify-between border-b border-surface-container-high pb-4">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-m3-primary text-[24px]">calculate</span>
-                <span className="font-bold text-on-surface">درآمد خالص میزبان</span>
+                <span className="material-symbols-outlined text-m3-primary text-[24px]">
+                  calculate
+                </span>
+                <span className="font-bold text-on-surface">
+                  درآمد خالص میزبان
+                </span>
               </div>
               <span className="text-xs text-emerald-800 bg-emerald-500/15 px-2.5 py-0.5 rounded-full font-bold">
                 محاسبه نمونه (شبیه‌سازی)
@@ -1849,7 +2141,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
               </div>
               <div className="space-y-2.5 pt-2 text-sm text-on-surface">
                 <div className="flex justify-between items-center">
-                  <span className="text-on-surface-variant">مجموع اجاره ناخالص:</span>
+                  <span className="text-on-surface-variant">
+                    مجموع اجاره ناخالص:
+                  </span>
                   <span className="font-bold">
                     {Number.isFinite(gross) ? `${faNumber(gross)} تومان` : "—"}
                   </span>
@@ -1857,12 +2151,16 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 <div className="flex justify-between items-center text-m3-primary font-medium">
                   <span>تخفیف ({faNumber(form.discountPercent)}٪):</span>
                   <span>
-                    {Number.isFinite(discountAmt) ? `- ${faNumber(discountAmt)} تومان` : "—"}
+                    {Number.isFinite(discountAmt)
+                      ? `- ${faNumber(discountAmt)} تومان`
+                      : "—"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-on-surface-variant">
                   <span>کارمزد پلتفرم اورا (۱۰٪):</span>
-                  <span>{Number.isFinite(fee) ? `- ${faNumber(fee)} تومان` : "—"}</span>
+                  <span>
+                    {Number.isFinite(fee) ? `- ${faNumber(fee)} تومان` : "—"}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center text-emerald-700 font-medium">
                   <span>بیمه سلامت کالا (اوراگارد):</span>
@@ -1893,11 +2191,13 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 </span>
               </span>
               <div className="space-y-0.5">
-                <h4 className="font-bold text-on-surface text-sm">ضمانت بازگشت و سلامت کالا</h4>
+                <h4 className="font-bold text-on-surface text-sm">
+                  ضمانت بازگشت و سلامت کالا
+                </h4>
                 <p className="text-sm text-on-surface-variant">
-                  ودیعه{" "}
-                  {Number.isFinite(depositNum) ? faNumber(depositNum) : 0} تومانی تا تایید
-                  سلامت فیزیکی توسط شما آزاد نخواهد شد (شبیه‌سازی).
+                  ودیعه {Number.isFinite(depositNum) ? faNumber(depositNum) : 0}{" "}
+                  تومانی تا تایید سلامت فیزیکی توسط شما آزاد نخواهد شد
+                  (شبیه‌سازی).
                 </p>
               </div>
             </div>
@@ -1927,7 +2227,8 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 آگهی شما با موفقیت ثبت شد و در صف تایید کارشناسان قرار گرفت!
               </h4>
               <p className="text-xs text-emerald-700 mt-0.5">
-                شناسه پیگیری ثبت: {published.id !== "—" ? published.id : "در حال ثبت"}
+                شناسه پیگیری ثبت:{" "}
+                {published.id !== "—" ? published.id : "در حال ثبت"}
               </p>
             </div>
           </div>
@@ -1960,10 +2261,14 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             <div className="flex items-center justify-between pb-3">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-xl bg-primary-fixed flex items-center justify-center text-m3-primary">
-                  <span className="material-symbols-outlined text-[24px]">local_shipping</span>
+                  <span className="material-symbols-outlined text-[24px]">
+                    local_shipping
+                  </span>
                 </div>
                 <div>
-                  <h2 className="text-on-surface font-bold">روش‌ها و شرایط تحویل و بازگشت کالا</h2>
+                  <h2 className="text-on-surface font-bold">
+                    روش‌ها و شرایط تحویل و بازگشت کالا
+                  </h2>
                   <p className="text-sm text-on-surface-variant">
                     نحوه دریافت کالا توسط مستاجر و بازگرداندن آن را تعیین کنید.
                   </p>
@@ -1984,7 +2289,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 />
                 <div className="flex items-start justify-between mb-3">
                   <div className="size-9 rounded-lg bg-surface-container-lowest flex items-center justify-center text-m3-primary">
-                    <span className="material-symbols-outlined text-[22px]">pin_drop</span>
+                    <span className="material-symbols-outlined text-[22px]">
+                      pin_drop
+                    </span>
                   </div>
                   {form.pickupInPerson && (
                     <span
@@ -1995,7 +2302,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                     </span>
                   )}
                 </div>
-                <span className="font-bold text-on-surface">تحویل حضوری در محل مالک</span>
+                <span className="font-bold text-on-surface">
+                  تحویل حضوری در محل مالک
+                </span>
                 <span className="text-sm text-on-surface-variant mt-1">
                   {form.city}، {form.area || "—"}
                 </span>
@@ -2008,12 +2317,16 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 <input
                   type="checkbox"
                   checked={form.deliveryCourier}
-                  onChange={(e) => update({ deliveryCourier: e.target.checked })}
+                  onChange={(e) =>
+                    update({ deliveryCourier: e.target.checked })
+                  }
                   className="peer sr-only"
                 />
                 <div className="flex items-start justify-between mb-3">
                   <div className="size-9 rounded-lg bg-surface-container-lowest flex items-center justify-center text-m3-primary">
-                    <span className="material-symbols-outlined text-[22px]">two_wheeler</span>
+                    <span className="material-symbols-outlined text-[22px]">
+                      two_wheeler
+                    </span>
                   </div>
                   {form.deliveryCourier && (
                     <span
@@ -2024,7 +2337,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                     </span>
                   )}
                 </div>
-                <span className="font-bold text-on-surface">ارسال با سفیر اختصاصی اورا</span>
+                <span className="font-bold text-on-surface">
+                  ارسال با سفیر اختصاصی اورا
+                </span>
                 <span className="text-sm text-on-surface-variant mt-1">
                   ناوگان امن مجهز به جعبه ضدضربه
                 </span>
@@ -2037,17 +2352,23 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
               <div className="flex flex-col gap-2">
                 <label className="text-on-surface flex items-center gap-1.5 font-semibold text-sm">
-                  <span className="material-symbols-outlined text-[18px] text-m3-primary">schedule</span>
+                  <span className="material-symbols-outlined text-[18px] text-m3-primary">
+                    schedule
+                  </span>
                   بازه زمانی مجاز تحویل و عودت کالا
                 </label>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 bg-surface-container-low rounded-lg p-3 flex items-center justify-between">
-                    <span className="text-xs text-on-surface-variant">از ساعت:</span>
+                    <span className="text-xs text-on-surface-variant">
+                      از ساعت:
+                    </span>
                     <span className="font-bold text-on-surface">۱۰:۰۰ صبح</span>
                   </div>
                   <span className="text-on-surface-variant text-sm">الی</span>
                   <div className="flex-1 bg-surface-container-low rounded-lg p-3 flex items-center justify-between">
-                    <span className="text-xs text-on-surface-variant">تا ساعت:</span>
+                    <span className="text-xs text-on-surface-variant">
+                      تا ساعت:
+                    </span>
                     <span className="font-bold text-on-surface">۲۰:۰۰ شب</span>
                   </div>
                 </div>
@@ -2058,18 +2379,25 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
           <div className="bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col gap-6">
             <div className="flex items-center gap-3 pb-2">
               <div className="size-10 rounded-xl bg-secondary-fixed flex items-center justify-center text-m3-secondary">
-                <span className="material-symbols-outlined text-[24px]">gavel</span>
+                <span className="material-symbols-outlined text-[24px]">
+                  gavel
+                </span>
               </div>
               <div>
-                <h2 className="text-on-surface font-bold">قوانین اختصاصی و شرایط رزرو</h2>
+                <h2 className="text-on-surface font-bold">
+                  قوانین اختصاصی و شرایط رزرو
+                </h2>
                 <p className="text-sm text-on-surface-variant">
-                  سیاست استرداد و شروط ویژه استفاده از دستگاه خود را تنظیم نمایید.
+                  سیاست استرداد و شروط ویژه استفاده از دستگاه خود را تنظیم
+                  نمایید.
                 </p>
               </div>
             </div>
 
             <div className="flex flex-col gap-3">
-              <span className="text-on-surface font-bold text-sm">سیاست لغو رزرو توسط مستاجر</span>
+              <span className="text-on-surface font-bold text-sm">
+                سیاست لغو رزرو توسط مستاجر
+              </span>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {CANCELLATION_POLICIES.map((pol) => (
                   <label
@@ -2081,7 +2409,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-on-surface text-sm">{pol.title}</span>
+                      <span className="font-bold text-on-surface text-sm">
+                        {pol.title}
+                      </span>
                       <input
                         type="radio"
                         name="cancellation_policy"
@@ -2090,7 +2420,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                         className="accent-m3-primary size-4"
                       />
                     </div>
-                    <p className="text-sm text-on-surface-variant">{pol.desc}</p>
+                    <p className="text-sm text-on-surface-variant">
+                      {pol.desc}
+                    </p>
                   </label>
                 ))}
               </div>
@@ -2110,7 +2442,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 ></textarea>
                 <div className="flex items-center justify-between text-xs text-on-surface-variant px-1">
                   <span className="inline-flex items-center gap-1.5 text-m3-tertiary">
-                    <span className="material-symbols-outlined text-[16px] text-m3-primary">info</span>
+                    <span className="material-symbols-outlined text-[16px] text-m3-primary">
+                      info
+                    </span>
                     شروط ثبت‌شده در برگه آگهی درج خواهد شد.
                   </span>
                 </div>
@@ -2121,10 +2455,14 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
           <div className="bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col gap-5">
             <div className="flex items-center gap-3">
               <div className="size-10 rounded-xl bg-surface-container-high flex items-center justify-center text-m3-primary">
-                <span className="material-symbols-outlined text-[24px]">contract</span>
+                <span className="material-symbols-outlined text-[24px]">
+                  contract
+                </span>
               </div>
               <div>
-                <h2 className="text-on-surface font-bold">تعهدات حقوقی و قرارداد دیجیتال امانی</h2>
+                <h2 className="text-on-surface font-bold">
+                  تعهدات حقوقی و قرارداد دیجیتال امانی
+                </h2>
                 <p className="text-sm text-on-surface-variant">
                   قرارداد رسمی الکترونیکی مطابق با قوانین تجارت الکترونیک
                 </p>
@@ -2134,7 +2472,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             <div className="bg-surface-container-low rounded-xl p-4 flex flex-col gap-3">
               <div className="flex items-center justify-between border-b pb-2 text-xs text-on-surface-variant">
                 <span className="font-bold flex items-center gap-1.5 text-on-surface">
-                  <span className="material-symbols-outlined text-m3-primary text-[18px]">policy</span>
+                  <span className="material-symbols-outlined text-m3-primary text-[18px]">
+                    policy
+                  </span>
                   خلاصه سند امانت‌سپاری اورا (نسخه نمایشی)
                 </span>
                 <span className="bg-surface-container px-2 py-0.5 rounded text-m3-tertiary">
@@ -2142,11 +2482,11 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 </span>
               </div>
               <p className="text-sm text-on-surface leading-relaxed text-justify">
-                این قرارداد به استناد ماده ۱۰ قانون مدنی و قانون تجارت الکترونیک تنظیم
-                گردیده و مطابق آن، مالک متعهد می‌شود کالای فوق‌الذکر را با سلامت کامل فنی
-                در زمان مشخص تحویل دهد و مستاجر متعهد است در موعد مقرر کالا را عودت دهد.
-                هرگونه خسارت ناشی از استفاده نامتعارف توسط کارشناسان اورا ارزیابی و جبران
-                می‌گردد.
+                این قرارداد به استناد ماده ۱۰ قانون مدنی و قانون تجارت الکترونیک
+                تنظیم گردیده و مطابق آن، مالک متعهد می‌شود کالای فوق‌الذکر را با
+                سلامت کامل فنی در زمان مشخص تحویل دهد و مستاجر متعهد است در موعد
+                مقرر کالا را عودت دهد. هرگونه خسارت ناشی از استفاده نامتعارف
+                توسط کارشناسان اورا ارزیابی و جبران می‌گردد.
               </p>
             </div>
 
@@ -2159,8 +2499,8 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                   className="size-5 rounded text-m3-primary focus:ring-m3-primary accent-m3-primary mt-0.5"
                 />
                 <span className="text-sm text-on-surface leading-snug">
-                  صحت کلیه اطلاعات فنی، سلامت فیزیکی دستگاه و مالکیت قانونی کالا را تایید
-                  می‌نمایم.
+                  صحت کلیه اطلاعات فنی، سلامت فیزیکی دستگاه و مالکیت قانونی کالا
+                  را تایید می‌نمایم.
                 </span>
               </label>
               <label className="flex items-start gap-3 cursor-pointer">
@@ -2171,8 +2511,8 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                   className="size-5 rounded text-m3-primary focus:ring-m3-primary accent-m3-primary mt-0.5"
                 />
                 <span className="text-sm text-on-surface leading-snug">
-                  قوانین و مقررات میزبانی کالا و شیوه حل اختلاف سامانه داوری اورا را مطالعه
-                  نموده و می‌پذیرم.
+                  قوانین و مقررات میزبانی کالا و شیوه حل اختلاف سامانه داوری
+                  اورا را مطالعه نموده و می‌پذیرم.
                 </span>
               </label>
             </div>
@@ -2183,7 +2523,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
         <div className="lg:col-span-4 flex flex-col gap-6 lg:sticky lg:top-20">
           <div className="bg-surface-container-lowest rounded-xl p-5 shadow-xl flex flex-col gap-5 border border-outline-variant/30">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-on-surface">پیش‌نمایش زنده آگهی</span>
+              <span className="font-bold text-on-surface">
+                پیش‌نمایش زنده آگهی
+              </span>
               <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full">
                 <span className="size-1.5 rounded-full bg-emerald-600 animate-ping"></span>
                 آماده تایید و انتشار
@@ -2191,7 +2533,7 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
             </div>
 
             <div className="relative w-full h-56 rounded-xl overflow-hidden bg-surface-container group">
-              { }
+              {}
               <img
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 src={previewImage ?? "/assets/img/9ddd0b723001.jpg"}
@@ -2211,23 +2553,31 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
                 <span className="text-xs text-primary-fixed block font-medium">
                   {selectedCategory?.name ?? "دسته‌بندی انتخاب نشده"}
                 </span>
-                <h3 className="text-base font-bold truncate">{form.title || "عنوان وسیله"}</h3>
+                <h3 className="text-base font-bold truncate">
+                  {form.title || "عنوان وسیله"}
+                </h3>
               </div>
             </div>
 
             <div className="flex flex-col gap-3 p-4 rounded-xl bg-surface-container-low">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-on-surface-variant">اجاره بها روزانه:</span>
+                <span className="text-sm text-on-surface-variant">
+                  اجاره بها روزانه:
+                </span>
                 <div className="flex items-baseline gap-1">
                   <span className="font-bold text-m3-primary">
                     {Number.isFinite(dailyNum) ? faNumber(dailyNum) : "—"}
                   </span>
-                  <span className="text-xs text-on-surface-variant font-medium">تومان / روز</span>
+                  <span className="text-xs text-on-surface-variant font-medium">
+                    تومان / روز
+                  </span>
                 </div>
               </div>
               <div className="flex items-center justify-between border-t border-outline-variant/30 pt-2.5">
                 <span className="text-sm text-on-surface-variant flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[16px] text-m3-secondary">lock</span>
+                  <span className="material-symbols-outlined text-[16px] text-m3-secondary">
+                    lock
+                  </span>
                   مبلغ ودیعه امن (نقدی):
                 </span>
                 <span className="font-bold text-on-surface">
@@ -2244,12 +2594,16 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
 
             <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low">
               <div className="relative size-12 rounded-full overflow-hidden bg-primary-fixed flex items-center justify-center">
-                <span className="text-m3-primary font-black text-lg">{userName?.trim()?.[0] ?? "م"}</span>
+                <span className="text-m3-primary font-black text-lg">
+                  {userName?.trim()?.[0] ?? "م"}
+                </span>
                 <div className="absolute bottom-0 right-0 size-3.5 bg-emerald-500 rounded-full border-2 border-surface-container-lowest"></div>
               </div>
               <div className="flex flex-col flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-on-surface truncate text-sm">{userName}</span>
+                  <span className="font-bold text-on-surface truncate text-sm">
+                    {userName}
+                  </span>
                   <span
                     className="material-symbols-outlined text-emerald-600 text-[16px]"
                     style={{ fontVariationSettings: "'FILL' 1" }}
@@ -2272,7 +2626,9 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
           onClick={() => goStep(3)}
           className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-surface-container-high text-on-surface hover:bg-surface-variant transition-colors font-semibold cursor-pointer"
         >
-          <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+          <span className="material-symbols-outlined text-[20px]">
+            arrow_forward
+          </span>
           <span>بازگشت به مرحله ۳ (قیمت‌گذاری)</span>
         </button>
 
@@ -2286,8 +2642,12 @@ export default function CreateListingWizard({ categories, sampleImages, initial,
               : "bg-surface-container text-m3-tertiary cursor-not-allowed opacity-60"
           }`}
         >
-          <span>{submitting ? "در حال ارسال…" : "ثبت نهایی و انتشار آگهی"}</span>
-          <span className="material-symbols-outlined text-[22px]">rocket_launch</span>
+          <span>
+            {submitting ? "در حال ارسال…" : "ثبت نهایی و انتشار آگهی"}
+          </span>
+          <span className="material-symbols-outlined text-[22px]">
+            rocket_launch
+          </span>
         </button>
       </section>
     </div>

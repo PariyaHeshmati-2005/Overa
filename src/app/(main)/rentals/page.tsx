@@ -4,7 +4,10 @@ import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import SiteHeader from "@/components/layout/SiteHeader";
 import RentalsClient from "./RentalsClient";
-import { RESERVATION_STATUS_LABELS, RESERVATION_STATUS_COLORS } from "@/lib/rental-state";
+import {
+  RESERVATION_STATUS_LABELS,
+  RESERVATION_STATUS_COLORS,
+} from "@/lib/rental-state";
 
 export const dynamic = "force-dynamic";
 
@@ -79,13 +82,25 @@ export default async function RentalsPage() {
         aria-label="مسیریابی"
         className="flex items-center gap-2 text-sm text-m3-outline pt-4 mb-4 mt-3 mr-3 sm:mr-6"
       >
-        <Link className="hover:text-m3-primary transition-colors flex items-center gap-1" href="/">
+        <Link
+          className="hover:text-m3-primary transition-colors flex items-center gap-1"
+          href="/"
+        >
           <span className="material-symbols-outlined text-[18px]">home</span>
           <span>خانه</span>
         </Link>
-        <span className="material-symbols-outlined text-[16px] text-outline-variant">chevron_left</span>
-        <Link className="hover:text-m3-primary transition-colors" href="/account-settings">حساب کاربری</Link>
-        <span className="material-symbols-outlined text-[16px] text-outline-variant">chevron_left</span>
+        <span className="material-symbols-outlined text-[16px] text-outline-variant">
+          chevron_left
+        </span>
+        <Link
+          className="hover:text-m3-primary transition-colors"
+          href="/account-settings"
+        >
+          حساب کاربری
+        </Link>
+        <span className="material-symbols-outlined text-[16px] text-outline-variant">
+          chevron_left
+        </span>
         <span className="text-on-surface font-bold">اجاره ها</span>
       </nav>
 
@@ -109,12 +124,27 @@ export default async function RentalsPage() {
             <span>— سامانه هوشمند کرایه و اشتراک تجهیزات در سراسر کشور</span>
           </div>
           <div className="flex items-center gap-4 sm:gap-6">
-            <Link className="hover:text-m3-primary transition-colors" href="/tos-support-faq">قوانین بیمه و ضمانت</Link>
-            <Link className="hover:text-m3-primary transition-colors" href="/wallet">شرایط بازگشت ودیعه</Link>
-            <Link className="hover:text-m3-primary transition-colors" href="/tos-support-faq">مرکز تماس و پشتیبانی</Link>
+            <Link
+              className="hover:text-m3-primary transition-colors"
+              href="/tos-support-faq"
+            >
+              قوانین بیمه و ضمانت
+            </Link>
+            <Link
+              className="hover:text-m3-primary transition-colors"
+              href="/wallet"
+            >
+              شرایط بازگشت ودیعه
+            </Link>
+            <Link
+              className="hover:text-m3-primary transition-colors"
+              href="/tos-support-faq"
+            >
+              مرکز تماس و پشتیبانی
+            </Link>
           </div>
           <div>
-            <span>تمامی حقوق محفوظ است © ۱۴۰۳</span>
+            <span>تمامی حقوق محفوظ است © ۱۴۰۵</span>
           </div>
         </div>
       </footer>

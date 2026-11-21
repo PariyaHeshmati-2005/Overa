@@ -1,63 +1,63 @@
 # گزارش تحویل — نسخه بهبودیافته اورا (Overa)
 
-> تاریخ: ۱۴۰۳/۰۸/۲۴ (۲۰۲۶-۱۱-۱۵) — نسخه ۰٫۳٫۰
+> تاریخ: ۱۴۰۵/۰۸/۲۴ (۲۰۲۶-۱۱-۱۵) — نسخه ۰٫۳٫۰
 > این سند، خلاصه کامل تغییرات، معماری دیتابیس، متغیرهای محیطی، راهنمای استقرار در Vercel و نتایج تست‌ها است.
 
 ---
 
 ## ۱. فایل‌های تغییر یافته (Modify)
 
-| فایل | شرح تغییر |
-| --- | --- |
-| `prisma/schema.prisma` | افزودن `isDemo` به `User` و `Listing` (تفکیک داده دمو از واقعی)، افزودن `Listing.searchKey` (کلید جستجوی نرمال‌شده) |
-| `scripts/seed.ts` | بازنویسی کامل: idempotent، غیرمخرب، با محافظ Production و برچسب `isDemo` |
-| `src/app/(main)/page.tsx` | جایگزینی بنر استاتیک با Carousel واقعی، کارت نصب اپلیکیشن با QR واقعی، حذف دکمه‌های قلابی فروشگاه |
-| `src/components/layout/HeaderClient.tsx` | جستجوی زنده دیتابیسی در هدر و منوی موبایل، حذف گزینه تخفیف‌ها برای مهمان، پنهان‌سازی زیرنویس برند در موبایل خیلی کوچک |
-| `src/app/(main)/discounts/page.tsx` | محافظ دسترسی سمت سرور (redirect مهمان به ورود)، `noindex` |
-| `src/app/(main)/categories/CategoriesApp.tsx` | پشتیبانی از پارامتر `?category=slug` برای دسته‌های بدون تب (مثل لوازم خانگی) |
-| `src/app/(main)/item-details/[id]/page.tsx` | ۴۰۴ واقعی برای شناسه نامعتبر، متادیتای SEO پویا (عنوان/توضیح/OG از محصول)، رفع کرش صفحه |
-| `src/app/(main)/admin-dashboard/page.tsx` | واکشی کل کاتالوگ با تعداد رزروها برای بخش مدیریت محصولات |
-| `src/app/(main)/admin-dashboard/AdminDashboardClient.tsx` | بخش جدید «مدیریت محصولات»: جستجو، فیلتر وضعیت، تایید/رد/توقف/آرشیو/حذف امن |
-| `src/app/(main)/tos-support-faq/TosFaqApp.tsx` | رفع سرریز افقی ۸px در موبایل (`min-w-72` → `w-full sm:min-w-72`) |
-| `src/app/api/listings/route.ts` | تولید `searchKey` هنگام ساخت آگهی |
-| `src/app/api/listings/[id]/route.ts` | به‌روزرسانی `searchKey` هنگام ویرایش فیلدهای متنی |
-| `src/app/api/admin/listings/[id]/route.ts` | تایید/رد + اکشن‌های pause/resume/archive/restore/delete امن، اعلان به مالک، Audit Log کامل |
-| `src/lib/format.ts` | Null-safe کردن `faNumber`/`faToman` (رفع کرش `null.toLocaleString`) |
-| `src/lib/db.ts` | حذف `log: ['query']` (کاهش نویز و بهبود کارایی) |
-| `src/app/(main)/host-dashboard/page.tsx` | هدر داشبورد میزبان: واکنش‌گرا در موبایل کوچک (پنهان‌سازی زیرنویس و آیکون‌های ثانویه زیر `sm`) |
-| `src/app/(main)/rentals/page.tsx` | هدر محلی صفحه: همان بهینه‌سازی موبایل |
-| `src/app/(main)/rentals/RentalsClient.tsx` | رفع سرریز افقی سوییچ «مستأجر/میزبان» در موبایل (`min-w-0`) |
-| `src/app/(main)/account-settings/page.tsx` | رفع سرریز هدر در موبایل |
-| `src/app/(main)/live-chat/page.tsx` | رفع سرریز هدر در موبایل |
-| `src/app/(main)/reviews/page.tsx` | رفع سرریز هدر در موبایل |
-| `src/app/(main)/loading/page.tsx` | پنهان‌سازی زیرنویس برند در موبایل |
-| `src/components/overa/NotFoundContent.tsx` | پنهان‌سازی زیرنویس برند در موبایل |
-| `package.json` | اسکریپت‌های امن دیتابیس (`db:migrate*`، حذف `--accept-data-loss`)، wrapper محیطی |
-| `.env.example` | مستندسازی `NEXT_PUBLIC_SITE_URL` و DATABASE_URL |
-| `Dockerfile`, `docker-compose.yml`, `docker-entrypoint.sh` | مهاجرت از SQLite به PostgreSQL، `migrate deploy`، بوت‌استرپ ادمین، Seed دمو فقط با `SEED_DEMO=1` |
-| `bun.lock` | افزودن وابستگی `qrcode` |
+| فایل                                                       | شرح تغییر                                                                                                             |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `prisma/schema.prisma`                                     | افزودن `isDemo` به `User` و `Listing` (تفکیک داده دمو از واقعی)، افزودن `Listing.searchKey` (کلید جستجوی نرمال‌شده)   |
+| `scripts/seed.ts`                                          | بازنویسی کامل: idempotent، غیرمخرب، با محافظ Production و برچسب `isDemo`                                              |
+| `src/app/(main)/page.tsx`                                  | جایگزینی بنر استاتیک با Carousel واقعی، کارت نصب اپلیکیشن با QR واقعی، حذف دکمه‌های قلابی فروشگاه                     |
+| `src/components/layout/HeaderClient.tsx`                   | جستجوی زنده دیتابیسی در هدر و منوی موبایل، حذف گزینه تخفیف‌ها برای مهمان، پنهان‌سازی زیرنویس برند در موبایل خیلی کوچک |
+| `src/app/(main)/discounts/page.tsx`                        | محافظ دسترسی سمت سرور (redirect مهمان به ورود)، `noindex`                                                             |
+| `src/app/(main)/categories/CategoriesApp.tsx`              | پشتیبانی از پارامتر `?category=slug` برای دسته‌های بدون تب (مثل لوازم خانگی)                                          |
+| `src/app/(main)/item-details/[id]/page.tsx`                | ۴۰۴ واقعی برای شناسه نامعتبر، متادیتای SEO پویا (عنوان/توضیح/OG از محصول)، رفع کرش صفحه                               |
+| `src/app/(main)/admin-dashboard/page.tsx`                  | واکشی کل کاتالوگ با تعداد رزروها برای بخش مدیریت محصولات                                                              |
+| `src/app/(main)/admin-dashboard/AdminDashboardClient.tsx`  | بخش جدید «مدیریت محصولات»: جستجو، فیلتر وضعیت، تایید/رد/توقف/آرشیو/حذف امن                                            |
+| `src/app/(main)/tos-support-faq/TosFaqApp.tsx`             | رفع سرریز افقی ۸px در موبایل (`min-w-72` → `w-full sm:min-w-72`)                                                      |
+| `src/app/api/listings/route.ts`                            | تولید `searchKey` هنگام ساخت آگهی                                                                                     |
+| `src/app/api/listings/[id]/route.ts`                       | به‌روزرسانی `searchKey` هنگام ویرایش فیلدهای متنی                                                                     |
+| `src/app/api/admin/listings/[id]/route.ts`                 | تایید/رد + اکشن‌های pause/resume/archive/restore/delete امن، اعلان به مالک، Audit Log کامل                            |
+| `src/lib/format.ts`                                        | Null-safe کردن `faNumber`/`faToman` (رفع کرش `null.toLocaleString`)                                                   |
+| `src/lib/db.ts`                                            | حذف `log: ['query']` (کاهش نویز و بهبود کارایی)                                                                       |
+| `src/app/(main)/host-dashboard/page.tsx`                   | هدر داشبورد میزبان: واکنش‌گرا در موبایل کوچک (پنهان‌سازی زیرنویس و آیکون‌های ثانویه زیر `sm`)                         |
+| `src/app/(main)/rentals/page.tsx`                          | هدر محلی صفحه: همان بهینه‌سازی موبایل                                                                                 |
+| `src/app/(main)/rentals/RentalsClient.tsx`                 | رفع سرریز افقی سوییچ «مستأجر/میزبان» در موبایل (`min-w-0`)                                                            |
+| `src/app/(main)/account-settings/page.tsx`                 | رفع سرریز هدر در موبایل                                                                                               |
+| `src/app/(main)/live-chat/page.tsx`                        | رفع سرریز هدر در موبایل                                                                                               |
+| `src/app/(main)/reviews/page.tsx`                          | رفع سرریز هدر در موبایل                                                                                               |
+| `src/app/(main)/loading/page.tsx`                          | پنهان‌سازی زیرنویس برند در موبایل                                                                                     |
+| `src/components/overa/NotFoundContent.tsx`                 | پنهان‌سازی زیرنویس برند در موبایل                                                                                     |
+| `package.json`                                             | اسکریپت‌های امن دیتابیس (`db:migrate*`، حذف `--accept-data-loss`)، wrapper محیطی                                      |
+| `.env.example`                                             | مستندسازی `NEXT_PUBLIC_SITE_URL` و DATABASE_URL                                                                       |
+| `Dockerfile`, `docker-compose.yml`, `docker-entrypoint.sh` | مهاجرت از SQLite به PostgreSQL، `migrate deploy`، بوت‌استرپ ادمین، Seed دمو فقط با `SEED_DEMO=1`                      |
+| `bun.lock`                                                 | افزودن وابستگی `qrcode`                                                                                               |
 
 ## ۲. فایل‌های جدید (Create)
 
-| فایل | کارکرد |
-| --- | --- |
-| `src/lib/persian.ts` | نرمال‌سازی فارسی (ی/ك/اعراب/نیم‌فاصله/ارقام) + ساخت searchKey |
-| `src/lib/search.ts` | موتور جستجوی دیتابیسی (فقط آگهی‌های ACTIVE، parameterized و امن) |
-| `src/lib/qr.ts` | تولید QR واقعی به‌صورت محلی + تعیین URL پایه سایت |
-| `src/lib/pwa.ts` | مدیریت `beforeinstallprompt`، تشخیص نصب‌بودن، هوک `usePwaInstall` |
-| `src/app/api/search/route.ts` | API جستجو (`GET /api/search?q=&limit=`) |
-| `src/components/search/SearchBox.tsx` | باکس جستجوی زنده (هدر + منوی موبایل)، کیبورد، RTL |
-| `src/app/(main)/search/` | صفحه نتایج جستجو + حالت «پیدا نشد» با حفظ عبارت و اصلاح جستجو |
+| فایل                                   | کارکرد                                                                                                            |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `src/lib/persian.ts`                   | نرمال‌سازی فارسی (ی/ك/اعراب/نیم‌فاصله/ارقام) + ساخت searchKey                                                     |
+| `src/lib/search.ts`                    | موتور جستجوی دیتابیسی (فقط آگهی‌های ACTIVE، parameterized و امن)                                                  |
+| `src/lib/qr.ts`                        | تولید QR واقعی به‌صورت محلی + تعیین URL پایه سایت                                                                 |
+| `src/lib/pwa.ts`                       | مدیریت `beforeinstallprompt`، تشخیص نصب‌بودن، هوک `usePwaInstall`                                                 |
+| `src/app/api/search/route.ts`          | API جستجو (`GET /api/search?q=&limit=`)                                                                           |
+| `src/components/search/SearchBox.tsx`  | باکس جستجوی زنده (هدر + منوی موبایل)، کیبورد، RTL                                                                 |
+| `src/app/(main)/search/`               | صفحه نتایج جستجو + حالت «پیدا نشد» با حفظ عبارت و اصلاح جستجو                                                     |
 | `src/components/home/HeroCarousel.tsx` | Carousel صفحه اصلی (Embla: loop، autoplay ۵ثانیه، بدون فلش، دات، توقف با hover/focus/drag/تب مخفی/reduced-motion) |
-| `src/components/pwa/AppPromoCard.tsx` | کارت معرفی و نصب اپلیکیشن در بنر فعلی صفحه اصلی |
-| `src/app/(main)/install/` | صفحه نصب با QR، تشخیص دستگاه، دکمه نصب واقعی، راهنمای iOS سه‌مرحله‌ای |
-| `src/proxy.ts` | ۴۰۴ واقعی برای شناسه نامعتبر + redirect واقعی (۳۰۷) صفحات محافظت‌شده برای مهمان |
-| `scripts/create-admin.ts` | ساخت/ارتقای ادمین Production-safe با متغیرهای محیطی |
-| `scripts/backfill-search-keys.ts` | بازسازی searchKey برای داده‌های موجود (idempotent) |
-| `scripts/env-run.sh` | wrapper محیطی برای توسعه محلی ( اولویت `.env.local`) |
-| `scripts/find-listing.ts` | ابزار کمکی توسعه برای یافتن شناسه آگهی |
-| `prisma/migrations/` | سه Migration کنترل‌شده: `init`، `add_is_demo_flags`، `add_listing_search_key` |
-| `tests/persian.test.ts` | ۱۲ تست واحد نرمال‌سازی فارسی |
+| `src/components/pwa/AppPromoCard.tsx`  | کارت معرفی و نصب اپلیکیشن در بنر فعلی صفحه اصلی                                                                   |
+| `src/app/(main)/install/`              | صفحه نصب با QR، تشخیص دستگاه، دکمه نصب واقعی، راهنمای iOS سه‌مرحله‌ای                                             |
+| `src/proxy.ts`                         | ۴۰۴ واقعی برای شناسه نامعتبر + redirect واقعی (۳۰۷) صفحات محافظت‌شده برای مهمان                                   |
+| `scripts/create-admin.ts`              | ساخت/ارتقای ادمین Production-safe با متغیرهای محیطی                                                               |
+| `scripts/backfill-search-keys.ts`      | بازسازی searchKey برای داده‌های موجود (idempotent)                                                                |
+| `scripts/env-run.sh`                   | wrapper محیطی برای توسعه محلی ( اولویت `.env.local`)                                                              |
+| `scripts/find-listing.ts`              | ابزار کمکی توسعه برای یافتن شناسه آگهی                                                                            |
+| `prisma/migrations/`                   | سه Migration کنترل‌شده: `init`، `add_is_demo_flags`، `add_listing_search_key`                                     |
+| `tests/persian.test.ts`                | ۱۲ تست واحد نرمال‌سازی فارسی                                                                                      |
 
 ## ۳. معماری دیتابیس و اتصال
 
@@ -76,12 +76,12 @@
 
 ## ۵. Environment Variables
 
-| متغیر | الزامی | شرح |
-| --- | --- | --- |
-| `DATABASE_URL` | بله | رشته اتصال PostgreSQL (در Vercel تنظیم می‌شود؛ مقدار فعلی شما در `.env.overa-backup` حفظ شده) |
-| `NEXT_PUBLIC_SITE_URL` | توصیه‌شده | مثل `https://overa.vercel.app` — آدرس داخل QR Code نصب. در نبود آن از `VERCEL_URL` و در آخر از دامنه عمومی استفاده می‌شود |
-| `SMS_PROVIDER_API_KEY` | اختیاری | بدون آن، OTP در «حالت دمو با برچسب» کار می‌کند (کد روی صفحه نمایش داده می‌شود) |
-| `NODE_ENV`, `NEXT_TELEMETRY_DISABLED` | — | معمولی |
+| متغیر                                 | الزامی    | شرح                                                                                                                       |
+| ------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                        | بله       | رشته اتصال PostgreSQL (در Vercel تنظیم می‌شود؛ مقدار فعلی شما در `.env.overa-backup` حفظ شده)                             |
+| `NEXT_PUBLIC_SITE_URL`                | توصیه‌شده | مثل `https://overa.vercel.app` — آدرس داخل QR Code نصب. در نبود آن از `VERCEL_URL` و در آخر از دامنه عمومی استفاده می‌شود |
+| `SMS_PROVIDER_API_KEY`                | اختیاری   | بدون آن، OTP در «حالت دمو با برچسب» کار می‌کند (کد روی صفحه نمایش داده می‌شود)                                            |
+| `NODE_ENV`, `NEXT_TELEMETRY_DISABLED` | —         | معمولی                                                                                                                    |
 
 هیچ رمز یا توکنی در کد یا گیت قرار نگرفته؛ `.env*` در `.gitignore` است.
 
@@ -113,14 +113,14 @@ bun run dev                 # http://localhost:3000
 
 ## ۸. نتایج تست‌ها (نهایی)
 
-| تست | نتیجه |
-| --- | --- |
-| `bun run lint` (ESLint) | ✔ ۰ خطا / ۰ هشدار |
-| `bunx tsc --noEmit` | ✔ بدون خطا |
-| `bun test` | ✔ ۳۷/۳۷ پاس (۱۲ تست جدید نرمال‌سازی فارسی) |
-| `bun run build` (production) | ✔ Compiled successfully |
-| دود تست Production (standalone) | ✔ صفحه اصلی ۲۰۰، جستجو ۲۰۰، نصب ۲۰۰، شناسه نامعتبر **۴۰۴ واقعی**، مهمان→تخفیف‌ها **۳۰۷ واقعی** |
-| مرورگر واقعی (1440/768/430/360/320) | ✔ بدون اسکرول افقی؛ Carousel، جستجو، ورود OTP، منوی موبایل، پنل ادمین بررسی و تأیید شد |
+| تست                                 | نتیجه                                                                                          |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `bun run lint` (ESLint)             | ✔ ۰ خطا / ۰ هشدار                                                                              |
+| `bunx tsc --noEmit`                 | ✔ بدون خطا                                                                                     |
+| `bun test`                          | ✔ ۳۷/۳۷ پاس (۱۲ تست جدید نرمال‌سازی فارسی)                                                     |
+| `bun run build` (production)        | ✔ Compiled successfully                                                                        |
+| دود تست Production (standalone)     | ✔ صفحه اصلی ۲۰۰، جستجو ۲۰۰، نصب ۲۰۰، شناسه نامعتبر **۴۰۴ واقعی**، مهمان→تخفیف‌ها **۳۰۷ واقعی** |
+| مرورگر واقعی (1440/768/430/360/320) | ✔ بدون اسکرول افقی؛ Carousel، جستجو، ورود OTP، منوی موبایل، پنل ادمین بررسی و تأیید شد         |
 
 سناریوهای مرورگری تأییدشده: جستجوی «دوربین/چادر/sony/PS5/کمپینگ/عرب‌نویسی ي-ك/بدون نیم‌فاصله/عدم وجود»، کلیک نتیجه→جزئیات، ورود OTP مهمان، مخفی/آشکار بودن تخفیف‌ها، تایید/توقف/آرشیو ادمین با ثبت در Audit Log و اعلان مالک، autoplay دو جهته Carousel با دات و درگ.
 

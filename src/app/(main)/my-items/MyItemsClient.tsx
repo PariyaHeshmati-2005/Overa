@@ -62,7 +62,14 @@ type Props = {
   initialListings: ApiListing[];
 };
 
-type TabKey = "ALL" | "ACTIVE" | "PENDING" | "DRAFT" | "REJECTED" | "PAUSED" | "ARCHIVED";
+type TabKey =
+  | "ALL"
+  | "ACTIVE"
+  | "PENDING"
+  | "DRAFT"
+  | "REJECTED"
+  | "PAUSED"
+  | "ARCHIVED";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "ALL", label: "همه وسایل" },
@@ -75,12 +82,30 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 const STATUS_CHIP: Record<string, { label: string; cls: string }> = {
-  ACTIVE: { label: "فعال", cls: "bg-emerald-50 text-emerald-600 border border-emerald-200/50" },
-  PENDING: { label: "در انتظار تایید کارشناس", cls: "bg-amber-100 text-amber-800 border border-amber-200/60" },
-  DRAFT: { label: "پیش‌نویس", cls: "bg-primary-fixed text-primary border border-primary/20" },
-  PAUSED: { label: "موقتاً غیرفعال", cls: "bg-surface-container text-on-surface-variant border border-outline-variant/40" },
-  REJECTED: { label: "رد شده", cls: "bg-m3-error-container text-m3-on-error-container border border-m3-error/20" },
-  ARCHIVED: { label: "آرشیو", cls: "bg-surface-container-high text-on-surface-variant border border-outline-variant/40" },
+  ACTIVE: {
+    label: "فعال",
+    cls: "bg-emerald-50 text-emerald-600 border border-emerald-200/50",
+  },
+  PENDING: {
+    label: "در انتظار تایید کارشناس",
+    cls: "bg-amber-100 text-amber-800 border border-amber-200/60",
+  },
+  DRAFT: {
+    label: "پیش‌نویس",
+    cls: "bg-primary-fixed text-primary border border-primary/20",
+  },
+  PAUSED: {
+    label: "موقتاً غیرفعال",
+    cls: "bg-surface-container text-on-surface-variant border border-outline-variant/40",
+  },
+  REJECTED: {
+    label: "رد شده",
+    cls: "bg-m3-error-container text-m3-on-error-container border border-m3-error/20",
+  },
+  ARCHIVED: {
+    label: "آرشیو",
+    cls: "bg-surface-container-high text-on-surface-variant border border-outline-variant/40",
+  },
 };
 
 const PAGE_SIZE = 6;
@@ -104,7 +129,11 @@ function draftProgress(l: ApiListing) {
   return { pct, step, nextHint };
 }
 
-export default function MyItemsClient({ stats, rentedMap, initialListings }: Props) {
+export default function MyItemsClient({
+  stats,
+  rentedMap,
+  initialListings,
+}: Props) {
   const router = useRouter();
   const [tab, setTab] = useState<TabKey>("ALL");
   const [allListings, setAllListings] = useState<ApiListing[]>(initialListings);
@@ -123,23 +152,24 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
     setAllListings(Array.isArray(data.listings) ? data.listings : []);
   }, []);
 
-  const loadTab = useCallback(
-    async (t: TabKey) => {
-      setLoading(true);
-      try {
-        const url = t === "ALL" ? "/api/listings?mine=1" : `/api/listings?mine=1&status=${t}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        setListings(Array.isArray(data.listings) ? data.listings : []);
-        if (t === "ALL") setAllListings(Array.isArray(data.listings) ? data.listings : []);
-      } catch {
-        toast.error("دریافت فهرست وسایل ممکن نشد.");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [],
-  );
+  const loadTab = useCallback(async (t: TabKey) => {
+    setLoading(true);
+    try {
+      const url =
+        t === "ALL"
+          ? "/api/listings?mine=1"
+          : `/api/listings?mine=1&status=${t}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      setListings(Array.isArray(data.listings) ? data.listings : []);
+      if (t === "ALL")
+        setAllListings(Array.isArray(data.listings) ? data.listings : []);
+    } catch {
+      toast.error("دریافت فهرست وسایل ممکن نشد.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     void loadTab("ALL");
@@ -180,7 +210,8 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
   }
 
   async function removeListing(l: ApiListing) {
-    if (!window.confirm(`آگهی «${l.title}» از فهرست شما حذف (آرشیو) شود؟`)) return;
+    if (!window.confirm(`آگهی «${l.title}» از فهرست شما حذف (آرشیو) شود؟`))
+      return;
     setBusy(l.id);
     try {
       const res = await fetch(`/api/listings/${l.id}`, { method: "DELETE" });
@@ -233,17 +264,29 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
           l.category.name.includes(q),
       );
     }
-    if (categoryFilter !== "all") list = list.filter((l) => l.category.slug === categoryFilter);
+    if (categoryFilter !== "all")
+      list = list.filter((l) => l.category.slug === categoryFilter);
     if (sort === "price_asc") list.sort((a, b) => a.dailyPrice - b.dailyPrice);
-    else if (sort === "price_desc") list.sort((a, b) => b.dailyPrice - a.dailyPrice);
-    else list.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    else if (sort === "price_desc")
+      list.sort((a, b) => b.dailyPrice - a.dailyPrice);
+    else
+      list.sort(
+        (a, b) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+      );
     return list;
   }, [listings, query, categoryFilter, sort]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
-  const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
-  const drafts = useMemo(() => allListings.filter((l) => l.status === "DRAFT"), [allListings]);
+  const paged = filtered.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
+  );
+  const drafts = useMemo(
+    () => allListings.filter((l) => l.status === "DRAFT"),
+    [allListings],
+  );
 
   const draftActions = (l: ApiListing) => {
     const items: { label: string; run: () => void }[] = [];
@@ -251,34 +294,60 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
       items.push({
         label: "توقف نمایش (غیرفعال)",
         run: () =>
-          patchStatus(l, "PAUSED", `نمایش آگهی «${l.title}» موقتاً متوقف شود؟`, "آگهی موقتاً غیرفعال شد."),
+          patchStatus(
+            l,
+            "PAUSED",
+            `نمایش آگهی «${l.title}» موقتاً متوقف شود؟`,
+            "آگهی موقتاً غیرفعال شد.",
+          ),
       });
     }
     if (l.status === "PAUSED") {
       items.push({
         label: "فعال‌سازی مجدد",
-        run: () => patchStatus(l, "ACTIVE", `آگهی «${l.title}» دوباره فعال شود؟`, "آگهی فعال شد و در سایت منتشر گردید."),
+        run: () =>
+          patchStatus(
+            l,
+            "ACTIVE",
+            `آگهی «${l.title}» دوباره فعال شود؟`,
+            "آگهی فعال شد و در سایت منتشر گردید.",
+          ),
       });
     }
     if (l.status === "DRAFT") {
       items.push({
         label: "ارسال برای بررسی",
         run: () =>
-          patchStatus(l, "PENDING", `آگهی «${l.title}» برای تایید کارشناس ارسال شود؟`, "آگهی برای بررسی کارشناس ارسال شد."),
+          patchStatus(
+            l,
+            "PENDING",
+            `آگهی «${l.title}» برای تایید کارشناس ارسال شود؟`,
+            "آگهی برای بررسی کارشناس ارسال شد.",
+          ),
       });
     }
     if (l.status === "REJECTED") {
       items.push({
         label: "ارسال مجدد برای بررسی",
         run: () =>
-          patchStatus(l, "PENDING", `آگهی «${l.title}» پس از ویرایش دوباره ارسال شود؟`, "آگهی برای بررسی مجدد ارسال شد."),
+          patchStatus(
+            l,
+            "PENDING",
+            `آگهی «${l.title}» پس از ویرایش دوباره ارسال شود؟`,
+            "آگهی برای بررسی مجدد ارسال شد.",
+          ),
       });
     }
     if (l.status !== "ARCHIVED") {
       items.push({
         label: "آرشیو کردن",
         run: () =>
-          patchStatus(l, "ARCHIVED", `آگهی «${l.title}» به آرشیو منتقل شود؟`, "آگهی به آرشیو منتقل شد."),
+          patchStatus(
+            l,
+            "ARCHIVED",
+            `آگهی «${l.title}» به آرشیو منتقل شود؟`,
+            "آگهی به آرشیو منتقل شد.",
+          ),
       });
     } else {
       items.push({ label: "حذف از فهرست", run: () => removeListing(l) });
@@ -304,7 +373,9 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
           <div className="absolute top-3 right-3 flex flex-wrap gap-1.5">
             {rented ? (
               <span className="bg-emerald-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">
-                <span className="material-symbols-outlined text-[14px]">key</span>
+                <span className="material-symbols-outlined text-[14px]">
+                  key
+                </span>
                 هم‌اکنون در اجاره
               </span>
             ) : l.status === "ACTIVE" ? (
@@ -313,7 +384,9 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                 آماده رزرو
               </span>
             ) : (
-              <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg ${chip.cls}`}>
+              <span
+                className={`text-[11px] font-bold px-2.5 py-1 rounded-lg ${chip.cls}`}
+              >
                 {chip.label}
               </span>
             )}
@@ -334,11 +407,15 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                   star
                 </span>
                 <strong className="text-on-surface">
-                  {l.reviewsCount > 0 ? faNumber(Math.round(l.rating * 10) / 10) : "—"}
+                  {l.reviewsCount > 0
+                    ? faNumber(Math.round(l.rating * 10) / 10)
+                    : "—"}
                 </strong>
                 ({faNumber(l.reviewsCount)} نظر)
               </span>
-              <span className="text-m3-primary font-semibold">کد وسیله: {code}</span>
+              <span className="text-m3-primary font-semibold">
+                کد وسیله: {code}
+              </span>
             </div>
 
             {l.status === "REJECTED" && l.rejectionReason && (
@@ -360,9 +437,13 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                 </span>
               </div>
               <div className="flex justify-between items-center text-[11px]">
-                <span className="text-on-surface-variant">ودیعه ضمانت اورا:</span>
+                <span className="text-on-surface-variant">
+                  ودیعه ضمانت اورا:
+                </span>
                 <span className="font-medium text-on-surface">
-                  {l.deposit > 0 ? `${faNumber(l.deposit)} تومان` : "بدون ودیعه"}
+                  {l.deposit > 0
+                    ? `${faNumber(l.deposit)} تومان`
+                    : "بدون ودیعه"}
                 </span>
               </div>
               <div className="flex justify-between items-center text-[11px] pt-1 border-t border-outline-variant/20">
@@ -371,7 +452,9 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                 </span>
                 <span
                   className={
-                    rented ? "text-emerald-700 font-medium" : "text-on-surface-variant"
+                    rented
+                      ? "text-emerald-700 font-medium"
+                      : "text-on-surface-variant"
                   }
                 >
                   {rented
@@ -390,7 +473,9 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                 href={`/rental-lifecycle/${rented.id}`}
                 className="flex-1 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1 transition-colors shadow-sm"
               >
-                <span className="material-symbols-outlined text-[17px]">hourglass_top</span>
+                <span className="material-symbols-outlined text-[17px]">
+                  hourglass_top
+                </span>
                 <span className="">در حال پیگیری</span>
               </Link>
             )}
@@ -398,7 +483,9 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
               href={`/create-listing?edit=${l.id}`}
               className="flex-1 h-9 px-3 rounded-xl border border-outline-variant/40 hover:bg-surface-container text-on-surface-variant hover:text-on-surface text-xs font-semibold flex items-center justify-center gap-1 transition-colors"
             >
-              <span className="material-symbols-outlined text-[16px]">edit</span>
+              <span className="material-symbols-outlined text-[16px]">
+                edit
+              </span>
               <span className="">ویرایش</span>
             </Link>
             <DropdownMenu>
@@ -413,7 +500,10 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                   </span>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52 rounded-xl p-1.5">
+              <DropdownMenuContent
+                align="end"
+                className="w-52 rounded-xl p-1.5"
+              >
                 {draftActions(l).map((a) => (
                   <DropdownMenuItem
                     key={a.label}
@@ -458,15 +548,19 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
         ></div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h4 className="font-bold text-sm text-on-surface truncate">{l.title}</h4>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${chip.cls}`}>
+            <h4 className="font-bold text-sm text-on-surface truncate">
+              {l.title}
+            </h4>
+            <span
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${chip.cls}`}
+            >
               {chip.label}
             </span>
           </div>
           <p className="text-[11px] text-on-surface-variant mt-1">
             {l.category.name} • {l.city}
-            {l.area ? "، " + l.area : ""} • {faNumber(l.dailyPrice)} تومان/روز • آخرین ویرایش{" "}
-            {faDate(l.updatedAt)}
+            {l.area ? "، " + l.area : ""} • {faNumber(l.dailyPrice)} تومان/روز •
+            آخرین ویرایش {faDate(l.updatedAt)}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -492,7 +586,9 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                 title="گزینه‌های بیشتر"
                 disabled={busy === l.id}
               >
-                <span className="material-symbols-outlined text-[18px]">more_vert</span>
+                <span className="material-symbols-outlined text-[18px]">
+                  more_vert
+                </span>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52 rounded-xl p-1.5">
@@ -518,7 +614,6 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
       <div className="flex min-h-screen w-full bg-m3-background items-stretch">
         <HostSidebar active="items" />
         <div className="flex-1 flex flex-col min-w-0">
-
           <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
             {/* 1. Hero header */}
             <section className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 shadow-sm">
@@ -538,21 +633,28 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                   href="/create-listing"
                   className="h-10 px-5 rounded-xl bg-m3-primary hover:bg-primary-container text-on-primary font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-sm shadow-m3-primary/20 active:scale-[0.98]"
                 >
-                  <span className="material-symbols-outlined text-[18px]">add</span>
+                  <span className="material-symbols-outlined text-[18px]">
+                    add
+                  </span>
                   <span className=""> ثبت وسیله جدید</span>
                 </Link>
               </div>
             </section>
 
             {/* 2. KPI cards — real aggregates */}
-            <section aria-label="آمار کلیدی وسایل" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <section
+              aria-label="آمار کلیدی وسایل"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+            >
               <div className="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/30 shadow-sm relative overflow-hidden flex flex-col justify-between">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-on-surface-variant">
                     کل وسایل ثبت‌شده
                   </span>
                   <div className="size-8 rounded-lg bg-surface-container-high text-m3-primary flex items-center justify-center">
-                    <span className="material-symbols-outlined text-lg">devices</span>
+                    <span className="material-symbols-outlined text-lg">
+                      devices
+                    </span>
                   </div>
                 </div>
                 <div className="my-3">
@@ -560,10 +662,12 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                     {faNumber(stats.total)} وسیله
                   </div>
                   <div className="flex items-center gap-1.5 mt-1 text-xs text-emerald-600 font-semibold">
-                    <span className="material-symbols-outlined text-sm">trending_up</span>
+                    <span className="material-symbols-outlined text-sm">
+                      trending_up
+                    </span>
                     <span className="">
-                      {faNumber(stats.active)} فعال | {faNumber(stats.rented)} در اجاره |{" "}
-                      {faNumber(stats.pending)} در انتظار تایید
+                      {faNumber(stats.active)} فعال | {faNumber(stats.rented)}{" "}
+                      در اجاره | {faNumber(stats.pending)} در انتظار تایید
                     </span>
                   </div>
                 </div>
@@ -586,7 +690,9 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                     <span className="size-2 rounded-full bg-m3-primary animate-pulse"></span>
                   </div>
                   <div className="size-8 rounded-lg bg-primary-fixed/60 text-m3-primary flex items-center justify-center">
-                    <span className="material-symbols-outlined text-lg">edit_document</span>
+                    <span className="material-symbols-outlined text-lg">
+                      edit_document
+                    </span>
                   </div>
                 </div>
                 <div className="my-3">
@@ -594,8 +700,12 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                     {faNumber(stats.draft)} مورد دردسترس
                   </div>
                   <div className="flex items-center gap-1 mt-1 text-xs text-on-surface-variant">
-                    <span className="material-symbols-outlined text-sm text-m3-primary">cloud_done</span>
-                    <span className="">با دکمه «ذخیره موقت» در فرم ثبت ذخیره می‌شوند</span>
+                    <span className="material-symbols-outlined text-sm text-m3-primary">
+                      cloud_done
+                    </span>
+                    <span className="">
+                      با دکمه «ذخیره موقت» در فرم ثبت ذخیره می‌شوند
+                    </span>
                   </div>
                 </div>
                 <div className="text-[11px] text-m3-primary/80 font-medium bg-primary-fixed/30 px-2 py-1 rounded-md">
@@ -609,16 +719,23 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                     درآمد ناخالص این ماه
                   </span>
                   <div className="size-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-lg">account_balance_wallet</span>
+                    <span className="material-symbols-outlined text-lg">
+                      account_balance_wallet
+                    </span>
                   </div>
                 </div>
                 <div className="my-3">
                   <div className="text-2xl font-black text-on-surface tracking-tight">
                     {faNumber(stats.revenueMonth)}
-                    <span className="text-xs font-normal text-on-surface-variant"> تومان</span>
+                    <span className="text-xs font-normal text-on-surface-variant">
+                      {" "}
+                      تومان
+                    </span>
                   </div>
                   <div className="flex items-center gap-1 mt-1 text-xs text-emerald-600 font-semibold">
-                    <span className="material-symbols-outlined text-sm">north_east</span>
+                    <span className="material-symbols-outlined text-sm">
+                      north_east
+                    </span>
                     <span className="">جمع تراکنش‌های دریافت اجاره</span>
                   </div>
                 </div>
@@ -643,8 +760,13 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                 </div>
                 <div className="my-3">
                   <div className="text-2xl font-black text-on-surface tracking-tight">
-                    {stats.avgRating != null ? faNumber(Math.round(stats.avgRating * 10) / 10) : "—"}
-                    <span className="text-xs font-normal text-on-surface-variant"> از ۵.۰</span>
+                    {stats.avgRating != null
+                      ? faNumber(Math.round(stats.avgRating * 10) / 10)
+                      : "—"}
+                    <span className="text-xs font-normal text-on-surface-variant">
+                      {" "}
+                      از ۵.۰
+                    </span>
                   </div>
                   <div className="flex items-center gap-1 mt-1 text-xs text-on-surface-variant">
                     <span
@@ -653,7 +775,9 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                     >
                       reviews
                     </span>
-                    <span className="">بر اساس {faNumber(stats.reviewsCount)} نظر تاییدشده</span>
+                    <span className="">
+                      بر اساس {faNumber(stats.reviewsCount)} نظر تاییدشده
+                    </span>
                   </div>
                 </div>
                 <span className="text-[11px] text-on-surface-variant">
@@ -681,14 +805,16 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                       سیستم همگام‌سازی و ذخیره خودکار ابری اورا فعال است
                     </h3>
                     <span className="inline-flex items-center gap-1 text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                      <span className="material-symbols-outlined text-[13px]">check_circle</span>
+                      <span className="material-symbols-outlined text-[13px]">
+                        check_circle
+                      </span>
                       فعال
                     </span>
                   </div>
                   <p className="text-xs sm:text-sm text-on-surface-variant leading-relaxed max-w-3xl">
-                    اگر در حین پر کردن فرم «ثبت وسیله جدید» دکمه ذخیره موقت را زده
-                    باشید، تمامی عکس‌ها و اطلاعات شما در بخش پیش‌نویس‌ها محفوظ و
-                    قابل تکمیل است.
+                    اگر در حین پر کردن فرم «ثبت وسیله جدید» دکمه ذخیره موقت را
+                    زده باشید، تمامی عکس‌ها و اطلاعات شما در بخش پیش‌نویس‌ها
+                    محفوظ و قابل تکمیل است.
                   </p>
                 </div>
               </div>
@@ -702,7 +828,9 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                       ? `مشاهده و تکمیل ${faNumber(drafts.length)} پیش‌نویس ناتمام`
                       : "مشاهده پیش‌نویس‌ها"}
                   </span>
-                  <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                  <span className="material-symbols-outlined text-[18px]">
+                    arrow_back
+                  </span>
                 </a>
               </div>
             </section>
@@ -819,7 +947,9 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                       title="نمای شبکه‌ای"
                       aria-pressed={layout === "grid"}
                     >
-                      <span className="material-symbols-outlined text-[18px]">grid_view</span>
+                      <span className="material-symbols-outlined text-[18px]">
+                        grid_view
+                      </span>
                     </button>
                     <button
                       onClick={() => setLayout("list")}
@@ -831,7 +961,9 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                       title="نمای سطری"
                       aria-pressed={layout === "list"}
                     >
-                      <span className="material-symbols-outlined text-[18px]">view_list</span>
+                      <span className="material-symbols-outlined text-[18px]">
+                        view_list
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -871,7 +1003,9 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                         <div className="space-y-3">
                           <div className="flex items-start justify-between gap-2">
                             <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-primary-fixed text-m3-primary px-2.5 py-0.5 rounded-full">
-                              <span className="material-symbols-outlined text-[13px]">cloud_done</span>
+                              <span className="material-symbols-outlined text-[13px]">
+                                cloud_done
+                              </span>
                               ذخیره موقت
                             </span>
                             <span className="text-[11px] text-on-surface-variant font-medium">
@@ -883,7 +1017,9 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                               className="size-16 rounded-xl bg-cover bg-center shrink-0 border border-outline-variant/30 bg-surface-container"
                               style={
                                 l.images?.[0]?.url
-                                  ? { backgroundImage: `url('${l.images[0].url}')` }
+                                  ? {
+                                      backgroundImage: `url('${l.images[0].url}')`,
+                                    }
                                   : undefined
                               }
                             ></div>
@@ -911,7 +1047,9 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                                 style={{ width: `${p.pct}%` }}
                               ></div>
                             </div>
-                            <p className="text-[11px] text-on-surface-variant">{p.nextHint}</p>
+                            <p className="text-[11px] text-on-surface-variant">
+                              {p.nextHint}
+                            </p>
                           </div>
                         </div>
                         <div className="pt-5 mt-3 border-t border-outline-variant/20 flex items-center gap-2">
@@ -919,8 +1057,12 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                             href={`/create-listing?edit=${l.id}`}
                             className="flex-1 h-9 rounded-xl bg-m3-primary hover:bg-primary-container text-on-primary font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
                           >
-                            <span className="">ادامه ثبت از مرحله {faNumber(p.step)}</span>
-                            <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                            <span className="">
+                              ادامه ثبت از مرحله {faNumber(p.step)}
+                            </span>
+                            <span className="material-symbols-outlined text-[16px]">
+                              arrow_back
+                            </span>
                           </Link>
                           <button
                             onClick={() => removeListing(l)}
@@ -928,7 +1070,9 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                             className="size-9 rounded-xl border border-outline-variant/40 hover:bg-m3-error-container hover:text-m3-error hover:border-m3-error/30 text-on-surface-variant flex items-center justify-center transition-colors"
                             title="حذف پیش‌نویس"
                           >
-                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                            <span className="material-symbols-outlined text-[18px]">
+                              delete
+                            </span>
                           </button>
                         </div>
                       </div>
@@ -943,7 +1087,9 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <h3 className="text-base sm:text-lg font-bold text-on-surface">
-                    {tab === "ALL" ? "آگهی‌های شما در همه وضعیت‌ها" : TABS.find((t) => t.key === tab)?.label}
+                    {tab === "ALL"
+                      ? "آگهی‌های شما در همه وضعیت‌ها"
+                      : TABS.find((t) => t.key === tab)?.label}
                   </h3>
                   <p className="text-xs text-on-surface-variant">
                     {loading
@@ -972,8 +1118,8 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant/30 text-xs">
                   <span className="text-on-surface-variant font-medium">
                     نمایش {faNumber((safePage - 1) * PAGE_SIZE + 1)} تا{" "}
-                    {faNumber(Math.min(safePage * PAGE_SIZE, filtered.length))} از کل{" "}
-                    {faNumber(filtered.length)} آگهی
+                    {faNumber(Math.min(safePage * PAGE_SIZE, filtered.length))}{" "}
+                    از کل {faNumber(filtered.length)} آگهی
                   </span>
                   <div className="flex items-center gap-1.5">
                     <button
@@ -982,28 +1128,36 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
                       className="size-8 rounded-lg border border-outline-variant/40 flex items-center justify-center text-on-surface-variant hover:bg-surface-container disabled:opacity-40"
                       aria-label="صفحه قبل"
                     >
-                      <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                      <span className="material-symbols-outlined text-[16px]">
+                        chevron_right
+                      </span>
                     </button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                      <button
-                        key={p}
-                        onClick={() => setPage(p)}
-                        className={`size-8 rounded-lg flex items-center justify-center ${
-                          p === safePage
-                            ? "bg-m3-primary text-on-primary font-bold"
-                            : "border border-outline-variant/40 hover:bg-surface-container text-on-surface font-semibold"
-                        }`}
-                      >
-                        {faNumber(p)}
-                      </button>
-                    ))}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (p) => (
+                        <button
+                          key={p}
+                          onClick={() => setPage(p)}
+                          className={`size-8 rounded-lg flex items-center justify-center ${
+                            p === safePage
+                              ? "bg-m3-primary text-on-primary font-bold"
+                              : "border border-outline-variant/40 hover:bg-surface-container text-on-surface font-semibold"
+                          }`}
+                        >
+                          {faNumber(p)}
+                        </button>
+                      ),
+                    )}
                     <button
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      onClick={() =>
+                        setPage((p) => Math.min(totalPages, p + 1))
+                      }
                       disabled={safePage === totalPages}
                       className="size-8 rounded-lg border border-outline-variant/40 flex items-center justify-center text-on-surface-variant hover:bg-surface-container disabled:opacity-40"
                       aria-label="صفحه بعد"
                     >
-                      <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                      <span className="material-symbols-outlined text-[16px]">
+                        chevron_left
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -1014,14 +1168,20 @@ export default function MyItemsClient({ stats, rentedMap, initialListings }: Pro
           <footer className="mt-8 border-t border-outline-variant/30 bg-surface-container-lowest py-4 px-6 text-center text-xs text-on-surface-variant">
             <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
               <p className="">
-                © ۱۴۰۳ سامانه هوشمند اجاره وسایل اورا (Overa) - کلیه حقوق برای پنل
-                میزبان محفوظ است.
+                © ۱۴۰۵ سامانه هوشمند اجاره وسایل اورا (Overa) - کلیه حقوق برای
+                پنل میزبان محفوظ است.
               </p>
               <div className="flex items-center gap-4">
-                <Link className="hover:text-m3-primary transition-colors" href="/tos-support-faq">
+                <Link
+                  className="hover:text-m3-primary transition-colors"
+                  href="/tos-support-faq"
+                >
                   قوانین و ضمانت اجرایی
                 </Link>
-                <Link className="hover:text-m3-primary transition-colors" href="/tos-support-faq">
+                <Link
+                  className="hover:text-m3-primary transition-colors"
+                  href="/tos-support-faq"
+                >
                   مرکز تماس میزبانان
                 </Link>
                 <span className="">نسخه سامانه v2.8.4</span>

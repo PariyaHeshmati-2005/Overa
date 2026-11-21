@@ -15,7 +15,7 @@ export default function SiteFooter() {
           <span className="font-bold text-neutral-text">
             پلتفرم اجاره وسایل اورا (Overa)
           </span>
-          <span className="">— تمامی حقوق محفوظ است ۱۴۰۳</span>
+          <span className="">— تمامی حقوق محفوظ است ۱۴۰۵</span>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
           <Link className="hover:text-primary transition-colors" href="/tos-support-faq">

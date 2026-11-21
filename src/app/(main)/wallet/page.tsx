@@ -34,9 +34,13 @@ export default async function WalletPage() {
             <div className="space-y-space-md md:col-span-1">
               <div className="flex items-center gap-space-sm">
                 <div className="w-9 h-9 rounded-xl bg-m3-primary flex items-center justify-center text-on-primary">
-                  <span className="material-symbols-outlined text-[20px]">all_inclusive</span>
+                  <span className="material-symbols-outlined text-[20px]">
+                    all_inclusive
+                  </span>
                 </div>
-                <span className="text-headline-md font-bold text-m3-primary">اورا</span>
+                <span className="text-headline-md font-bold text-m3-primary">
+                  اورا
+                </span>
               </div>
               <p className="text-body-sm text-on-surface-variant leading-relaxed">
                 پلتفرم اشتراک‌گذاری و اجاره تجهیزات با تضمین امنیت سپرده و بیمه
@@ -44,27 +48,89 @@ export default async function WalletPage() {
               </p>
               <div className="flex items-center gap-space-xs">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#10B981]/10 text-[#065F46] text-label-sm font-semibold">
-                  <span className="material-symbols-outlined text-[16px]">verified_user</span>
+                  <span className="material-symbols-outlined text-[16px]">
+                    verified_user
+                  </span>
                   تضمین بازپرداخت و بیمه
                 </span>
               </div>
             </div>
             <div>
-              <h4 className="text-headline-sm font-bold text-on-surface mb-space-md">دسترسی سریع</h4>
+              <h4 className="text-headline-sm font-bold text-on-surface mb-space-md">
+                دسترسی سریع
+              </h4>
               <ul className="space-y-space-sm text-body-sm text-on-surface-variant">
-                <li><Link className="hover:text-m3-primary transition-colors" href="/categories">جستجوی وسایل</Link></li>
-                <li><Link className="hover:text-m3-primary transition-colors" href="/create-listing">درآمدزایی با وسایل</Link></li>
-                <li><Link className="hover:text-m3-primary transition-colors" href="/wallet">مدیریت کیف پول</Link></li>
-                <li><Link className="hover:text-m3-primary transition-colors" href="/how-it-works">راهنمای سلامت کالا</Link></li>
+                <li>
+                  <Link
+                    className="hover:text-m3-primary transition-colors"
+                    href="/categories"
+                  >
+                    جستجوی وسایل
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className="hover:text-m3-primary transition-colors"
+                    href="/create-listing"
+                  >
+                    درآمدزایی با وسایل
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className="hover:text-m3-primary transition-colors"
+                    href="/wallet"
+                  >
+                    مدیریت کیف پول
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className="hover:text-m3-primary transition-colors"
+                    href="/how-it-works"
+                  >
+                    راهنمای سلامت کالا
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
-              <h4 className="text-headline-sm font-bold text-on-surface mb-space-md">پشتیبانی و امنیت</h4>
+              <h4 className="text-headline-sm font-bold text-on-surface mb-space-md">
+                پشتیبانی و امنیت
+              </h4>
               <ul className="space-y-space-sm text-body-sm text-on-surface-variant">
-                <li><Link className="hover:text-m3-primary transition-colors" href="/tos-support-faq">پوشش بیمه تجهیزات</Link></li>
-                <li><Link className="hover:text-m3-primary transition-colors" href="/wallet">سازوکار امانت و ودیعه</Link></li>
-                <li><Link className="hover:text-m3-primary transition-colors" href="/tos-support-faq">پرسش‌های متداول</Link></li>
-                <li><Link className="hover:text-m3-primary transition-colors" href="/tos-support-faq">تماس با پشتیبانی ۲۴/۷</Link></li>
+                <li>
+                  <Link
+                    className="hover:text-m3-primary transition-colors"
+                    href="/tos-support-faq"
+                  >
+                    پوشش بیمه تجهیزات
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className="hover:text-m3-primary transition-colors"
+                    href="/wallet"
+                  >
+                    سازوکار امانت و ودیعه
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className="hover:text-m3-primary transition-colors"
+                    href="/tos-support-faq"
+                  >
+                    پرسش‌های متداول
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className="hover:text-m3-primary transition-colors"
+                    href="/tos-support-faq"
+                  >
+                    تماس با پشتیبانی ۲۴/۷
+                  </Link>
+                </li>
               </ul>
             </div>
             <div className="space-y-space-md">
@@ -79,26 +145,53 @@ export default async function WalletPage() {
               </div>
               <div className="flex items-center gap-space-sm">
                 <div className="w-16 h-16 rounded-xl bg-surface-container-lowest p-2 flex flex-col items-center justify-center text-center shadow-[0_4px_16px_rgba(76,42,158,0.06)]">
-                  <span className="material-symbols-outlined text-m3-primary text-[24px]">lock</span>
-                  <span className="text-label-sm text-on-surface-variant mt-1">امانت امن</span>
+                  <span className="material-symbols-outlined text-m3-primary text-[24px]">
+                    lock
+                  </span>
+                  <span className="text-label-sm text-on-surface-variant mt-1">
+                    امانت امن
+                  </span>
                 </div>
                 <div className="w-16 h-16 rounded-xl bg-surface-container-lowest p-2 flex flex-col items-center justify-center text-center shadow-[0_4px_16px_rgba(76,42,158,0.06)]">
-                  <span className="material-symbols-outlined text-[#10B981] text-[24px]">verified</span>
-                  <span className="text-label-sm text-on-surface-variant mt-1">مجوز رسمی</span>
+                  <span className="material-symbols-outlined text-[#10B981] text-[24px]">
+                    verified
+                  </span>
+                  <span className="text-label-sm text-on-surface-variant mt-1">
+                    مجوز رسمی
+                  </span>
                 </div>
                 <div className="w-16 h-16 rounded-xl bg-surface-container-lowest p-2 flex flex-col items-center justify-center text-center shadow-[0_4px_16px_rgba(76,42,158,0.06)]">
-                  <span className="material-symbols-outlined text-m3-secondary text-[24px]">shield</span>
-                  <span className="text-label-sm text-on-surface-variant mt-1">بیمه کالا</span>
+                  <span className="material-symbols-outlined text-m3-secondary text-[24px]">
+                    shield
+                  </span>
+                  <span className="text-label-sm text-on-surface-variant mt-1">
+                    بیمه کالا
+                  </span>
                 </div>
               </div>
             </div>
           </div>
           <div className="pt-space-lg flex flex-col sm:flex-row items-center justify-between gap-space-md text-body-sm text-on-surface-variant">
-            <p>© ۱۴۰۳ پلتفرم اورا (Overa). کلیه حقوق مادی و معنوی محفوظ است.</p>
+            <p>© ۱۴۰۵ پلتفرم اورا (Overa). کلیه حقوق مادی و معنوی محفوظ است.</p>
             <div className="flex items-center gap-space-lg text-label-sm">
-              <Link className="hover:text-m3-primary transition-colors" href="/tos-support-faq">شرایط استفاده</Link>
-              <Link className="hover:text-m3-primary transition-colors" href="/tos-support-faq">حریم خصوصی کاربران</Link>
-              <Link className="hover:text-m3-primary transition-colors" href="/wallet">قوانین ودیعه نقدی</Link>
+              <Link
+                className="hover:text-m3-primary transition-colors"
+                href="/tos-support-faq"
+              >
+                شرایط استفاده
+              </Link>
+              <Link
+                className="hover:text-m3-primary transition-colors"
+                href="/tos-support-faq"
+              >
+                حریم خصوصی کاربران
+              </Link>
+              <Link
+                className="hover:text-m3-primary transition-colors"
+                href="/wallet"
+              >
+                قوانین ودیعه نقدی
+              </Link>
             </div>
           </div>
         </div>

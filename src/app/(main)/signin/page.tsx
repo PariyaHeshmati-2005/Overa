@@ -52,7 +52,9 @@ export default async function SignInPage({
 
   return (
     <div className="bg-m3-background text-on-surface min-h-screen flex flex-col selection:bg-primary-container selection:text-white">
-      <style href="ov-card-auth" precedence="default">{OV_CARD_CSS}</style>
+      <style href="ov-card-auth" precedence="default">
+        {OV_CARD_CSS}
+      </style>
       {/* Ambient background (classes shared in globals.css) */}
       <div aria-hidden="true" className="ov-bg">
         <span className="ov-blob ov-blob-1"></span>
@@ -61,7 +63,7 @@ export default async function SignInPage({
       </div>
 
       {/* Top Minimal Focused Navigation — preserved from source */}
-            <SiteHeader />
+      <SiteHeader />
 
       {/* Main Split-Card View */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-10">
@@ -141,7 +143,7 @@ export default async function SignInPage({
         <div className="max-w-[1360px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-on-surface-variant">
           <div className="flex items-center gap-2">
             <span className="">
-              © ۱۴۰۳ تمامی حقوق مادی و معنوی برای پلتفرم اورا (Overa) محفوظ است.
+              © ۱۴۰۵ تمامی حقوق مادی و معنوی برای پلتفرم اورا (Overa) محفوظ است.
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-6 font-medium">

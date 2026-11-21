@@ -45,17 +45,26 @@ export default async function AccountSettingsPage() {
     <div className="bg-m3-background text-on-surface antialiased">
       {/* Page-local helper (source used .no-scrollbar on the tab strip) */}
       <style href="no-scrollbar" precedence="default">
-        {".no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}"}
+        {
+          ".no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}"
+        }
       </style>
       <div className="flex min-h-screen w-full bg-[#f9f8fc]">
         {/* Desktop Right Sidebar (Persistent Navigation for Host Portal) */}
         <aside
           className="w-72 shrink-0 border-l border-[#2e175b]/60 flex-col justify-between p-4 min-h-screen hidden lg:flex sticky top-0 h-screen overflow-y-auto items-stretch z-30"
-          style={{ background: "rgb(19, 8, 39)", minHeight: "100vh", height: "100vh" }}
+          style={{
+            background: "rgb(19, 8, 39)",
+            minHeight: "100vh",
+            height: "100vh",
+          }}
         >
           <div className="flex flex-col gap-6">
             {/* Navigation List exactly matching the source */}
-            <nav aria-label="منوی پنل کاربری" className="flex flex-col gap-1.5 pt-3">
+            <nav
+              aria-label="منوی پنل کاربری"
+              className="flex flex-col gap-1.5 pt-3"
+            >
               {NAV_ITEMS.map((item) => (
                 <Link
                   key={item.href}
@@ -74,7 +83,9 @@ export default async function AccountSettingsPage() {
                 href="/account-settings"
                 style={{ background: "#7312d8" }}
               >
-                <span className="material-symbols-outlined text-[20px]">settings</span>
+                <span className="material-symbols-outlined text-[20px]">
+                  settings
+                </span>
                 <span className="text-[14px]">تنظیمات</span>
               </Link>
             </nav>
@@ -85,10 +96,15 @@ export default async function AccountSettingsPage() {
             {/* 24/7 Support Card */}
             <div
               className="rounded-2xl p-4 flex flex-col items-center text-center gap-2 border border-[#431f7a]/40 shadow-inner"
-              style={{ background: "rgba(36, 12, 69, 0.65)", backdropFilter: "blur(8px)" }}
+              style={{
+                background: "rgba(36, 12, 69, 0.65)",
+                backdropFilter: "blur(8px)",
+              }}
             >
               <div className="size-10 rounded-full flex items-center justify-center bg-[#4c1d95]/40 text-[#c4b5fd] border border-[#7c3aed]/30 shadow-sm">
-                <span className="material-symbols-outlined text-[20px]">support_agent</span>
+                <span className="material-symbols-outlined text-[20px]">
+                  support_agent
+                </span>
               </div>
               <div className="flex flex-col gap-0.5 mt-0.5">
                 <span className="font-bold text-white text-xs tracking-tight">
@@ -131,9 +147,9 @@ export default async function AccountSettingsPage() {
                     تنظیمات حساب کاربری و ترجیحات میزبانی
                   </h2>
                   <p className="text-sm lg:text-base text-on-surface-variant leading-relaxed max-w-3xl">
-                    مدیریت اطلاعات فردی، ترجیحات رزرو، شیوه دریافت و تسویه، امنیت
-                    و اعلان‌های هوشمند جهت اجاره مطمئن تجهیزات و وسایل در سراسر
-                    کشور.
+                    مدیریت اطلاعات فردی، ترجیحات رزرو، شیوه دریافت و تسویه،
+                    امنیت و اعلان‌های هوشمند جهت اجاره مطمئن تجهیزات و وسایل در
+                    سراسر کشور.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -143,7 +159,9 @@ export default async function AccountSettingsPage() {
                     title="به‌زودی"
                     type="button"
                   >
-                    <span className="material-symbols-outlined text-base">visibility</span>
+                    <span className="material-symbols-outlined text-base">
+                      visibility
+                    </span>
                     <span className="">مشاهده پروفایل عمومی من</span>
                   </button>
                 </div>
@@ -167,28 +185,36 @@ export default async function AccountSettingsPage() {
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container text-xs lg:text-sm font-semibold transition-all"
                     href="#preferences"
                   >
-                    <span className="material-symbols-outlined text-base">event_available</span>
+                    <span className="material-symbols-outlined text-base">
+                      event_available
+                    </span>
                     <span className="">ترجیحات میزبانی و قوانین</span>
                   </a>
                   <a
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container text-xs lg:text-sm font-semibold transition-all"
                     href="#payout"
                   >
-                    <span className="material-symbols-outlined text-base">account_balance</span>
+                    <span className="material-symbols-outlined text-base">
+                      account_balance
+                    </span>
                     <span className="">حساب‌های بانکی و تسویه</span>
                   </a>
                   <a
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container text-xs lg:text-sm font-semibold transition-all"
                     href="#security"
                   >
-                    <span className="material-symbols-outlined text-base">shield_person</span>
+                    <span className="material-symbols-outlined text-base">
+                      shield_person
+                    </span>
                     <span className="">امنیت و نشست‌ها</span>
                   </a>
                   <a
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container text-xs lg:text-sm font-semibold transition-all"
                     href="#notifications"
                   >
-                    <span className="material-symbols-outlined text-base">notifications_active</span>
+                    <span className="material-symbols-outlined text-base">
+                      notifications_active
+                    </span>
                     <span className="">اعلان‌ها و پیامک‌ها</span>
                   </a>
                 </div>
@@ -218,7 +244,7 @@ export default async function AccountSettingsPage() {
             <footer className="mt-12 py-6 px-4 sm:px-10 border-t border-surface-container text-center text-xs text-on-surface-variant flex flex-col md:flex-row items-center justify-between gap-4">
               <span className="">
                 تمامی حقوق مادی و معنوی متعلق به پلتفرم اجاره وسایل اورا (Overa
-                Host) است © ۱۴۰۳
+                Host) است © ۱۴۰۵
               </span>
               <div className="flex items-center gap-4 text-xs text-m3-secondary font-medium">
                 <Link className="hover:underline" href="/how-it-works">
