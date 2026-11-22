@@ -17,6 +17,7 @@
     "db:seed:categories": "bash scripts/env-run.sh bun run scripts/seed-categories.ts",
     "db:import": "bash scripts/env-run.sh bun run scripts/import-listings.ts",
     "db:coords": "bash scripts/env-run.sh bun run scripts/backfill-listing-coords.ts",
+    "reminders": "bash scripts/env-run.sh bun run scripts/run-reminders.ts",
     "db:seed": "bash scripts/env-run.sh bun run scripts/seed.ts"
   },
   "dependencies": {

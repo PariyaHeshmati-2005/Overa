@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { jsonError, jsonOk, requireUser } from "@/lib/api";
+import { notifyAdmins, type NotifyDb } from "@/lib/admin-notify";
 import {
   assertTransition,
   canAct,
@@ -183,6 +184,18 @@ export async function PATCH(req: Request, ctx: Ctx) {
       if (actor === "renter") reservation.renterProtocol = protocol;
       else reservation.hostProtocol = protocol;
       addEvent(`صورت‌جلسه تحویل ثبت شد: ${protocol}`);
+      // Oversight (legacy completion path): the admin learns the item was
+      // handed back healthy and the order is closed.
+      await notifyAdmins(
+        db as unknown as NotifyDb,
+        {
+          type: "RESERVATION",
+          title: "بازگشت سالم کالا تأیید شد",
+          body: `سفارش «${reservation.code}» پس از تکمیل صورت‌جلسه تحویل بسته شد: کالا سالم به مالک بازگشته است.`,
+          link: "/admin-dashboard",
+        },
+        [reservation.renterId, reservation.hostId],
+      );
       break;
     }
     case "release_deposit":
@@ -196,6 +209,17 @@ export async function PATCH(req: Request, ctx: Ctx) {
     case "dispute":
       dataExtra.disputeOpenedAt = new Date();
       addEvent(String(body.note ?? "اعلام اختلاف/خسارت برای این اجاره؛ سفارش به مرحله بررسی اختلاف منتقل شد."));
+      // Oversight: admins must see the dispute the moment it is declared.
+      await notifyAdmins(
+        db as unknown as NotifyDb,
+        {
+          type: "DISPUTE",
+          title: "اعلام اختلاف/خسارت برای یک سفارش",
+          body: `برای سفارش «${reservation.code}» اختلاف/خسارت ثبت شد؛ جزئیات و مکاتبات طرفین در صفحهٔ «خسارت و داوری» قابل بررسی است.`,
+          link: "/damage-claims",
+        },
+        [reservation.renterId, reservation.hostId],
+      );
       break;
     case "cancel": {
       addEvent("رزرو لغو شد.");

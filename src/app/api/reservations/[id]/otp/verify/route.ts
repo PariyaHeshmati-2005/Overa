@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { jsonError, jsonOk, requireUser } from "@/lib/api";
+import { notifyAdmins, type NotifyDb } from "@/lib/admin-notify";
 import {
   assertOtpStageAllowed,
   consumeReservationOtp,
@@ -200,6 +201,18 @@ export async function POST(req: Request, ctx: Ctx) {
             link: "/rentals",
           },
         });
+        // Oversight: the admin must know this item came back safe and sound
+        // (and that the deposit refund pipeline is waiting to be settled).
+        await notifyAdmins(
+          tx as unknown as NotifyDb,
+          {
+            type: "RESERVATION",
+            title: "بازگشت سالم کالا تأیید شد",
+            body: `سفارش «${reservation.code}» تکمیل شد: کالا با تأیید میزبان سالم به مالک بازگشته و فرآیند بازگشت ودیعه آغاز شده است (تسویه نهایی در پنل مدیریت).`,
+            link: "/admin-dashboard",
+          },
+          [reservation.renterId, reservation.hostId],
+        );
         return { status: "COMPLETED" };
       },
     });

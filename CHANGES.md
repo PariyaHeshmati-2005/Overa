@@ -1,6 +1,6 @@
 # گزارش تغییرات اٌوِرا (نسخه اصلاح‌شده)
 
-در این نسخه تمام موارد درخواستی اصلاح شده‌اند **بدون هیچ تغییری در ظاهر و هویت بصری صفحات**. تمام کدها با `tsc` تایپ‌چک، با ESLint (بدون هیچ هشدار) لینت و با مجموعه تست‌ها (۶۱ تست) تایید شده‌اند و `next build` با موفقیت کامل شده است.
+در این نسخه تمام موارد درخواستی اصلاح شده‌اند **بدون هیچ تغییری در ظاهر و هویت بصری صفحات**. تمام کدها با `tsc` تایپ‌چک، با ESLint (بدون هیچ هشدار) لینت و با مجموعه تست‌ها (۷۳ تست) تایید شده‌اند و `next build` با موفقیت کامل شده است.
 
 ---
 
@@ -86,13 +86,40 @@
 
 ---
 
+## ۱۰) بازگشت کالا به مالک، یادآوری تاریخ‌ها و منع اجارهٔ هم‌زمان (نسخهٔ ۳)
+
+### تحویل به مالک در پایان اجاره — مسیر کامل + اطلاع‌رسانی مدیر
+- مسیر بازگشت کامل است: مستأجر در صفحهٔ اجاره دکمهٔ **«درخواست بازگشت»** را می‌زند؛ میزبان اعلان می‌گیرد، سلامت کالا را بررسی و در کارت **«تأیید بازگشت کالا»** با کد یک‌بارمصرف تأیید می‌کند؛ سفارش تکمیل (COMPLETED) و فرآیند بازگشت ودیعه آغاز می‌شود و مستأجر هم اعلان می‌گیرد.
+- **مدیر سایت حالا در جریان است:** با تأیید بازگشت سالم، اعلان «بازگشت سالم کالا تأیید شد» به همهٔ مدیران ارسال می‌شود (هم از مسیر کد یک‌بارمصرف و هم از مسیر قدیمی صورت‌جلسه)، و اعلام خسارت/اختلاف نیز بلافاصله برای مدیران می‌رود. مدیرانی که خودشان طرف سفارش‌اند اعلان تکراری نمی‌گیرند. با این کار مدیر می‌فهمد کالا سالم به مالک بازگشته و ودیعه در انتظار تسویه است.
+
+### یادآوری هوشمند تاریخ‌ها (روز تحویل و مهلت عودت)
+- موتور یادآوری (`src/lib/rental-reminders.ts`) از روی تاریخ‌های ذخیره‌شدهٔ هر رزرو کار می‌کند و پروژه «تاریخ‌ها را به خاطر می‌سپارد»:
+  - **روز تحویل کالا** (وضعیت پرداخت‌شده/تحویل‌شده): یادآوری دو روز قبل، روز قبل و خودِ روز تحویل برای مستأجر و میزبان؛ اگر روز تحویل بگذرد و میزبان تحویل را ثبت نکرده باشد، یادآوری روزانهٔ «روز تحویل کالا گذشته است».
+  - **مهلت عودت** (وضعیت اجارهٔ فعال): یادآوری دو روز قبل، روز قبل و خودِ روز مهلت («وسیله را آمادهٔ تحویل کنید و درخواست بازگشت را ثبت کنید»)؛ پس از مهلت، هر روز یادآوری «تأخیر در بازگشت کالا — روز N» برای مستأجر و راهنمای اعلام خسارت برای میزبان.
+- یادآوری‌ها با نوع جدید `REMINDER` داخل همان سیستم اعلان‌های سایت نمایش داده می‌شوند (زنگ بالای صفحه و صفحهٔ اعلان‌ها، با چیپ «یادآوری»)؛ تیتر هر یادآوری قطعی و شامل کد سفارش است، بنابراین هیچ یادآوری‌ای دوبار ثبت نمی‌شود.
+- اجرا بدون نیاز به سرویس جدا: همان دو مسیری که سایت همواره poll می‌کند (`GET /api/notifications` و `GET /api/reservations`) اسکن یادآوری را حداکثر یک بار در دقیقه در هر فرآیند اجرا می‌کنند؛ برای زمان‌بند واقعی (cron) هم `bun run reminders` یک اجرای کامل و بی‌ضرر است.
+
+### منع اجارهٔ هم‌زمان یک وسیله (دو نفر برای یک بازه)
+- در `POST /api/reservations` هر درخواستی که با هر رزرو فعال دیگر همان وسیله (از «ثبت‌شده» تا «در انتظار بازگشت») هم‌پوشانی داشته باشد، با خطای **۴۰۹** و پیام «این بازه با اجاره دیگری هم‌پوشانی دارد؛ بازه دیگری انتخاب کنید.» رد می‌شود؛ رزروهای لغوشده یا ردشده تاریخ‌هایشان را آزاد می‌کنند و روزهای مسدودشده از سوی میزبان هم جداگانه بررسی می‌شوند.
+- تقویم شمسی صفحهٔ آگهی نیز روزهای رزروشده را از دیتای واقعی رزروها (`activeReservations`) غیرفعال نشان می‌دهد؛ یعنی از همان لحظهٔ انتخاب تاریخ، بازه‌های اشغال‌شده قابل انتخاب نیستند و دو کاربر هرگز نمی‌توانند یک وسیله را در یک بازهٔ مشترک اجاره کنند.
+
+---
+
 ## اصلاح تکمیلی (نسخه ۲)
 - رفع حذف شدن صفر شماره موبایل در صفحه ورود/ثبت‌نام + پذیرش هر دو فرمت با صفر و بدون صفر (بخش ۸).
+
+## اصلاح تکمیلی (نسخه ۳)
+- مسیر کامل بازگشت کالا به مالک + اطلاع‌رسانی مدیر از بازگشت سالم و اختلاف‌ها (بخش ۱۰).
+- یادآوری هوشمند روز تحویل و مهلت عودت، با نمایش در همان سیستم اعلان‌ها (بخش ۱۰).
+- مستندسازی و تایید منع اجارهٔ هم‌زمان (۴۰۹ روی هم‌پوشانی + تقویم غیرفعال برای روزهای رزروشده) (بخش ۱۰).
 
 ## فایل‌های جدید
 | مسیر | نقش |
 |---|---|
 | `src/lib/input-guard.ts` | منطق پاک‌سازی ورودی عددی + نگهبان DOM |
+| `src/lib/rental-reminders.ts` | موتور یادآوری تاریخ تحویل و مهلت عودت (بدون یادداشت تکراری) |
+| `src/lib/admin-notify.ts` | اطلاع‌رسانی رویدادهای نظارتی (بازگشت سالم/اختلاف) به مدیران |
+| `scripts/run-reminders.ts` | اجرای یک‌بارهٔ اسکن یادآوری‌ها برای cron (`bun run reminders`) |
 | `src/components/overa/NumericInputGuard.tsx` | نصب سراسری نگهبان در layout |
 | `src/components/overa/mapLoader.ts` | لودر یک‌بار مصرف Leaflet از CDN |
 | `src/components/overa/MapView.tsx` | نقشهٔ نمایشی وسیله (با fallback) |
@@ -104,9 +131,10 @@
 | `scripts/backfill-listing-coords.ts` | ثبت مختصات پایدار برای وسایل بدون نقشه |
 | `prisma/migrations/20261122000000_signature_and_geo/` | مایگریشن افزایشی |
 | `tests/input-guard.test.ts` | ۷ تست ورودی عددی |
+| `tests/rental-reminders.test.ts` | ۷ تست یادآوری تاریخ‌ها |
 
 ## فایل‌های اصلاح‌شده (مهم‌ترین‌ها)
-`prisma/schema.prisma` · `src/app/(main)/create-listing/CreateListingWizard.tsx` (+`page.tsx`) · `src/app/(main)/item-details/[id]/ItemDetailsApp.tsx` (+`page.tsx`) · `src/app/(main)/rental-lifecycle/[id]/RentalLifecycleClient.tsx` (+`page.tsx`) · `src/app/(main)/damage-claims/DamageClaimsClient.tsx` (+`page.tsx`) · `src/app/(main)/wallet/WalletClient.tsx` (+`page.tsx`) · `src/app/(main)/rentals/RentalsClient.tsx` · `src/lib/rental-state.ts` · `src/lib/reservation-otp.ts` · `src/app/api/reservations/route.ts` · `src/app/api/reservations/[id]/route.ts` · `src/app/api/reservations/[id]/otp/verify/route.ts` · `src/app/api/reviews/route.ts` · `src/app/api/conversations/[id]/messages/route.ts` · `src/app/api/listings/route.ts` · `src/app/api/listings/[id]/route.ts` · `src/app/layout.tsx` · `scripts/seed.ts` · `package.json` · `README.md`
+`prisma/schema.prisma` · `src/app/(main)/create-listing/CreateListingWizard.tsx` (+`page.tsx`) · `src/app/(main)/item-details/[id]/ItemDetailsApp.tsx` (+`page.tsx`) · `src/app/(main)/rental-lifecycle/[id]/RentalLifecycleClient.tsx` (+`page.tsx`) · `src/app/(main)/damage-claims/DamageClaimsClient.tsx` (+`page.tsx`) · `src/app/(main)/wallet/WalletClient.tsx` (+`page.tsx`) · `src/app/(main)/rentals/RentalsClient.tsx` · `src/app/(main)/notifications/NotificationsClient.tsx` · `src/lib/rental-state.ts` · `src/lib/reservation-otp.ts` · `src/app/api/reservations/route.ts` · `src/app/api/reservations/[id]/route.ts` · `src/app/api/reservations/[id]/otp/verify/route.ts` · `src/app/api/reviews/route.ts` · `src/app/api/conversations/[id]/messages/route.ts` · `src/app/api/listings/route.ts` · `src/app/api/listings/[id]/route.ts` · `src/app/api/notifications/route.ts` · `src/app/layout.tsx` · `scripts/seed.ts` · `package.json` · `README.md`
 
 ## اجرا (برای ماشین شما)
 ```bash
@@ -114,5 +142,5 @@ bun install
 bun run db:push        # اعمال مایگریشن جدید (افزایشی)
 bun run db:coords      # یک بار: مختصات نقشه برای وسایل موجود
 bun run dev            # اجرای سایت روی localhost:3000
-bun test               # ۶۱ تست — همه پاس
+bun test               # ۷۳ تست — همه پاس
 ```

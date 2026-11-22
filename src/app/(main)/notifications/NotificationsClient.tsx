@@ -18,7 +18,7 @@ export type NotificationRow = {
 
 /* Type chip metadata — same type vocabulary the rest of the app writes into
    the Notification table (RESERVATION | MESSAGE | REVIEW | LISTING |
-   DISPUTE | SYSTEM). */
+   DISPUTE | REMINDER | SYSTEM). */
 const TYPE_META: Record<
   string,
   { label: string; icon: React.ReactNode; ring: string }
@@ -65,6 +65,15 @@ const TYPE_META: Record<
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.9" viewBox="0 0 24 24">
         <path d="M12 3v18M3 7l4-4 4 4M5 3v6m10-2l4-4 4 4m-2-2v8a2 2 0 01-2 2h-4" strokeLinecap="round" strokeLinejoin="round"></path>
+      </svg>
+    ),
+  },
+  REMINDER: {
+    label: "یادآوری",
+    ring: "bg-amber-50 text-accent-gold",
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.9" viewBox="0 0 24 24">
+        <path d="M12 8v4l3 3M12 3a9 9 0 100 18 9 9 0 000-18z" strokeLinecap="round" strokeLinejoin="round"></path>
       </svg>
     ),
   },

@@ -1,10 +1,14 @@
 import { db } from "@/lib/db";
 import { jsonOk, requireUser } from "@/lib/api";
+import { maybeRunRentalReminderSweep } from "@/lib/rental-reminders";
 
-/** GET /api/notifications — my notifications. */
+/** GET /api/notifications — my notifications. The bell/notifications page
+ *  polls this endpoint, so it opportunistically drives the date-aware
+ *  rental reminder sweep (delivery day + return deadline, throttled). */
 export async function GET() {
   const auth = await requireUser();
   if (auth.response) return auth.response;
+  await maybeRunRentalReminderSweep();
   const notifications = await db.notification.findMany({
     where: { userId: auth.user.id },
     orderBy: { createdAt: "desc" },

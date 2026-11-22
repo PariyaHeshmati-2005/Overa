@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { jsonError, jsonOk, requireUser } from "@/lib/api";
+import { maybeRunRentalReminderSweep } from "@/lib/rental-reminders";
 import {
   diffDaysIso,
   parseBlockedRanges,
@@ -23,11 +24,15 @@ function toUtcMidnight(value: unknown): Date | null {
 
 /**
  * GET /api/reservations — the caller's reservations (as renter and as host).
+ * The rentals page polls this endpoint, so it opportunistically drives the
+ * date-aware rental reminder sweep (delivery day + return deadline,
+ * throttled to at most one run per minute per server process).
  */
 export async function GET() {
   const auth = await requireUser();
   if (auth.response) return auth.response;
   const user = auth.user;
+  await maybeRunRentalReminderSweep();
 
   const reservations = await db.reservation.findMany({
     where: { OR: [{ renterId: user.id }, { hostId: user.id }] },
