@@ -205,6 +205,7 @@ export default function OtpConfirmFlow({
                     : "border-outline-variant text-on-surface"
                 } rounded-xl focus:outline-none focus:border-m3-primary focus:ring-2 focus:ring-m3-primary/30`}
                 inputMode="numeric"
+                data-numeric="keep-zeros"
                 maxLength={1}
                 placeholder="•"
                 type="text"

@@ -3,16 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { normalizeIranMobile } from "@/lib/persian";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
 /** Normalize Persian/Arabic digits to Latin so API validation passes. */
-function toEnDigits(v: string): string {
-  return v
-    .replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
-    .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
-}
-
 type Intent = "both" | "renter" | "host";
 
 const INTENT_OPTIONS: Array<{ value: Intent; icon: string; label: string }> = [
@@ -60,13 +55,15 @@ export default function SignUpForm({ next }: { next: string }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    const normalizedPhone = toEnDigits(phone).trim();
+    // With or without the leading zero (09… / 9… / +98…) — all accepted and
+    // normalized to the canonical «09…» form.
+    const normalizedPhone = normalizeIranMobile(phone) ?? "";
     if (name.trim().length < 2) {
       setError("نام و نام خانوادگی را کامل وارد کنید.");
       return;
     }
-    if (!/^09\d{9}$/.test(normalizedPhone)) {
-      setError("شماره موبایل معتبر نیست؛ باید با ۰۹ شروع شده و ۱۱ رقم باشد.");
+    if (!normalizedPhone) {
+      setError("شماره موبایل معتبر نیست؛ مثلاً ۰۹۱۲۳۴۵۶۷۸۹ را وارد کنید.");
       return;
     }
     if (password.length < 8) {
@@ -151,6 +148,7 @@ export default function SignUpForm({ next }: { next: string }) {
                 dir="ltr"
                 id="mobileInput"
                 inputMode="numeric"
+                data-numeric="keep-zeros"
                 maxLength={11}
                 placeholder="۰۹۱۲۳۴۵۶۷۸۹"
                 type="tel"
@@ -184,6 +182,7 @@ export default function SignUpForm({ next }: { next: string }) {
                 dir="ltr"
                 id="nationalCodeInput"
                 inputMode="numeric"
+                data-numeric="keep-zeros"
                 maxLength={10}
                 placeholder="۰۰۱۲۳۴۵۶۷۸"
                 type="text"

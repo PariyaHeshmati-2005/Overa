@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toPersianDigits } from "@/lib/format";
+import { normalizeIranMobile } from "@/lib/persian";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
@@ -47,10 +48,13 @@ export default function SignInOtpForm({ next }: { next: string }) {
       : "کد منقضی شد";
 
   async function requestCode(phoneValue?: string) {
-    const target = toEnDigits(phoneValue ?? phone).trim();
+    const raw = toEnDigits(phoneValue ?? phone).trim();
     setError("");
-    if (!/^09\d{9}$/.test(target)) {
-      setError("شماره موبایل معتبر نیست؛ باید با ۰۹ شروع شده و ۱۱ رقم باشد.");
+    // With or without the leading zero (09… / 9… / +98…) — all accepted and
+    // normalized to the canonical «09…» form.
+    const target = normalizeIranMobile(raw) ?? "";
+    if (!target) {
+      setError("شماره موبایل معتبر نیست؛ مثلاً ۰۹۱۲۳۴۵۶۷۸۹ را وارد کنید.");
       return;
     }
     setLoading(true);
@@ -161,6 +165,7 @@ export default function SignInOtpForm({ next }: { next: string }) {
               dir="ltr"
               id="mobileInput"
               inputMode="numeric"
+              data-numeric="keep-zeros"
               maxLength={11}
               placeholder="۰۹۱۲۳۴۵۶۷۸۹"
               type="tel"
@@ -210,6 +215,7 @@ export default function SignInOtpForm({ next }: { next: string }) {
                       : "border-outline-variant text-on-surface"
                   } rounded-xl focus:outline-none focus:border-m3-primary focus:ring-2 focus:ring-m3-primary/30`}
                   inputMode="numeric"
+                  data-numeric="keep-zeros"
                   maxLength={1}
                   placeholder="•"
                   type="text"

@@ -55,6 +55,32 @@ export function digitsToNumber(value: string): number {
 }
 
 /**
+ * digits-only sanitizer that PRESERVES leading zeros — for identifiers where
+ * a zero at the start carries meaning: mobile numbers (۰۹۱۲…), OTP codes,
+ * national IDs (۰۰۱۲…) — as opposed to money amounts where «۰۰۰۵۰۰» means ۵۰۰.
+ */
+export function digitsKeepZeros(value: string): string {
+  return foldDigits(String(value ?? "")).replace(/[^0-9]/g, "");
+}
+
+/**
+ * Should this numeric field keep its leading zeros?
+ *   - explicitly marked: data-numeric="keep-zeros" (phone, OTP boxes, national ID)
+ *   - implicitly: type="tel" (semantic phone input)
+ */
+export function keepsLeadingZeros(el: Element | null): boolean {
+  if (!el) return false;
+  const candidate = el as unknown as {
+    dataset?: Record<string, string | undefined>;
+    getAttribute?: (name: string) => string | null;
+  };
+  if (candidate.dataset?.numeric === "keep-zeros") return true;
+  if (typeof candidate.getAttribute !== "function") return false;
+  if (candidate.dataset?.numericKeepZeros === "true") return true;
+  return candidate.getAttribute("type")?.toLowerCase() === "tel";
+}
+
+/**
  * Is this DOM input a numeric field the global guard should sanitize?
  * Numeric intent is declared via inputMode="numeric"/"decimal", type="number",
  * or data-numeric. Search/text inputs are left untouched.
@@ -141,6 +167,30 @@ export function attachNumericInputGuard(doc: Document): () => void {
     if (e.key.length === 1) e.preventDefault();
   }
 
+  function sanitizeValue(input: HTMLInputElement) {
+    const cleaned = keepsLeadingZeros(input)
+      ? digitsKeepZeros(input.value)
+      : digitsOnly(input.value);
+    if (cleaned !== input.value) {
+      const pos = input.selectionStart;
+      input.value = cleaned;
+      try {
+        input.setSelectionRange?.(Math.min(pos ?? cleaned.length, cleaned.length), Math.min(pos ?? cleaned.length, cleaned.length));
+      } catch {
+        /* some input types do not support selection — ignore */
+      }
+    }
+    if (
+      !keepsLeadingZeros(input) &&
+      typeof input.min === "string" &&
+      input.min !== "" &&
+      Number(input.value) < Number(input.min)
+    ) {
+      input.value = input.min;
+    }
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
   function clampPositive(input: HTMLInputElement) {
     const cleaned = digitsOnly(input.value);
     if (cleaned !== input.value) {
@@ -172,15 +222,20 @@ export function attachNumericInputGuard(doc: Document): () => void {
       if (cleaned !== input.value) input.value = cleaned;
       return;
     }
-    clampPositive(input);
+    // Phones / OTP codes / national IDs keep their leading zeros — a typed
+    // «۰۹۱۲…» must stay «0912…» instead of collapsing to «912…».
+    sanitizeValue(input);
   }
 
   function onPaste(e: ClipboardEvent) {
     const target = e.target as Element | null;
     if (!isNumericIntent(target)) return;
     const input = target as HTMLInputElement;
+    // Single-character OTP boxes manage their own paste (the browser's
+    // maxLength=1 truncation feeds their distribute logic) — hands off.
+    if (keepsLeadingZeros(input) && input.maxLength === 1) return;
     const text = e.clipboardData?.getData("text") ?? "";
-    const cleaned = digitsOnly(text);
+    const cleaned = keepsLeadingZeros(input) ? digitsKeepZeros(text) : digitsOnly(text);
     if (!cleaned && text) {
       e.preventDefault();
       return;
@@ -190,7 +245,7 @@ export function attachNumericInputGuard(doc: Document): () => void {
       const start = input.selectionStart ?? input.value.length;
       const end = input.selectionEnd ?? input.value.length;
       const next = input.value.slice(0, start) + cleaned + input.value.slice(end);
-      input.value = digitsOnly(next);
+      input.value = keepsLeadingZeros(input) ? digitsKeepZeros(next) : digitsOnly(next);
       input.dispatchEvent(new Event("input", { bubbles: true }));
       input.dispatchEvent(new Event("change", { bubbles: true }));
     }

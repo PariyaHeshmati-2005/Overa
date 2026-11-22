@@ -1,10 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import {
   attachNumericInputGuard,
+  digitsKeepZeros,
   digitsOnly,
   digitsToNumber,
   foldDigits,
+  keepsLeadingZeros,
 } from "../src/lib/input-guard";
+import { normalizeIranMobile } from "../src/lib/persian";
 
 describe("input-guard (positive digits only)", () => {
   test("foldDigits folds Persian and Arabic digits", () => {
@@ -37,6 +40,46 @@ describe("input-guard (positive digits only)", () => {
     expect(digitsToNumber("")).toBe(0);
     expect(digitsToNumber("ناموجود")).toBe(0);
     expect(digitsToNumber("۱۰۰")).toBe(100);
+  });
+});
+
+describe("digitsKeepZeros (phone / OTP / national-ID fields)", () => {
+  test("keeps the leading zero", () => {
+    expect(digitsKeepZeros("09123456789")).toBe("09123456789");
+    expect(digitsKeepZeros("۰۹۱۲۳۴۵۶۷۸۹")).toBe("09123456789");
+    expect(digitsKeepZeros("0012345678")).toBe("0012345678");
+    expect(digitsKeepZeros("0")).toBe("0");
+    expect(digitsKeepZeros("abc-0912")).toBe("0912");
+  });
+});
+
+describe("keepsLeadingZeros detection", () => {
+  test("type=tel and data-numeric=keep-zeros are detected", () => {
+    const tel = { dataset: {}, getAttribute: (n: string) => (n === "type" ? "tel" : null), value: "" };
+    const marked = { dataset: { numeric: "keep-zeros" }, getAttribute: () => null, value: "" };
+    const plain = { dataset: {}, getAttribute: () => null, value: "" };
+    expect(keepsLeadingZeros(tel as unknown as Element)).toBe(true);
+    expect(keepsLeadingZeros(marked as unknown as Element)).toBe(true);
+    expect(keepsLeadingZeros(plain as unknown as Element)).toBe(false);
+    expect(keepsLeadingZeros(null)).toBe(false);
+  });
+});
+
+describe("normalizeIranMobile (both formats accepted)", () => {
+  test("09…, 9…, +98…, 0098… and Persian digits all normalize", () => {
+    expect(normalizeIranMobile("09123456789")).toBe("09123456789");
+    expect(normalizeIranMobile("9123456789")).toBe("09123456789");
+    expect(normalizeIranMobile("+989123456789")).toBe("09123456789");
+    expect(normalizeIranMobile("00989123456789")).toBe("09123456789");
+    expect(normalizeIranMobile("۰۹۱۲۳۴۵۶۷۸۹")).toBe("09123456789");
+    expect(normalizeIranMobile("+98 912 345 6789")).toBe("09123456789");
+    expect(normalizeIranMobile("0912-345-6789")).toBe("09123456789");
+  });
+  test("invalid numbers are rejected", () => {
+    expect(normalizeIranMobile("0912345678")).toBe(null); // 10 digits, starts 0
+    expect(normalizeIranMobile("091234567890")).toBe(null); // too long
+    expect(normalizeIranMobile("email@example.com")).toBe(null);
+    expect(normalizeIranMobile("")).toBe(null);
   });
 });
 
@@ -118,5 +161,17 @@ describe("attachNumericInputGuard (DOM guard)", () => {
     input.value = "-۵۰۰abc";
     listeners["input"]({ target: input } as unknown as Event);
     expect(input.value).toBe("500");
+  });
+
+  test("phone-style fields (type=tel) keep the leading zero", () => {
+    const { doc, listeners } = makeDoc();
+    attachNumericInputGuard(doc);
+    const phone = makeInput({ type: "tel", inputmode: "numeric" });
+    phone.value = "۰۹۱۲۳۴۵۶۷۸۹";
+    listeners["input"]({ target: phone } as unknown as Event);
+    expect(phone.value).toBe("09123456789");
+    phone.value = "09123456789abc";
+    listeners["input"]({ target: phone } as unknown as Event);
+    expect(phone.value).toBe("09123456789");
   });
 });

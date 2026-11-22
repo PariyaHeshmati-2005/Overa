@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { normalizeIranMobile } from "@/lib/persian";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
@@ -29,7 +30,11 @@ export default function SignInForm({ next }: { next: string }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    const normalizedPhone = toEnDigits(phone).trim();
+    // Phone or email identifier: when it looks like a mobile number, accept
+    // both formats (09… / 9… / +98…) and normalize; otherwise pass through
+    // (email logins are untouched).
+    const asMobile = normalizeIranMobile(phone);
+    const normalizedPhone = asMobile ?? toEnDigits(phone).trim();
     if (!normalizedPhone) {
       setError("شماره موبایل یا ایمیل حساب کاربری را وارد کنید.");
       return;

@@ -64,6 +64,22 @@ export function normalizePersian(input: string): string {
 }
 
 /**
+ * Normalize an Iranian mobile number to the canonical «09xxxxxxxxx» form.
+ * Accepts (digits may be Persian/Arabic, spaces/dashes ignored):
+ *   ۰۹۱۲۳۴۵۶۷۸۹ · 09123456789 · 9123456789 · +989123456789 · 00989123456789
+ * Returns the canonical «09…» string, or null when it is not a valid mobile.
+ */
+export function normalizeIranMobile(input: string): string | null {
+  let s = normalizePersian(String(input ?? ""))
+    .replace(/[^0-9+]/g, "");
+  if (s.startsWith("+98")) s = s.slice(3);
+  else if (s.startsWith("0098")) s = s.slice(4);
+  else if (s.length >= 12 && s.startsWith("98")) s = s.slice(2);
+  if (s.length === 10 && s.startsWith("9")) s = `0${s}`;
+  return /^09\d{9}$/.test(s) ? s : null;
+}
+
+/**
  * Build the stored search key for a listing from its searchable text fields.
  * Stored on `Listing.searchKey` at create/update time and matched against
  * `normalizePersian(query)` — with ZWNJ removed on both sides, «می‌شود» and
