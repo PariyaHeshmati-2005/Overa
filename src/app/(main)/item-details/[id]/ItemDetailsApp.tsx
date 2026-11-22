@@ -4,9 +4,10 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Toaster, toast } from "sonner";
-import { faNumber, faToman, faDate, daysBetween } from "@/lib/format";
+import { faDate, faNumber, faToman, daysBetween } from "@/lib/format";
 import { formatJalaliIso, type DateRange } from "@/lib/jalali";
 import JalaliCalendar from "@/components/overa/JalaliCalendar";
+import MapView from "@/components/overa/MapView";
 
 export type ItemDetailData = {
   id: string;
@@ -20,6 +21,9 @@ export type ItemDetailData = {
   deposit: number;
   city: string;
   area: string | null;
+  /** Exact map coordinates (null → city centroid fallback on the map). */
+  lat: number | null;
+  lng: number | null;
   pickupInPerson: boolean;
   deliveryCourier: boolean;
   minDays: number;
@@ -41,6 +45,10 @@ export type ReviewData = {
   comment: string;
   hostReply: string | null;
   createdAt: string;
+  /** true → tied to a completed reservation («اجاره‌کننده‌ی تأییدشده»). */
+  verified: boolean;
+  /** Whether the current viewer already authored this review. */
+  isMine?: boolean;
 };
 
 export type OwnerListingData = {
@@ -232,13 +240,25 @@ function ReviewsSection({
   listingId,
   reviews,
   rating,
+  viewerId,
+  isOwner,
 }: {
   listingId: string;
   reviews: ReviewData[];
   rating: number;
+  viewerId: string | null;
+  isOwner: boolean;
 }) {
   const [sort, setSort] = useState("new");
   const [liked, setLiked] = useState<Record<string, boolean>>({});
+  const router = useRouter();
+  const [formOpen, setFormOpen] = useState(false);
+  const [formRating, setFormRating] = useState(0);
+  const [formComment, setFormComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const alreadyReviewed = viewerId
+    ? reviews.some((r) => r.isMine)
+    : false;
 
   const counts = useMemo(() => {
     const c: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
@@ -284,13 +304,30 @@ function ReviewsSection({
             ({faNumber(total)})
           </span>
         </h3>
-        <Link
-          href="/rentals"
-          className="text-xs font-bold text-[#7c3aed] hover:text-[#6d28d9] bg-[#f5f3ff] hover:bg-[#ede9fe] px-3 py-1.5 rounded-lg transition-colors"
-          title="ثبت نظر پس از اتمام اجاره، از صفحه رزروهای من"
-        >
-          ثبت نظر
-        </Link>
+        {viewerId && !isOwner && !alreadyReviewed ? (
+          <button
+            type="button"
+            onClick={() => setFormOpen((v) => !v)}
+            className="text-xs font-bold text-white bg-[#7c3aed] hover:bg-[#6d28d9] px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-sm">
+              {formOpen ? "close" : "edit_note"}
+            </span>
+            {formOpen ? "بستن فرم" : "ثبت نظر"}
+          </button>
+        ) : (
+          <Link
+            href="/rentals"
+            className="text-xs font-bold text-[#7c3aed] hover:text-[#6d28d9] bg-[#f5f3ff] hover:bg-[#ede9fe] px-3 py-1.5 rounded-lg transition-colors"
+            title={
+              isOwner
+                ? "برای وسیله خودتان نمی‌توانید نظر ثبت کنید"
+                : "ثبت نظر پس از اتمام اجاره، از صفحه رزروهای من"
+            }
+          >
+            ثبت نظر
+          </Link>
+        )}
       </div>
 
       <div className="p-5 space-y-6">
@@ -337,6 +374,107 @@ function ReviewsSection({
           </div>
         </div>
 
+        {/* In-page review form — submit right here, no redirect needed */}
+        {formOpen && viewerId && !isOwner && !alreadyReviewed && (
+          <div className="rounded-2xl border border-[#ddd6fe] bg-[#faf9ff] p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-bold text-slate-800">
+                نظر شما درباره این وسیله
+              </h4>
+              <span className="text-[10px] font-semibold text-slate-400">
+                نظرات پس از ثبت فوراً نمایش داده می‌شوند
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {[1, 2, 3, 4, 5].map((sIdx) => (
+                <button
+                  key={sIdx}
+                  type="button"
+                  onClick={() => setFormRating(sIdx)}
+                  aria-label={`${sIdx} ستاره`}
+                  className="cursor-pointer transition-transform hover:scale-110"
+                >
+                  <StarSvg filled={sIdx <= formRating} className="w-7 h-7" />
+                </button>
+              ))}
+              <span className="text-xs text-slate-400 font-medium mr-2">
+                {formRating
+                  ? `${faNumber(formRating)} از ۵`
+                  : "امتیاز را انتخاب کنید"}
+              </span>
+            </div>
+            <textarea
+              value={formComment}
+              onChange={(e) => setFormComment(e.target.value.slice(0, 2000))}
+              rows={3}
+              placeholder="تجربه خود از اجاره این وسیله را بنویسید (حداقل ۵ کاراکتر)…"
+              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-700 outline-none focus:border-[#a78bfa] focus:ring-2 focus:ring-[#ede9fe]"
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-slate-400 font-medium">
+                {faNumber(formComment.length)} / ۲۰۰۰ کاراکتر
+              </span>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (formRating < 1) {
+                    toast.error("امتیاز بین ۱ تا ۵ لازم است.");
+                    return;
+                  }
+                  if (formComment.trim().length < 5) {
+                    toast.error("متن دیدگاه کوتاه است.");
+                    return;
+                  }
+                  setSubmitting(true);
+                  try {
+                    const res = await fetch("/api/reviews", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        listingId,
+                        rating: formRating,
+                        comment: formComment.trim(),
+                      }),
+                    });
+                    const payload = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                      toast.error(payload?.error ?? "ثبت دیدگاه ممکن نشد.");
+                      return;
+                    }
+                    toast.success("دیدگاه شما با موفقیت ثبت شد.");
+                    setFormOpen(false);
+                    setFormRating(0);
+                    setFormComment("");
+                    router.refresh();
+                  } catch {
+                    toast.error("خطای شبکه؛ دوباره تلاش کنید.");
+                  } finally {
+                    setSubmitting(false);
+                  }
+                }}
+                disabled={submitting}
+                className="bg-[#7c3aed] hover:bg-[#6d28d9] disabled:opacity-60 text-white text-xs font-bold px-5 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-sm">send</span>
+                {submitting ? "در حال ثبت..." : "ثبت دیدگاه"}
+              </button>
+            </div>
+          </div>
+        )}
+        {!viewerId ? (
+          <button
+            type="button"
+            onClick={() =>
+              router.push(
+                `/signin-otp?next=${encodeURIComponent(`/item-details/${listingId}`)}`,
+              )
+            }
+            className="w-full rounded-xl border border-dashed border-[#ddd6fe] bg-[#faf9ff] p-3.5 text-xs font-bold text-[#6d28d9] hover:bg-[#f5f3ff] transition-colors cursor-pointer"
+          >
+            برای ثبت نظر، ابتدا وارد حساب خود شوید
+          </button>
+        ) : null}
+
         {/* List toolbar */}
         <div className="flex items-center justify-between gap-3 pt-1">
           <h4 className="text-sm font-bold text-slate-800">همه‌ی نظرات</h4>
@@ -373,9 +511,15 @@ function ReviewsSection({
                         <span className="text-sm font-bold text-slate-800">
                           {r.authorName}
                         </span>
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-md">
-                          اجاره‌کننده‌ی تأییدشده
-                        </span>
+                        {r.verified ? (
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-md">
+                            اجاره‌کننده‌ی تأییدشده
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-slate-600 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded-md">
+                            کاربر اٌوِرا
+                          </span>
+                        )}
                       </div>
                       <span className="text-[11px] text-slate-400 font-medium">
                         {faDate(r.createdAt)}
@@ -444,6 +588,7 @@ function ReviewsSection({
 function BookingBox({
   data,
   viewerId,
+  viewerWalletBalance,
   startIso,
   endIso,
   onRangeChange,
@@ -452,6 +597,8 @@ function BookingBox({
 }: {
   data: ItemDetailData;
   viewerId: string | null;
+  /** Viewer's wallet balance (Toman) — powers the «شارژ کیف پول» hint. */
+  viewerWalletBalance: number;
   startIso: string | null;
   endIso: string | null;
   onRangeChange: (startIso: string | null, endIso: string | null) => void;
@@ -591,6 +738,48 @@ function BookingBox({
         </div>
       </div>
 
+      {/* Wallet guidance: payment happens from the wallet after the request is
+          approved — warn early so the renter tops up BEFORE renting. */}
+      {viewerId && viewerId !== data.owner.id && subtotal > 0 && (
+        <div
+          className={`rounded-xl border p-3 text-[11px] leading-relaxed font-semibold ${
+            viewerWalletBalance >= subtotal + data.deposit
+              ? "border-emerald-200 bg-emerald-50/70 text-emerald-700"
+              : "border-amber-300 bg-amber-50 text-amber-800"
+          }`}
+        >
+          <span className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-sm">
+              account_balance_wallet
+            </span>
+            موجودی کیف پول شما: {faToman(viewerWalletBalance)} تومان
+          </span>
+          {viewerWalletBalance < subtotal + data.deposit ? (
+            <>
+              <p className="mt-1">
+                مجموع این رزرو ({faToman(subtotal + data.deposit)} تومان) از
+                موجودی شما بیشتر است. برای پرداخت مرحله بعد،{" "}
+                <b>ابتدا کیف پول را شارژ کنید</b>.
+              </p>
+              <a
+                href="/wallet"
+                className="mt-2 inline-flex items-center gap-1 rounded-lg bg-amber-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-amber-700"
+              >
+                <span className="material-symbols-outlined text-sm">
+                  add_card
+                </span>
+                شارژ کیف پول
+              </a>
+            </>
+          ) : (
+            <p className="mt-1">
+              موجودی شما برای این رزرو کافی است؛ پرداخت پس از تایید میزبان از
+              کیف پول انجام می‌شود (Sandbox).
+            </p>
+          )}
+        </div>
+      )}
+
       <button
         type="button"
         onClick={submit}
@@ -632,6 +821,7 @@ export default function ItemDetailsApp({
   reviews,
   otherItems,
   viewerId,
+  viewerWalletBalance = 0,
   bookedRanges = [],
   ownerBlockedRanges = [],
   initialFaved = false,
@@ -640,6 +830,8 @@ export default function ItemDetailsApp({
   reviews: ReviewData[];
   otherItems: OwnerListingData[];
   viewerId: string | null;
+  /** Signed-in viewer's wallet balance (0 for guests). */
+  viewerWalletBalance?: number;
   /** Existing non-cancelled reservations of this listing (ISO dates). */
   bookedRanges?: DateRange[];
   /** Days the owner blocked from the create-listing wizard (ISO dates). */
@@ -851,24 +1043,15 @@ export default function ItemDetailsApp({
                 {deliveryText}
               </span>
             </div>
-            <div className="h-28 bg-slate-100 rounded-xl relative overflow-hidden flex items-center justify-center border border-slate-200/60">
-              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#6366f1_1px,transparent_1px)] [background-size:16px_16px]"></div>
-              <div className="w-9 h-9 rounded-full bg-[#7c3aed]/20 flex items-center justify-center animate-pulse">
-                <div className="w-5 h-5 rounded-full bg-[#7c3aed] flex items-center justify-center text-white shadow-md">
-                  <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path>
-                  </svg>
-                </div>
-              </div>
-              <button
-                type="button"
-                disabled
-                title="به‌زودی"
-                className="absolute bottom-2.5 right-2.5 bg-white/95 px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 shadow border border-slate-200/80 cursor-not-allowed"
-              >
-                مشاهده روی نقشه
-              </button>
-            </div>
+            <MapView
+              lat={data.lat}
+              lng={data.lng}
+              city={data.city}
+              area={data.area}
+              title={data.title}
+              height={190}
+              className="h-auto"
+            />
           </div>
 
           {/* Other Items by Owner */}
@@ -1202,11 +1385,13 @@ export default function ItemDetailsApp({
             </div>
           </div>
 
-          {/* Reviews */}
+          {/* Reviews (with in-page submission) */}
           <ReviewsSection
             listingId={data.id}
             reviews={reviews}
             rating={data.rating}
+            viewerId={viewerId}
+            isOwner={viewerId === data.owner.id}
           />
         </div>
 
@@ -1404,6 +1589,7 @@ export default function ItemDetailsApp({
           <BookingBox
             data={data}
             viewerId={viewerId}
+            viewerWalletBalance={viewerWalletBalance}
             startIso={startIso}
             endIso={endIso}
             onRangeChange={handleRangeChange}

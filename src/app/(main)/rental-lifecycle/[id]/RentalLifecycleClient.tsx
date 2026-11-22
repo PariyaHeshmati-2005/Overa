@@ -5,15 +5,17 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast, Toaster } from "sonner";
 import {
-  faDate,
   faDateTime,
   faNumber,
   faToman,
   toPersianDigits,
 } from "@/lib/format";
+import { formatJalaliIso } from "@/lib/jalali";
 import type { ReservationAction } from "@/lib/rental-state";
 import DeliveryConfirmCard from "@/components/overa/DeliveryConfirmCard";
 import ReturnConfirmCard from "@/components/overa/ReturnConfirmCard";
+import SignatureCard from "@/components/overa/SignatureCard";
+import MapView from "@/components/overa/MapView";
 
 /* ------------------------------------------------------------------ types */
 
@@ -32,6 +34,8 @@ export type LifecycleReservation = {
   renterProtocol: string | null;
   hostProtocol: string | null;
   depositStatus?: string | null;
+  /** Timestamp of the renter's verified digital signature (null = unsigned). */
+  signedByRenterAt?: string | null;
   listing: {
     id: string;
     title: string;
@@ -40,6 +44,8 @@ export type LifecycleReservation = {
     area: string | null;
     rating: number;
     images: string[];
+    lat?: number | null;
+    lng?: number | null;
   };
   renter: { id: string; name: string };
   host: { id: string; name: string };
@@ -58,6 +64,8 @@ type Props = {
   actions: ReservationAction[];
   statusLabels: Record<string, string>;
   statusColors: Record<string, string>;
+  /** Signed-in user's wallet balance (Toman) — drives the pay-time warning. */
+  viewerWalletBalance: number;
 };
 
 /* ------------------------------------------------- stage mapping (4-stage journey) */
@@ -191,6 +199,24 @@ const ACTION_META: Record<
   },
 };
 
+/** Friendly icon + title for each reservation event type (timeline). */
+const EVENT_META: Record<string, { title: string; icon: string }> = {
+  REQUEST: { title: "ثبت درخواست اجاره", icon: "touch_app" },
+  APPROVE: { title: "تایید مالک", icon: "check_circle" },
+  REJECT: { title: "رد درخواست", icon: "cancel" },
+  CONFIRM_AGREEMENT: { title: "تایید قرارداد", icon: "draw" },
+  SIGN_AGREEMENT: { title: "امضای دیجیتال قرارداد", icon: "fingerprint" },
+  PAY: { title: "پرداخت اجاره", icon: "lock_open" },
+  DELIVER: { title: "ثبت تحویل کالا", icon: "local_shipping" },
+  CONFIRM_DELIVERY: { title: "تایید دریافت کالا", icon: "package_2" },
+  REQUEST_RETURN: { title: "ثبت بازگشت کالا", icon: "replay" },
+  CONFIRM_RETURN: { title: "تایید بازگشت کالا", icon: "fact_check" },
+  COMPLETE_INSPECTION: { title: "ثبت صورت‌جلسه تحویل", icon: "task_alt" },
+  RELEASE_DEPOSIT: { title: "آزادسازی ودیعه", icon: "payments" },
+  DISPUTE: { title: "اعلام خسارت / اختلاف", icon: "gavel" },
+  CANCEL: { title: "لغو رزرو", icon: "block" },
+};
+
 const ACTION_ORDER: ReservationAction[] = [
   "approve",
   "reject",
@@ -214,13 +240,13 @@ export default function RentalLifecycleClient({
   actions,
   statusLabels,
   statusColors,
+  viewerWalletBalance,
 }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [contractTab, setContractTab] = useState(0);
   const [depositMode, setDepositMode] = useState("cash");
   const [agreed, setAgreed] = useState(false);
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [protocol, setProtocol] = useState("");
   const [disputeNote, setDisputeNote] = useState("");
 
@@ -231,6 +257,141 @@ export default function RentalLifecycleClient({
   const statusColor =
     statusColors[status] ?? "bg-surface-container-high text-on-surface";
   const can = (a: string) => actions.includes(a as ReservationAction);
+  /* Renter-side contract signature (renter ONLY — the host never signs). */
+  const signatureAvailable =
+    role === "renter" && ["REQUESTED", "APPROVED"].includes(status);
+  const renterSigned = Boolean(r.signedByRenterAt);
+  const totalDue = r.subtotal + r.deposit;
+  const insufficientBalance =
+    role === "renter" && can("pay") && viewerWalletBalance < totalDue;
+
+  /* Plain-language next step for the CURRENT viewer (kills the "what now?" deadlock). */
+  type NextStep = { title: string; body: string; icon: string; anchor?: string };
+  let nextStep: NextStep | null = null;
+  let waitingOnOther: string | null = null;
+  if (status === "REQUESTED") {
+    if (role === "host") {
+      nextStep = {
+        title: "درخواست اجاره را بررسی و تایید کنید",
+        body: "در صورت تایید، مستأجر قرارداد را با امضای دیجیتال ثبت می‌کند و پیام تایید برای شما ارسال می‌شود.",
+        icon: "check_circle",
+        anchor: "#contract",
+      };
+    } else if (role === "renter") {
+      if (!renterSigned) {
+        nextStep = {
+          title: "قرارداد را با امضای دیجیتال ثبت کنید",
+          body: "کد یک‌بارمصرف صادر شده را وارد و ثبت کنید؛ پس از امضا، پیام تایید برای میزبان ارسال می‌شود.",
+          icon: "fingerprint",
+          anchor: "#contract",
+        };
+      } else {
+        waitingOnOther =
+          "امضای شما ثبت شده است؛ در انتظار تایید درخواست توسط میزبان هستید.";
+      }
+    }
+  } else if (status === "APPROVED") {
+    if (role === "renter") {
+      nextStep = renterSigned
+        ? {
+            title: "تایید قرارداد را نهایی کنید",
+            body: "میزبان درخواست را تایید کرده و شما قبلاً قرارداد را امضا کرده‌اید؛ تایید قرارداد را ثبت کنید.",
+            icon: "draw",
+            anchor: "#contract",
+          }
+        : {
+            title: "قرارداد را با امضای دیجیتال تایید کنید",
+            body: "میزبان درخواست شما را تایید کرده است؛ کد یک‌بارمصرف امضا را وارد و ثبت کنید.",
+            icon: "fingerprint",
+            anchor: "#contract",
+          };
+    } else {
+      waitingOnOther = "تایید شما ثبت شده است؛ در انتظار امضای قرارداد توسط مستأجر هستید.";
+    }
+  } else if (status === "AGREEMENT" || status === "PAYMENT") {
+    if (role === "renter") {
+      nextStep = {
+        title: insufficientBalance
+          ? "ابتدا کیف پول را شارژ کنید، سپس پرداخت آزمایشی را انجام دهید"
+          : "پرداخت آزمایشی (اجاره + ودیعه) را انجام دهید",
+        body: insufficientBalance
+          ? `موجودی کیف پول شما ${faToman(viewerWalletBalance)} تومان است؛ برای این سفارش ${faToman(totalDue)} تومان لازم است.`
+          : `مجموع قابل پرداخت ${faToman(totalDue)} تومان است (اجاره + ودیعه بازگشت‌پذیر).`,
+        icon: insufficientBalance ? "account_balance_wallet" : "lock_open",
+        anchor: "#payment",
+      };
+    } else {
+      waitingOnOther = "در انتظار انجام پرداخت آزمایشی توسط مستأجر هستید.";
+    }
+  } else if (status === "PAID") {
+    if (role === "host") {
+      nextStep = {
+        title: "کالا را به مستأجر تحویل دهید و «تحویل شد» را ثبت کنید",
+        body: "پرداخت انجام شده است؛ پس از ثبت تحویل، کد تأیید دریافت برای مستأجر صادر می‌شود.",
+        icon: "local_shipping",
+        anchor: "#delivery",
+      };
+    } else {
+      waitingOnOther = "پرداخت شما ثبت شده است؛ در انتظار تحویل کالا از سوی میزبان هستید.";
+    }
+  } else if (status === "DELIVERED") {
+    if (role === "renter") {
+      nextStep = {
+        title: "دریافت کالا را با کد یک‌بارمصرف تأیید کنید",
+        body: "کالا را بازرسی کنید؛ در صورت سلامت، کارت «تأیید دریافت کالا» را با کد صادرشده تکمیل کنید.",
+        icon: "package_2",
+        anchor: "#delivery",
+      };
+    } else {
+      waitingOnOther = "تحویل شما ثبت شده است؛ در انتظار تأیید دریافت کالا توسط مستأجر هستید.";
+    }
+  } else if (status === "RENTAL_ACTIVE") {
+    if (role === "renter") {
+      nextStep = {
+        title: "در پایان دوره اجاره، بازگشت کالا را ثبت کنید",
+        body: `مهلت عودت ${formatJalaliIso(r.endDate.slice(0, 10))} است؛ از دکمه «درخواست بازگشت» استفاده کنید.`,
+        icon: "replay",
+        anchor: "#protocol",
+      };
+    } else {
+      waitingOnOther = "دوره اجاره فعال است؛ در انتظار ثبت بازگشت از سوی مستأجر.";
+    }
+  } else if (status === "RETURN_REQUESTED") {
+    if (role === "host") {
+      nextStep = {
+        title: "سلامت کالا را بررسی و بازگشت را تأیید کنید",
+        body: "در صورت سلامت، کارت تأیید بازگشت را با کد یک‌بارمصرف تکمیل کنید تا ودیعه آزاد شود.",
+        icon: "fact_check",
+        anchor: "#protocol",
+      };
+    } else {
+      waitingOnOther = "بازگشت شما ثبت شده است؛ در انتظار تأیید میزبان هستید.";
+    }
+  } else if (status === "INSPECTION") {
+    nextStep = {
+      title: "صورت‌جلسه تحویل را تکمیل کنید",
+      body: "وضعیت نهایی وسیله را ثبت کنید تا سفارش تکمیل گردد.",
+      icon: "task_alt",
+      anchor: "#protocol",
+    };
+  } else if (status === "DISPUTED") {
+    nextStep = {
+      title: "پرونده در حال بررسی توسط کارشناسان اٌوِرا است",
+      body: "مستندات و پاسخ خود را از صفحه «خسارت و داوری» تکمیل کنید؛ رأی کارشناس در همین صفحه اعلام می‌شود.",
+      icon: "gavel",
+      anchor: "#protocol",
+    };
+  } else if (status === "COMPLETED") {
+    if (role === "renter") {
+      nextStep = {
+        title: "دیدگاه خود را درباره این اجاره ثبت کنید",
+        body: "تجربه شما به میزبان و اجاره‌کنندگان بعدی کمک می‌کند.",
+        icon: "rate_review",
+      };
+    } else {
+      waitingOnOther = "این سفارش با موفقیت تکمیل شد.";
+    }
+  }
   /* OTP-gated actions never render as plain buttons: the renter's delivery
      confirmation and the host's RETURN_REQUESTED confirmation go through the
      confirmation cards (OtpConfirmFlow). The legacy RETURNED → INSPECTION
@@ -239,7 +400,13 @@ export default function RentalLifecycleClient({
     (a) =>
       can(a) &&
       a !== "confirm_delivery" &&
-      !(a === "confirm_return" && status === "RETURN_REQUESTED"),
+      !(a === "confirm_return" && status === "RETURN_REQUESTED") &&
+      // While the signature card is active, «تایید قرارداد» happens through
+      // the renter's one-time-code signature — not a plain button.
+      !(a === "confirm_agreement" && signatureAvailable && !renterSigned) &&
+      // Once already signed (before the host approved), a re-sign is
+      // impossible; finalize via the plain action after approval.
+      !(a === "confirm_agreement" && renterSigned && status !== "APPROVED"),
   );
   const image = r.listing.images[0] ?? null;
 
@@ -256,6 +423,14 @@ export default function RentalLifecycleClient({
       });
       const data = await res.json();
       if (!res.ok) {
+        if (data?.extra?.needTopup) {
+          toast.error(
+            "موجودی کیف پول شما برای این پرداخت کافی نیست؛ لطفاً ابتدا کیف پول را شارژ کنید.",
+            { duration: 6000 },
+          );
+          router.push("/wallet");
+          return;
+        }
         toast.error(data.error ?? "انجام این کنش در وضعیت فعلی مجاز نیست.");
         return;
       }
@@ -604,7 +779,8 @@ export default function RentalLifecycleClient({
                         مدت زمان اجاره:
                       </div>
                       <div className="text-slate-600">
-                        از {faDate(r.startDate)} تا {faDate(r.endDate)} (
+                        از {formatJalaliIso(r.startDate.slice(0, 10))} تا{" "}
+                        {formatJalaliIso(r.endDate.slice(0, 10))} (
                         {faNumber(r.days)} روز کامل)
                       </div>
                     </div>
@@ -658,60 +834,41 @@ export default function RentalLifecycleClient({
               )}
             </div>
 
-            {/* Digital signature (visual; final confirmation goes through the state machine) */}
-            <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xs font-bold text-slate-800">
-                    امضای دیجیتال قرارداد با رمز یکبارمصرف
-                  </h3>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    در این نسخه آزمایشی، تایید نهایی با دکمه «تایید قرارداد» ثبت
-                    می‌شود؛ کد نمایشی است.
-                  </p>
+            {/* Digital signature — RENTER ONLY (demo code flow). The host
+                never signs; their approval is the plain state-machine action.
+                After the renter signs, a notification asks the host to
+                confirm the contract as well. */}
+            {signatureAvailable && !renterSigned && (
+              <SignatureCard
+                reservationId={r.id}
+                code={r.code}
+                hostName={r.host.name}
+                agreed={agreed}
+              />
+            )}
+            {signatureAvailable && renterSigned && status === "REQUESTED" && (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex items-start gap-3">
+                <div className="size-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined">fingerprint</span>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-primary-soft text-m3-primary flex items-center justify-center">
-                  <span className="material-symbols-outlined text-xl">
-                    fingerprint
-                  </span>
+                <p className="text-xs text-emerald-800 font-bold leading-relaxed">
+                  امضای دیجیتال شما ({faDateTime(r.signedByRenterAt ?? "")}) ثبت شد؛
+                  پیام تایید برای میزبان ارسال گردید. پس از تایید مالک، قرارداد
+                  نهایی می‌شود.
+                </p>
+              </div>
+            )}
+            {role === "host" && status === "REQUESTED" && (
+              <div className="rounded-2xl border border-purple-100 bg-primary-soft/50 p-4 flex items-start gap-3">
+                <div className="size-9 rounded-xl bg-primary-soft text-m3-primary flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined">hourglass_top</span>
                 </div>
+                <p className="text-xs text-slate-600 font-semibold leading-relaxed">
+                  امضای دیجیتال قرارداد بر عهده مستأجر است. پس از امضای مستأجر،
+                  پیامی برای شما ارسال می‌شود تا درخواست را تایید کنید.
+                </p>
               </div>
-              <div
-                className="flex items-center justify-center gap-2 py-1"
-                dir="ltr"
-              >
-                {otp.map((digit, i) => (
-                  <input
-                    key={i}
-                    className="w-10 h-11 text-center text-lg font-bold rounded-lg border border-primary-fixed-dim focus:border-m3-primary bg-primary-soft/20 text-m3-primary focus:outline-none"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => {
-                      const next = [...otp];
-                      next[i] = e.target.value.slice(-1);
-                      setOtp(next);
-                    }}
-                    placeholder="-"
-                  />
-                ))}
-              </div>
-              <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-50">
-                <button
-                  className="text-m3-primary hover:underline font-semibold flex items-center gap-1 disabled:opacity-60"
-                  disabled
-                  title="به‌زودی"
-                  type="button"
-                >
-                  <span className="material-symbols-outlined text-sm">
-                    refresh
-                  </span>
-                  <span>ارسال مجدد کد</span>
-                </button>
-                <span className="text-slate-400 font-medium">
-                  امضای نمایشی (Sandbox)
-                </span>
-              </div>
-            </div>
+            )}
 
             <ActionRow
               busy={busy}
@@ -904,12 +1061,44 @@ export default function RentalLifecycleClient({
                   </span>
                 </div>
 
+                {/* Wallet balance guard: no negative balances — the renter must
+                    top up first (server enforces the same rule). */}
+                {insufficientBalance && (
+                  <div className="rounded-xl border border-m3-error/30 bg-m3-error-container/40 p-3.5 space-y-2">
+                    <p className="text-xs font-bold text-m3-on-error-container flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-base">
+                        account_balance_wallet
+                      </span>
+                      موجودی کیف پول شما کافی نیست
+                    </p>
+                    <p className="text-[11px] text-on-surface-variant leading-relaxed">
+                      موجودی فعلی: {faToman(viewerWalletBalance)} تومان — مجموع
+                      لازم برای این سفارش: {faToman(totalDue)} تومان. ابتدا کیف
+                      پول را شارژ کنید، سپس پرداخت را انجام دهید.
+                    </p>
+                    <Link
+                      href="/wallet"
+                      className="inline-flex items-center gap-1 rounded-lg bg-m3-primary px-3.5 py-2 text-[11px] font-bold text-white"
+                    >
+                      <span className="material-symbols-outlined text-sm">
+                        add_card
+                      </span>
+                      شارژ کیف پول
+                    </Link>
+                  </div>
+                )}
+
                 <button
                   type="button"
                   onClick={() => can("pay") && act("pay")}
                   disabled={!can("pay") || busy === "pay"}
+                  title={
+                    insufficientBalance
+                      ? "ابتدا کیف پول را شارژ کنید"
+                      : undefined
+                  }
                   className={`w-full mt-2 py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md transition active:scale-[0.99] ${
-                    can("pay")
+                    can("pay") && !insufficientBalance
                       ? "bg-m3-primary hover:bg-primary-container text-white shadow-m3-primary/25"
                       : "bg-surface-container-high text-on-surface-variant cursor-not-allowed"
                   }`}
@@ -976,10 +1165,20 @@ export default function RentalLifecycleClient({
                 <div className="md:border-r md:border-slate-200 md:pr-4">
                   <span className="text-slate-400">زمان مقرر تحویل:</span>
                   <p className="font-bold text-m3-primary mt-1">
-                    {faDate(r.startDate)}
+                    {formatJalaliIso(r.startDate.slice(0, 10))}
                   </p>
                 </div>
               </div>
+              {/* Exact pickup location on the shared map (city centroid when
+                  the listing has no saved coordinates). */}
+              <MapView
+                lat={r.listing.lat}
+                lng={r.listing.lng}
+                city={r.listing.city}
+                area={r.listing.area}
+                title={r.listing.title}
+                height={180}
+              />
             </div>
 
             <div className="bg-white rounded-xl p-5 border border-outline-variant/30 shadow-sm space-y-4">
@@ -1108,7 +1307,9 @@ export default function RentalLifecycleClient({
                 <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-2 text-xs">
                   <div className="flex justify-between font-bold text-slate-800 border-b border-slate-200 pb-2">
                     <span>مهلت عودت</span>
-                    <span className="text-m3-primary">{faDate(r.endDate)}</span>
+                    <span className="text-m3-primary">
+                      {formatJalaliIso(r.endDate.slice(0, 10))}
+                    </span>
                   </div>
                   <p className="text-slate-600 leading-relaxed">
                     وسیله باید در موعد مقرر عودت داده شود؛ در غیر این صورت جریمه
@@ -1208,9 +1409,45 @@ export default function RentalLifecycleClient({
         )}
       </section>
 
-      {/* Event timeline */}
+      {/* Next-step guidance — the single source of "what do I do now?" */}
+      {nextStep && !terminal && (
+        <div className="rounded-2xl border border-purple-100 bg-white shadow-sm p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="size-10 rounded-xl bg-primary-soft text-m3-primary flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-xl">
+              {nextStep.icon}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-extrabold text-slate-800">
+              گام بعدی شما: {nextStep.title}
+            </p>
+            <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">
+              {nextStep.body}
+            </p>
+          </div>
+          {nextStep.anchor && (
+            <a
+              href={nextStep.anchor}
+              className="shrink-0 inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-m3-primary text-white text-xs font-bold shadow-md shadow-m3-primary/25"
+            >
+              رفتن به مرحله مربوطه
+              <span className="material-symbols-outlined text-sm">arrow_left</span>
+            </a>
+          )}
+        </div>
+      )}
+      {waitingOnOther && !terminal && (
+        <div className="rounded-2xl border border-slate-200 bg-surface-container-low p-3.5 text-xs text-slate-600 font-semibold flex items-center gap-2">
+          <span className="material-symbols-outlined text-m3-secondary text-base">
+            hourglass_top
+          </span>
+          {waitingOnOther}
+        </div>
+      )}
+
+      {/* Event timeline — grouped by actor, icon per event type, newest first */}
       <section className="bg-white rounded-2xl border border-purple-100 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-purple-100 flex items-center gap-2">
+        <div className="p-4 border-b border-purple-100 flex flex-wrap items-center gap-2">
           <span className="material-symbols-outlined text-m3-primary text-xl">
             timeline
           </span>
@@ -1220,29 +1457,81 @@ export default function RentalLifecycleClient({
           <span className="text-xs text-on-surface-variant">
             ({faNumber(r.events.length)} رویداد)
           </span>
+          <div className="flex items-center gap-2 mr-auto text-[11px] font-semibold">
+            <span className="inline-flex items-center gap-1 text-amber-700">
+              <span className="size-2 rounded-full bg-amber-400"></span>
+              مستأجر
+            </span>
+            <span className="inline-flex items-center gap-1 text-m3-secondary">
+              <span className="size-2 rounded-full bg-m3-secondary"></span>
+              میزبان
+            </span>
+            <span className="inline-flex items-center gap-1 text-slate-500">
+              <span className="size-2 rounded-full bg-slate-300"></span>
+              سیستم
+            </span>
+          </div>
         </div>
         <div className="p-5">
-          <ol className="relative border-r-2 border-surface-container-high mr-3 space-y-5">
-            {r.events.map((e) => (
-              <li key={e.id} className="mr-5 pr-1">
-                <span className="absolute -right-[9px] top-1 size-4 rounded-full bg-m3-primary border-4 border-white shadow-sm"></span>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[11px] font-bold border ${
-                      ACTOR_STYLES[e.actor] ?? ACTOR_STYLES.system
-                    }`}
-                  >
-                    {ACTOR_LABELS[e.actor] ?? e.actor}
-                  </span>
-                  <span className="text-[11px] text-slate-400 font-medium">
-                    {faDateTime(e.createdAt)}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed mt-1">
-                  {e.message}
-                </p>
-              </li>
-            ))}
+          <ol className="relative border-r-2 border-surface-container-high mr-3 space-y-4">
+            {r.events
+              .slice()
+              .reverse()
+              .map((e) => {
+                const meta = EVENT_META[e.type] ?? {
+                  title: "رویداد سفارش",
+                  icon: "flag",
+                };
+                const actorLabel = ACTOR_LABELS[e.actor] ?? e.actor;
+                const isRenter = e.actor === "renter";
+                const isHost = e.actor === "host";
+                const dotCls = isRenter
+                  ? "bg-amber-400"
+                  : isHost
+                    ? "bg-m3-secondary"
+                    : "bg-slate-300";
+                const iconBgCls = isRenter
+                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                  : isHost
+                    ? "bg-secondary-fixed text-on-secondary-fixed border-secondary-fixed-dim"
+                    : "bg-surface-container-high text-on-surface-variant border-outline-variant/60";
+                const whoName = isRenter
+                  ? r.renter.name
+                  : isHost
+                    ? r.host.name
+                    : null;
+                return (
+                  <li key={e.id} className="mr-5 pr-1">
+                    <span
+                      className={`absolute -right-[9px] top-1 size-4 rounded-full ${dotCls} border-4 border-white shadow-sm`}
+                    ></span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${iconBgCls}`}
+                      >
+                        <span className="material-symbols-outlined text-[14px]">
+                          {meta.icon}
+                        </span>
+                        {meta.title}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[11px] font-bold border ${
+                          ACTOR_STYLES[e.actor] ?? ACTOR_STYLES.system
+                        }`}
+                      >
+                        {actorLabel}
+                        {whoName ? `: ${whoName}` : ""}
+                      </span>
+                      <span className="text-[11px] text-slate-400 font-medium">
+                        {faDateTime(e.createdAt)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed mt-1.5 text-justify">
+                      {e.message}
+                    </p>
+                  </li>
+                );
+              })}
             {r.events.length === 0 && (
               <li className="text-xs text-slate-400">رویدادی ثبت نشده است.</li>
             )}
@@ -1270,16 +1559,27 @@ export default function RentalLifecycleClient({
               گفتگو
             </button>
             {can("pay") && (
-              <button
-                type="button"
-                onClick={() => act("pay")}
-                disabled={busy === "pay"}
-                className="px-6 py-2.5 bg-m3-primary hover:bg-primary-container text-white rounded-xl text-xs font-bold shadow-md shadow-m3-primary/25 transition"
+              <Link
+                href="/wallet"
+                title={
+                  insufficientBalance
+                    ? "موجودی کیف پول کافی نیست — ابتدا شارژ کنید"
+                    : undefined
+                }
+                className={`px-6 py-2.5 rounded-xl text-xs font-bold shadow-md transition inline-flex items-center gap-1.5 ${
+                  insufficientBalance
+                    ? "bg-amber-100 text-amber-800 hover:bg-amber-200"
+                    : "bg-m3-primary hover:bg-primary-container text-white shadow-m3-primary/25"
+                }`}
               >
-                {busy === "pay" ? "در حال ثبت..." : "پرداخت آزمایشی (Sandbox)"}
-              </button>
+                <span className="material-symbols-outlined text-sm">
+                  {insufficientBalance ? "add_card" : "lock_open"}
+                </span>
+                {insufficientBalance ? "شارژ کیف پول و پرداخت" : "پرداخت آزمایشی (Sandbox)"}
+              </Link>
             )}
-            {can("confirm_agreement") && (
+            {can("confirm_agreement") &&
+              visibleActions.includes("confirm_agreement") && (
               <button
                 type="button"
                 onClick={() =>

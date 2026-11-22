@@ -90,6 +90,19 @@ export async function PATCH(req: Request, ctx: Ctx) {
       ? "host"
       : "renter";
 
+  // Wallet rule: balances can never go negative. The renter's sandbox payment
+  // (rental fee + refundable deposit) is drawn from their wallet — when the
+  // balance is insufficient the client is told to top up FIRST
+  // (extra.needTopup drives the «شارژ کیف پول» redirect in the UI).
+  const payCost = reservation.subtotal + reservation.deposit;
+  if (action === "pay" && actor === "renter" && user.walletBalance < payCost) {
+    return jsonError(
+      `موجودی کیف پول شما (${user.walletBalance.toLocaleString("fa-IR")} تومان) برای پرداخت این سفارش (${payCost.toLocaleString("fa-IR")} تومان) کافی نیست؛ لطفاً ابتدا کیف پول را شارژ کنید.`,
+      402,
+      { needTopup: true, needed: payCost, currentBalance: user.walletBalance },
+    );
+  }
+
   if (!canAct(reservation.status as ReservationStatus, action, actor)) {
     return jsonError(
       `انجام «${action}» در وضعیت «${RESERVATION_STATUS_LABELS[reservation.status as ReservationStatus]}» برای شما مجاز نیست.`,
@@ -145,6 +158,8 @@ export async function PATCH(req: Request, ctx: Ctx) {
       );
       balanceDelta[reservation.renterId] = (balanceDelta[reservation.renterId] ?? 0) - reservation.subtotal - reservation.deposit;
       balanceDelta[reservation.hostId] = (balanceDelta[reservation.hostId] ?? 0) + reservation.subtotal;
+      // Guarded inside the transaction below: the renter's balance must cover
+      // the cost, otherwise the whole transition (and payment) rolls back.
       await db.notification.create({ data: { userId: reservation.hostId, type: "RESERVATION", title: "پرداخت انجام شد", body: `پرداخت رزرو «${reservation.code}» انجام شد؛ وسیله را تحویل دهید.`, link: "/host-dashboard" } });
       break;
     }
@@ -201,7 +216,8 @@ export async function PATCH(req: Request, ctx: Ctx) {
     }
   }
 
-  await db.$transaction(async (tx) => {
+  try {
+    await db.$transaction(async (tx) => {
     await tx.reservation.update({
       where: { id },
       data: {
@@ -223,13 +239,35 @@ export async function PATCH(req: Request, ctx: Ctx) {
     }
     for (const [userId, delta] of Object.entries(balanceDelta)) {
       if (delta !== 0) {
-        await tx.user.update({
-          where: { id: userId },
-          data: { walletBalance: { increment: delta } },
-        });
+        // Debits are guarded: walletBalance >= |delta| must hold, so no
+        // balance can ever become negative (fails the whole transaction).
+        if (delta < 0) {
+          const debited = await tx.user.updateMany({
+            where: { id: userId, walletBalance: { gte: Math.abs(delta) } },
+            data: { walletBalance: { decrement: Math.abs(delta) } },
+          });
+          if (debited.count !== 1) {
+            throw new Error("WALLET_INSUFFICIENT_BALANCE");
+          }
+        } else {
+          await tx.user.update({
+            where: { id: userId },
+            data: { walletBalance: { increment: delta } },
+          });
+        }
       }
     }
   });
+  } catch (e) {
+    if (e instanceof Error && e.message === "WALLET_INSUFFICIENT_BALANCE") {
+      return jsonError(
+        "موجودی کیف پول کافی نیست؛ ابتدا کیف پول را شارژ کنید.",
+        402,
+        { needTopup: true, needed: payCost, currentBalance: user.walletBalance },
+      );
+    }
+    throw e;
+  }
 
   const updated = await db.reservation.findUnique({
     where: { id },

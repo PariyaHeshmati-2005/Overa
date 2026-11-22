@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { faToman, faDateTime, faNumber, toPersianDigits } from "@/lib/format";
+import { digitsOnly } from "@/lib/input-guard";
 
 /* ---------------------------------- types --------------------------------- */
 
@@ -109,7 +110,14 @@ function statusBadge(status: string) {
 
 /* ------------------------------- component -------------------------------- */
 
-export default function WalletClient({ userName }: { userName: string }) {
+export default function WalletClient({
+  userName,
+  creditScore,
+}: {
+  userName: string;
+  /** Real trust score computed server-side from the user's rental history. */
+  creditScore: number;
+}) {
   const [data, setData] = useState<WalletData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [tab, setTab] = useState<TabKey>("all");
@@ -470,7 +478,7 @@ export default function WalletClient({ userName }: { userName: string }) {
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="text-headline-lg font-black text-on-surface">
-                  ۹۸
+                  {toPersianDigits(creditScore)}
                 </span>
                 <span className="text-label-sm text-m3-outline">/ ۱۰۰</span>
               </div>
@@ -495,13 +503,13 @@ export default function WalletClient({ userName }: { userName: string }) {
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                   fill="none"
                   stroke="currentColor"
-                  strokeDasharray="98, 100"
+                  strokeDasharray={`${creditScore}, 100`}
                   strokeLinecap="round"
                   strokeWidth="3.5"
                 ></path>
               </svg>
               <span className="absolute text-label-sm text-[12px] font-bold text-m3-primary">
-                ۹۸٪
+                {toPersianDigits(creditScore)}٪
               </span>
             </div>
             <span className="sr-only">مقدار نمایشی</span>
@@ -1093,9 +1101,10 @@ export default function WalletClient({ userName }: { userName: string }) {
                 id="topup-amount"
                 type="text"
                 inputMode="numeric"
+                data-numeric="true"
                 value={faToman(topupAmount || "0")}
                 onChange={(e) =>
-                  setTopupAmount(e.target.value.replace(/[^\d]/g, ""))
+                  setTopupAmount(digitsOnly(e.target.value))
                 }
               />
             </div>
@@ -1161,11 +1170,20 @@ export default function WalletClient({ userName }: { userName: string }) {
                   id="payout-amount"
                   type="text"
                   inputMode="numeric"
+                  data-numeric="true"
                   value={faToman(payoutAmount || "0")}
                   onChange={(e) =>
-                    setPayoutAmount(e.target.value.replace(/[^\d]/g, ""))
+                    setPayoutAmount(digitsOnly(e.target.value))
                   }
                 />
+                {Number(payoutAmount) > balance && (
+                  <p className="text-[11px] font-bold text-m3-error mt-1 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">
+                      error
+                    </span>
+                    مبلغ از موجودی شما بیشتر است.
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-label-sm text-on-surface mb-1 font-semibold">

@@ -67,6 +67,55 @@ export async function POST(req: Request, ctx: Ctx) {
       applyStateChange: async (tx) => {
         const now = new Date();
 
+        if (stage === "AGREEMENT_SIGNATURE") {
+          // Digital contract signature — renter only (gated above). Two cases:
+          //  REQUESTED → the renter signs first; the host is then notified to
+          //              approve (status stays REQUESTED until they act).
+          //  APPROVED  → the signature doubles as «تایید قرارداد»: the order
+          //              moves to AGREEMENT and payment unlocks.
+          const wasApproved = reservation.status === "APPROVED";
+          const claimed = await tx.reservation.updateMany({
+            where: {
+              id: reservation.id,
+              status: reservation.status,
+              renterId: user.id,
+              signedByRenterAt: null,
+            },
+            data: {
+              signedByRenterAt: now,
+              ...(wasApproved ? { status: "AGREEMENT" } : {}),
+            },
+          });
+          if (claimed.count !== 1) {
+            throw new OtpError(
+              "امضای قرارداد قبلاً ثبت شده یا وضعیت سفارش تغییر کرده است؛ صفحه را به‌روزرسانی کنید.",
+              409,
+            );
+          }
+          await tx.reservationEvent.create({
+            data: {
+              reservationId: reservation.id,
+              actor: "renter",
+              type: "SIGN_AGREEMENT",
+              message: wasApproved
+                ? "قرارداد با امضای دیجیتال مستأجر تایید شد؛ آماده انجام پرداخت."
+                : "مستأجر قرارداد را با امضای دیجیتال ثبت کرد؛ منتظر تایید مالک.",
+            },
+          });
+          await tx.notification.create({
+            data: {
+              userId: reservation.hostId,
+              type: "RESERVATION",
+              title: wasApproved ? "قرارداد امضا و تایید شد" : "قرارداد از سوی مستأجر امضا شد",
+              body: wasApproved
+                ? `امضای دیجیتال «${reservation.code}» ثبت شد؛ منتظر انجام پرداخت آزمایشی هستید.`
+                : `مستأجر قرارداد «${reservation.code}» را با کد یک‌بارمصرف امضا کرد؛ لطفاً شما نیز درخواست را تایید کنید.`,
+              link: "/host-dashboard",
+            },
+          });
+          return { status: wasApproved ? "AGREEMENT" : "REQUESTED" };
+        }
+
         if (stage === "DELIVERY_RECEIVED") {
           // Renter confirms receipt → rental becomes active, real start time.
           const claimed = await tx.reservation.updateMany({

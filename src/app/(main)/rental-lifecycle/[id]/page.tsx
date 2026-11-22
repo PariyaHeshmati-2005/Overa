@@ -103,6 +103,9 @@ export default async function RentalLifecyclePage({
           renterProtocol: reservation.renterProtocol,
           hostProtocol: reservation.hostProtocol,
           depositStatus: reservation.depositStatus,
+          signedByRenterAt: reservation.signedByRenterAt
+            ? reservation.signedByRenterAt.toISOString()
+            : null,
           listing: {
             id: reservation.listing.id,
             title: reservation.listing.title,
@@ -111,6 +114,8 @@ export default async function RentalLifecyclePage({
             area: reservation.listing.area,
             rating: reservation.listing.rating,
             images: reservation.listing.images.map((i) => i.url),
+            lat: reservation.listing.lat,
+            lng: reservation.listing.lng,
           },
           renter: { id: reservation.renter.id, name: reservation.renter.name },
           host: { id: reservation.host.id, name: reservation.host.name },
@@ -172,6 +177,7 @@ export default async function RentalLifecyclePage({
           actions={actions}
           statusLabels={RESERVATION_STATUS_LABELS}
           statusColors={RESERVATION_STATUS_COLORS}
+          viewerWalletBalance={user.walletBalance}
         />
       ) : null}
 

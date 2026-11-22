@@ -73,6 +73,8 @@ export default async function CreateListingPage({
       deposit: listing.deposit,
       city: listing.city,
       area: listing.area,
+      lat: listing.lat,
+      lng: listing.lng,
       rules: listing.rules,
       minDays: listing.minDays,
       maxDays: listing.maxDays,

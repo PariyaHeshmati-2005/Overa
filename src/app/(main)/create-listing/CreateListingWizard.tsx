@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Toaster, toast } from "sonner";
 import { faNumber } from "@/lib/format";
 import JalaliCalendar from "@/components/overa/JalaliCalendar";
+import MapPicker from "@/components/overa/MapPicker";
+import { digitsOnly } from "@/lib/input-guard";
 import {
   formatJalaliIso,
   rangeHitsBooked,
@@ -28,6 +30,9 @@ export type WizardInitial = {
   deposit: number;
   city: string;
   area: string | null;
+  /** Exact map coordinates (null → city centroid fallback on the map). */
+  lat: number | null;
+  lng: number | null;
   rules: string | null;
   minDays: number;
   maxDays: number;
@@ -58,6 +63,8 @@ type FormData = {
   province: string;
   city: string;
   area: string;
+  lat: number | null;
+  lng: number | null;
   pickupInPerson: boolean;
   deliveryCourier: boolean;
   biometricAuth: boolean;
@@ -93,6 +100,8 @@ const DEFAULT_FORM: FormData = {
   province: "تهران",
   city: "تهران",
   area: "",
+  lat: null,
+  lng: null,
   pickupInPerson: true,
   deliveryCourier: false,
   biometricAuth: true,
@@ -210,6 +219,9 @@ export default function CreateListingWizard({
   const [showAllImages, setShowAllImages] = useState(false);
   const [rentalDaysEst, setRentalDaysEst] = useState(10);
   const [newAccessory, setNewAccessory] = useState("");
+  /** Local-device uploads in flight (files read, resized, then POSTed). */
+  const [uploadingCount, setUploadingCount] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   // In-progress Jalali block-range selection (first click = start, second = end).
   const [blockStart, setBlockStart] = useState<string | null>(null);
   const [blockEnd, setBlockEnd] = useState<string | null>(null);
@@ -232,6 +244,8 @@ export default function CreateListingWizard({
       city: initial.city,
       province,
       area: initial.area ?? "",
+      lat: initial.lat,
+      lng: initial.lng,
       pickupInPerson: initial.pickupInPerson,
       deliveryCourier: initial.deliveryCourier,
       instantBook: initial.instantBook,
@@ -267,6 +281,59 @@ export default function CreateListingWizard({
       return;
     }
     update({ images: [...form.images, url] });
+  }
+
+  /**
+   * Pick images from the device (phone or laptop) via the native file picker.
+   * Each photo is downscaled to max 1600px and JPEG-compressed in the browser
+   * (keeps uploads small on mobile data), then saved through /api/uploads and
+   * attached to the listing like any sample image.
+   */
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const room = 8 - form.images.length;
+    if (room <= 0) {
+      toast.error("حداکثر ۸ تصویر می‌توانید انتخاب کنید.");
+      return;
+    }
+    const picked = Array.from(files).slice(0, room);
+    setUploadingCount(picked.length);
+    const added: string[] = [];
+    try {
+      for (const file of picked) {
+        if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) {
+          toast.error(`«${file.name}» تصویر معتبری نیست (JPEG/PNG/WEBP).`);
+          continue;
+        }
+        if (file.size > 15 * 1024 * 1024) {
+          toast.error(`حجم «${file.name}» بیش از ۱۵ مگابایت است.`);
+          continue;
+        }
+        const dataUrl = await compressImage(file);
+        const res = await fetch("/api/uploads", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dataUrl }),
+        });
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          toast.error(payload?.error ?? "آپلود تصویر ممکن نشد.");
+          continue;
+        }
+        added.push(payload.url as string);
+      }
+      if (added.length > 0) {
+        update({ images: [...form.images, ...added] });
+        toast.success(
+          `${faNumber(added.length)} تصویر از دستگاه شما اضافه شد.`,
+        );
+      }
+    } catch {
+      toast.error("خواندن فایل‌ها ممکن نشد؛ دوباره تلاش کنید.");
+    } finally {
+      setUploadingCount(0);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   }
 
   function addAccessory() {
@@ -327,7 +394,7 @@ export default function CreateListingWizard({
       if (form.description.trim().length < 20)
         errs.description = "توضیحات باید حداقل ۲۰ کاراکتر باشد.";
       if (form.images.length < 1)
-        errs.images = "حداقل یک تصویر از نمونه‌ها انتخاب کنید.";
+        errs.images = "حداقل یک تصویر از نمونه‌ها یا فایل دستگاه انتخاب کنید.";
     }
     if (n === 3) {
       if (!Number.isFinite(dailyNum) || dailyNum < 1000)
@@ -370,6 +437,8 @@ export default function CreateListingWizard({
           : 0,
       city: form.city,
       area: form.area.trim() || undefined,
+      lat: form.lat,
+      lng: form.lng,
       rules: form.customRules.trim() || undefined,
       minDays: Number(form.minDays) || 1,
       maxDays: Number(form.maxDays) || 30,
@@ -930,6 +999,9 @@ export default function CreateListingWizard({
                     update({
                       province: p,
                       city: PROVINCE_CITIES[p]?.[0] ?? "تهران",
+                      // Coordinates were picked for the previous city.
+                      lat: null,
+                      lng: null,
                     });
                   }}
                   className="w-full h-12 bg-surface-container-lowest text-on-surface rounded-lg px-8 border border-outline-variant/40 focus:ring-2 focus:ring-m3-primary"
@@ -945,7 +1017,9 @@ export default function CreateListingWizard({
                 </label>
                 <select
                   value={form.city}
-                  onChange={(e) => update({ city: e.target.value })}
+                  onChange={(e) =>
+                    update({ city: e.target.value, lat: null, lng: null })
+                  }
                   className="w-full h-12 bg-surface-container-lowest text-on-surface rounded-lg px-8 border border-outline-variant/40 focus:ring-2 focus:ring-m3-primary"
                 >
                   {cityOptions.map((c) => (
@@ -964,6 +1038,31 @@ export default function CreateListingWizard({
                   className="h-12 w-full px-4 rounded-lg bg-surface-container-lowest text-on-surface border border-outline-variant/40 focus:ring-2 focus:ring-m3-primary outline-none"
                 />
               </div>
+            </div>
+
+            {/* Interactive location picker: the host pins the exact spot so
+                renters later see the real neighbourhood on the item map. */}
+            <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low/50 p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-on-surface font-semibold text-sm flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-m3-primary text-[18px]">
+                    map
+                  </span>
+                  انتخاب محل دقیق روی نقشه
+                </span>
+                <span className="text-[11px] text-m3-tertiary">
+                  {form.lat !== null && form.lng !== null
+                    ? "محل انتخاب شد ✓ (قابل جابه‌جایی)"
+                    : "اختیاری، اما پیشنهاد می‌شود"}
+                </span>
+              </div>
+              <MapPicker
+                lat={form.lat}
+                lng={form.lng}
+                city={form.city}
+                area={form.area}
+                onChange={(lat, lng) => update({ lat, lng })}
+              />
             </div>
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -1115,14 +1214,38 @@ export default function CreateListingWizard({
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-bold text-on-surface">
-                  انتخاب از نمونه‌ها — آپلود اختصاصی پس از اتصال فضای ذخیره‌سازی
-                  فعال می‌شود
+                  عکس وسیله خود را از گوشی یا لپ‌تاپ انتخاب کنید — یا از نمونه‌های
+                  آماده استفاده کنید
                 </p>
                 <p className="text-xs text-m3-tertiary">
-                  از بانک نمونه‌های زیر حداکثر ۸ تصویر برای وسیله انتخاب کنید
-                  (حداقل ۱ تصویر برای ثبت نهایی)
+                  تا ۸ تصویر (JPEG/PNG/WEBP)؛ تصاویر به‌صورت خودکار فشرده و ذخیره
+                  می‌شوند
                 </p>
               </div>
+              {/* Real device file picker — camera roll on phones, files on laptops */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => void handleFiles(e.target.files)}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingCount > 0 || form.images.length >= 8}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-m3-primary text-on-primary text-xs font-bold shadow-md shadow-m3-primary/25 hover:bg-primary-container transition-all active:scale-[0.98] disabled:opacity-60 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  upload_file
+                </span>
+                {uploadingCount > 0
+                  ? `در حال آپلود ${faNumber(uploadingCount)} تصویر…`
+                  : form.images.length >= 8
+                    ? "سقف ۸ تصویر تکمیل است"
+                    : "انتخاب فایل از دستگاه (گوشی / لپ‌تاپ)"}
+              </button>
             </div>
 
             {/* Selected photos strip */}
@@ -1690,8 +1813,13 @@ export default function CreateListingWizard({
                   <input
                     id="daily-rate-input"
                     type="text"
-                    value={form.dailyPrice}
-                    onChange={(e) => update({ dailyPrice: e.target.value })}
+                    inputMode="numeric"
+                    data-numeric="true"
+                    value={priceDisplay(form.dailyPrice)}
+                    onChange={(e) =>
+                      update({ dailyPrice: digitsOnly(e.target.value) })
+                    }
+                    placeholder="مثلاً ۵۰۰۰۰۰"
                     className="w-full h-12 pr-4 pl-16 rounded bg-surface-container-lowest text-on-surface font-bold border border-outline-variant/40 focus:ring-2 focus:ring-m3-primary shadow-sm outline-none"
                   />
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm pointer-events-none">
@@ -1739,8 +1867,13 @@ export default function CreateListingWizard({
                   <input
                     id="weekly-rate-input"
                     type="text"
-                    value={form.weeklyPrice}
-                    onChange={(e) => update({ weeklyPrice: e.target.value })}
+                    inputMode="numeric"
+                    data-numeric="true"
+                    value={priceDisplay(form.weeklyPrice)}
+                    onChange={(e) =>
+                      update({ weeklyPrice: digitsOnly(e.target.value) })
+                    }
+                    placeholder="اختیاری"
                     className="w-full h-12 pr-4 pl-16 rounded bg-surface-container-lowest text-on-surface font-bold border border-outline-variant/40 focus:ring-2 focus:ring-m3-primary shadow-sm outline-none"
                   />
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm pointer-events-none">
@@ -1759,8 +1892,13 @@ export default function CreateListingWizard({
                   <input
                     id="deposit-amount"
                     type="text"
-                    value={form.deposit}
-                    onChange={(e) => update({ deposit: e.target.value })}
+                    inputMode="numeric"
+                    data-numeric="true"
+                    value={priceDisplay(form.deposit)}
+                    onChange={(e) =>
+                      update({ deposit: digitsOnly(e.target.value) })
+                    }
+                    placeholder="مثلاً ۲۰۰۰۰۰۰"
                     className="w-full h-12 pr-4 pl-16 rounded bg-surface-container-lowest text-on-surface font-bold border border-outline-variant/40 focus:ring-2 focus:ring-m3-primary shadow-sm outline-none"
                   />
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm pointer-events-none">
@@ -2663,4 +2801,41 @@ export default function CreateListingWizard({
 
 function toFa(n: number): string {
   return String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[Number(d)]);
+}
+
+/**
+ * Downscale + JPEG-compress a picked image file in the browser (max 1600px
+ * on the long edge, quality 0.85) and return a JPEG data URL. Keeps mobile
+ * uploads small without changing the visual quality of the listing.
+ */
+async function compressImage(file: File): Promise<string> {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("read-failed"));
+    reader.readAsDataURL(file);
+  });
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error("decode-failed"));
+      el.src = dataUrl;
+    });
+    const maxEdge = 1600;
+    const scale = Math.min(1, maxEdge / Math.max(img.width, img.height));
+    const w = Math.max(1, Math.round(img.width * scale));
+    const h = Math.max(1, Math.round(img.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return dataUrl;
+    ctx.drawImage(img, 0, 0, w, h);
+    return canvas.toDataURL("image/jpeg", 0.85);
+  } catch {
+    // Canvas decode failed (e.g. exotic format) — send the original data URL
+    // and let the server's mime/size validation decide.
+    return dataUrl;
+  }
 }

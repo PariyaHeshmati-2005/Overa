@@ -39,6 +39,7 @@ export const OTP_MAX_SENDS_PER_WINDOW = 3; // max sends per window
 export const OTP_STAGES: readonly ReservationOtpStage[] = [
   "DELIVERY_RECEIVED",
   "RETURN_RECEIVED",
+  "AGREEMENT_SIGNATURE",
 ];
 
 /** Typed error whose Persian message is safe to show to the user. */
@@ -53,7 +54,11 @@ export class OtpError extends Error {
 }
 
 export function isReservationOtpStage(value: unknown): value is ReservationOtpStage {
-  return value === "DELIVERY_RECEIVED" || value === "RETURN_RECEIVED";
+  return (
+    value === "DELIVERY_RECEIVED" ||
+    value === "RETURN_RECEIVED" ||
+    value === "AGREEMENT_SIGNATURE"
+  );
 }
 
 /** Fold Persian/Arabic digits (and stray spaces) so «۱۲۳۴۵۶» also verifies. */
@@ -98,6 +103,18 @@ export function assertOtpStageAllowed(
   user: { id: string },
   stage: ReservationOtpStage,
 ): void {
+  if (stage === "AGREEMENT_SIGNATURE") {
+    // Digital contract signature is a RENTER-only action: the host never
+    // signs (their approval is the plain state-machine action).
+    if (reservation.renterId !== user.id)
+      throw new OtpError("امضای دیجیتال قرارداد فقط توسط مستأجر انجام می‌شود.", 403);
+    if (reservation.status !== "REQUESTED" && reservation.status !== "APPROVED")
+      throw new OtpError(
+        "امضای قرارداد فقط در مراحل «در انتظار پاسخ مالک» یا «تایید مالک» امکان‌پذیر است.",
+        422,
+      );
+    return;
+  }
   if (stage === "DELIVERY_RECEIVED") {
     if (reservation.renterId !== user.id)
       throw new OtpError("فقط مستأجر این سفارش می‌تواند دریافت کالا را تأیید کند.", 403);

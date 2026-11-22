@@ -6,7 +6,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { daysBetween, faDate, faNumber, faToman } from "@/lib/format";
+import { faNumber, faToman } from "@/lib/format";
+import { diffDaysIso, formatJalaliIso, todayIsoTehran } from "@/lib/jalali";
 import DeliveryConfirmCard from "@/components/overa/DeliveryConfirmCard";
 import ReturnConfirmCard from "@/components/overa/ReturnConfirmCard";
 
@@ -654,7 +655,9 @@ export default function RentalsClient({
               const statusColor =
                 statusColors[r.status] ??
                 "bg-surface-container-high text-on-surface";
-              const remaining = daysBetween(new Date(), r.endDate);
+              // Whole calendar days left until the return day (Tehran today),
+              // independent of device/server timezones.
+              const remaining = diffDaysIso(todayIsoTehran(), r.endDate.slice(0, 10));
               const isRenterView = r.renter.id === user.id;
               const counterparty = isRenterView ? r.host.name : r.renter.name;
               const canCancel = isRenterView && CANCELABLE.includes(r.status);
@@ -761,7 +764,7 @@ export default function RentalsClient({
                                 تاریخ شروع تحویل:
                               </span>
                               <span className="font-bold text-on-surface mt-0.5 block">
-                                {faDate(r.startDate)}
+                                {formatJalaliIso(r.startDate.slice(0, 10))}
                               </span>
                             </div>
                             <div>
@@ -771,7 +774,7 @@ export default function RentalsClient({
                               <span
                                 className={`font-bold mt-0.5 block ${["COMPLETED", "CANCELLED", "REJECTED"].includes(r.status) ? "text-on-surface" : "text-m3-error"}`}
                               >
-                                {faDate(r.endDate)}
+                                {formatJalaliIso(r.endDate.slice(0, 10))}
                               </span>
                             </div>
                           </div>

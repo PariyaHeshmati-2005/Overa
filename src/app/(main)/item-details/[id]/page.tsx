@@ -113,6 +113,8 @@ export default async function ItemDetailsPage({
     deposit: listing.deposit,
     city: listing.city,
     area: listing.area,
+    lat: listing.lat,
+    lng: listing.lng,
     pickupInPerson: listing.pickupInPerson,
     deliveryCourier: listing.deliveryCourier,
     minDays: listing.minDays,
@@ -138,6 +140,9 @@ export default async function ItemDetailsPage({
     comment: r.comment,
     hostReply: r.hostReply,
     createdAt: r.createdAt.toISOString(),
+    // Only reservation-tied reviews carry the «اجاره‌کننده‌ی تأییدشده» badge.
+    verified: Boolean(r.reservationId),
+    isMine: viewer ? r.authorId === viewer.id : false,
   }));
 
   const otherItems: OwnerListingData[] = ownerItems.map((o) => ({
@@ -185,6 +190,7 @@ export default async function ItemDetailsPage({
         reviews={reviews}
         otherItems={otherItems}
         viewerId={viewer?.id ?? null}
+        viewerWalletBalance={viewer?.walletBalance ?? 0}
         bookedRanges={bookedRanges}
         ownerBlockedRanges={ownerBlockedRanges}
         initialFaved={Boolean(favorite)}

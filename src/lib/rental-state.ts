@@ -115,7 +115,13 @@ export const ACTION_ACTORS: Record<ReservationAction, ("renter" | "host" | "admi
 export const OTP_ONLY_ACTIONS: ReservationAction[] = ["confirm_delivery"];
 
 /** OTP stage bound to each status that requires a verified one-time code. */
-export type ReservationOtpStage = "DELIVERY_RECEIVED" | "RETURN_RECEIVED";
+export type ReservationOtpStage =
+  | "DELIVERY_RECEIVED"
+  | "RETURN_RECEIVED"
+  // Digital contract signature: RENTER only (the host never signs — their
+  // approval is the plain state-machine action). Verifiable while the order
+  // sits in REQUESTED or APPROVED; see reservation-otp.ts.
+  | "AGREEMENT_SIGNATURE";
 
 export const OTP_STAGE_BY_STATUS: Partial<Record<ReservationStatus, ReservationOtpStage>> = {
   DELIVERED: "DELIVERY_RECEIVED", // renter confirms receipt → RENTAL_ACTIVE

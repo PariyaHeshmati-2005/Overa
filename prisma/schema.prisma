@@ -101,6 +101,10 @@ model Listing {
   // Location
   city        String
   area        String?
+  // Exact map coordinates (WGS84). Optional: seeded/legacy listings fall back
+  // to the city centroid rendered by the shared map components.
+  lat         Float?
+  lng         Float?
   // Delivery options
   pickupInPerson Boolean @default(true)
   deliveryCourier Boolean @default(false)
@@ -206,6 +210,10 @@ model Reservation {
   // NONE (nothing paid) | HELD (paid & held) | REFUND_PENDING
   // (order completed — refund process started) | REFUNDED (released)
   depositStatus String @default("NONE")
+  // Digital contract signature: timestamp of the RENTER's verified signature
+  // (one-time code, AGREEMENT_SIGNATURE stage). Only the renter signs the
+  // contract; the host's approval is the plain state-machine action.
+  signedByRenterAt DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

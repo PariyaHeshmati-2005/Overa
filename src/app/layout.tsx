@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import PWARegister from "@/components/pwa/PWARegister";
+import NumericInputGuard from "@/components/overa/NumericInputGuard";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -42,6 +43,8 @@ export default function RootLayout({
       <body className="min-h-screen antialiased selection:bg-primary-soft selection:text-primary">
         {children}
         <PWARegister />
+        {/* App-wide rule: numeric inputs accept positive digits only. */}
+        <NumericInputGuard />
       </body>
     </html>
   );

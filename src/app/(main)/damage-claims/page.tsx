@@ -22,7 +22,7 @@ export default async function DamageClaimsPage() {
       {/* Fixed header — faithful to damage-claims.html */}
             <SiteHeader />
 
-      <DamageClaimsClient />
+      <DamageClaimsClient viewerId={user.id} viewerName={user.name} />
     </>
   );
 }

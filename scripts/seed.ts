@@ -168,6 +168,9 @@ type DemoListing = {
   deposit?: number;
   city?: string;
   area?: string;
+  /** Exact map coordinates (optional — falls back to the city centroid). */
+  lat?: number;
+  lng?: number;
   rating?: number;
   reviewsCount?: number;
   viewsCount?: number;
@@ -542,6 +545,8 @@ async function ensureDemoListing(
       deposit: l.deposit ?? 1_000_000,
       city: l.city ?? "تهران",
       area: l.area,
+      lat: l.lat ?? null,
+      lng: l.lng ?? null,
       rating: l.rating ?? 4.7,
       reviewsCount: l.reviewsCount ?? 12,
       viewsCount: l.viewsCount ?? 120,

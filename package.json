@@ -16,6 +16,7 @@
     "db:migrate:deploy": "bash scripts/env-run.sh sh scripts/migrate-deploy.sh",
     "db:seed:categories": "bash scripts/env-run.sh bun run scripts/seed-categories.ts",
     "db:import": "bash scripts/env-run.sh bun run scripts/import-listings.ts",
+    "db:coords": "bash scripts/env-run.sh bun run scripts/backfill-listing-coords.ts",
     "db:seed": "bash scripts/env-run.sh bun run scripts/seed.ts"
   },
   "dependencies": {

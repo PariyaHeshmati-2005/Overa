@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast, Toaster } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { faDate, faNumber, faToman } from "@/lib/format";
+import ClaimChat from "@/components/overa/ClaimChat";
 
 /* ------------------------------------------------------------------ types */
 
@@ -108,12 +109,21 @@ const SAMPLE_EVIDENCE = [
   { url: "/assets/img/73195d3a6ac5.jpg", label: "متعلقات" },
 ];
 
-export default function DamageClaimsClient() {
+export default function DamageClaimsClient({
+  viewerId,
+  viewerName,
+}: {
+  /** Signed-in user id (page is protected — always present). */
+  viewerId: string;
+  viewerName: string;
+}) {
   const [loading, setLoading] = useState(true);
   const [claims, setClaims] = useState<ApiClaim[]>([]);
   const [reservations, setReservations] = useState<ApiReservationLite[]>([]);
   const [formOpen, setFormOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  /** Which claim's text-only chat is expanded (claim id). */
+  const [chatOpenId, setChatOpenId] = useState<string | null>(null);
 
   // form state
   const [reservationId, setReservationId] = useState("");
@@ -435,6 +445,20 @@ export default function DamageClaimsClient() {
                           </div>
                         )}
                         <div className="flex items-center justify-between pt-1 border-t border-outline-variant/40">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setChatOpenId((v) => (v === c.id ? null : c.id))
+                            }
+                            className="inline-flex items-center gap-1 text-xs font-bold text-m3-primary hover:underline cursor-pointer"
+                          >
+                            <span className="material-symbols-outlined text-sm">
+                              {chatOpenId === c.id ? "expand_less" : "forum"}
+                            </span>
+                            {chatOpenId === c.id
+                              ? "بستن گفتگو"
+                              : `گفتگو با ${c.claimant.id === viewerId ? c.against.name : c.claimant.name}`}
+                          </button>
                           <Link
                             href={`/rental-lifecycle/${c.reservation.id}?code=${c.reservation.code}`}
                             className="inline-flex items-center gap-1 text-xs font-bold text-m3-primary hover:underline"
@@ -444,10 +468,30 @@ export default function DamageClaimsClient() {
                             </span>
                             مشاهده روند اجاره
                           </Link>
-                          <span className="text-[10px] text-on-surface-variant">
-                            پرونده‌ها توسط کارشناسان اٌوِرا بررسی می‌شوند
-                          </span>
                         </div>
+                        {chatOpenId === c.id && (
+                          <div className="rounded-xl border border-outline-variant/50 bg-surface-container-low/50 p-3">
+                            <p className="text-[11px] font-bold text-on-surface-variant mb-2 flex items-center gap-1">
+                              <span className="material-symbols-outlined text-sm text-m3-primary">
+                                forum
+                              </span>
+                              گفتگوی دوطرفه پرونده — {c.title}
+                            </p>
+                            <ClaimChat
+                              reservationId={c.reservation.id}
+                              viewerId={viewerId}
+                              viewerName={viewerName}
+                              otherName={
+                                c.claimant.id === viewerId
+                                  ? c.against.name
+                                  : c.claimant.name
+                              }
+                            />
+                          </div>
+                        )}
+                        <span className="text-[10px] text-on-surface-variant">
+                          پرونده‌ها توسط کارشناسان اٌوِرا بررسی می‌شوند
+                        </span>
                       </article>
                     );
                   })}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { db } from "@/lib/db";
 import SiteHeader from "@/components/layout/SiteHeader";
 import M3Styles from "@/components/overa/M3Styles";
 import WalletClient from "./WalletClient";
@@ -9,9 +10,35 @@ import WalletClient from "./WalletClient";
 export const metadata: Metadata = { title: "کیف پول و صندوق امانی" };
 export const dynamic = "force-dynamic";
 
+/**
+ * Real trust score (0-100) computed from the caller's actual reservation
+ * history — no hard-coded demo value:
+ *   base 70, + up to 20 for completed rentals (4 pts each), + 10 when no
+ *   dispute was ever opened against them, -10 per disputed order (floor 0).
+ */
+async function computeCreditScore(userId: string): Promise<number> {
+  const [completed, disputed] = await Promise.all([
+    db.reservation.count({
+      where: {
+        OR: [{ renterId: userId }, { hostId: userId }],
+        status: "COMPLETED",
+      },
+    }),
+    db.reservation.count({
+      where: {
+        OR: [{ renterId: userId }, { hostId: userId }],
+        status: "DISPUTED",
+      },
+    }),
+  ]);
+  let score = 70 + Math.min(20, completed * 4) + (disputed === 0 ? 10 : 0) - disputed * 10;
+  return Math.max(0, Math.min(100, score));
+}
+
 export default async function WalletPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/signin-otp?next=" + encodeURIComponent("/wallet"));
+  const creditScore = await computeCreditScore(user.id);
 
   return (
     <div className="bg-m3-surface font-body-md text-on-surface antialiased selection:bg-primary-fixed selection:text-on-primary-fixed min-h-screen flex flex-col">
@@ -23,7 +50,7 @@ export default async function WalletPage() {
 
       <main className="w-full pt-6 bg-m3-surface min-h-[calc(100vh-280px)] flex-1">
         <div className="flex flex-col w-full">
-          <WalletClient userName={user.name} />
+          <WalletClient userName={user.name} creditScore={creditScore} />
         </div>
       </main>
 

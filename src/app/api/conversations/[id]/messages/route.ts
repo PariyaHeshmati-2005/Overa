@@ -61,6 +61,24 @@ export async function POST(req: Request, ctx: Ctx) {
   if (attachmentUrl && !/^https?:\/\/|^\/(assets|uploads)\//.test(attachmentUrl))
     return jsonError("لینک فایل پیوست معتبر نیست.");
 
+  // Damage-claim conversations are TEXT-ONLY: no images, voice or attachments.
+  const conversation = await db.conversation.findUnique({
+    where: { id },
+    select: { reservationId: true },
+  });
+  if (attachmentUrl && conversation?.reservationId) {
+    const openClaim = await db.damageClaim.findFirst({
+      where: { reservationId: conversation.reservationId, status: { notIn: ["SETTLED"] } },
+      select: { id: true },
+    });
+    if (openClaim) {
+      return jsonError(
+        "در گفتگوی پرونده خسارت فقط پیام متنی مجاز است؛ ارسال تصویر و فایل ممکن نیست.",
+        422,
+      );
+    }
+  }
+
   const message = await db.message.create({
     data: { conversationId: id, senderId: user.id, body: text, attachmentUrl },
     include: { sender: { select: { id: true, name: true } } },
