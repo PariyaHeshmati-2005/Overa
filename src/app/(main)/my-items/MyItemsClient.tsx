@@ -438,7 +438,7 @@ export default function MyItemsClient({
               </div>
               <div className="flex justify-between items-center text-[11px]">
                 <span className="text-on-surface-variant">
-                  ودیعه ضمانت اورا:
+                  ودیعه ضمانت اٌوِرا:
                 </span>
                 <span className="font-medium text-on-surface">
                   {l.deposit > 0
@@ -519,7 +519,7 @@ export default function MyItemsClient({
                     <DropdownMenuItem
                       disabled
                       className="rounded-lg text-xs text-on-surface-variant/60"
-                      title="تایید آگهی فقط توسط کارشناس اورا انجام می‌شود"
+                      title="تایید آگهی فقط توسط کارشناس اٌوِرا انجام می‌شود"
                     >
                       تایید آگهی (فقط کارشناس)
                     </DropdownMenuItem>
@@ -802,7 +802,7 @@ export default function MyItemsClient({
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm sm:text-base font-bold text-on-surface">
-                      سیستم همگام‌سازی و ذخیره خودکار ابری اورا فعال است
+                      سیستم همگام‌سازی و ذخیره خودکار ابری اٌوِرا فعال است
                     </h3>
                     <span className="inline-flex items-center gap-1 text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
                       <span className="material-symbols-outlined text-[13px]">
@@ -1168,7 +1168,7 @@ export default function MyItemsClient({
           <footer className="mt-8 border-t border-outline-variant/30 bg-surface-container-lowest py-4 px-6 text-center text-xs text-on-surface-variant">
             <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
               <p className="">
-                © ۱۴۰۵ سامانه هوشمند اجاره وسایل اورا (Overa) - کلیه حقوق برای
+                © ۱۴۰۵ سامانه هوشمند اجاره وسایل اٌوِرا (Overa) - کلیه حقوق برای
                 پنل میزبان محفوظ است.
               </p>
               <div className="flex items-center gap-4">

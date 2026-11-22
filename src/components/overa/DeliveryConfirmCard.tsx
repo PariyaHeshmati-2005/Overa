@@ -38,7 +38,9 @@ export default function DeliveryConfirmCard({
             <span className="material-symbols-outlined text-xl">package_2</span>
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-800">تأیید دریافت کالا</h3>
+            <h3 className="text-sm font-bold text-slate-800">
+              تأیید دریافت کالا
+            </h3>
             <p className="text-[11px] text-slate-500 mt-0.5">
               سفارش #{code} — {listingTitle}
             </p>
@@ -52,11 +54,13 @@ export default function DeliveryConfirmCard({
       {/* Body */}
       <div className="p-5 space-y-4">
         <div className="space-y-1.5">
-          <p className="text-sm font-bold text-slate-800">آیا کالا را سالم تحویل گرفته‌اید؟</p>
+          <p className="text-sm font-bold text-slate-800">
+            آیا کالا را سالم تحویل گرفته‌اید؟
+          </p>
           <p className="text-xs text-slate-500 leading-relaxed">
-            میزبان ({hostName}) تحویل این کالا را در سیستم ثبت کرده است. با زدن دکمه زیر، کد
-            یک‌بارمصرف برای شما صادر می‌شود؛ پس از تأیید کد، دوره اجاره فعال شده و زمان شروع واقعی
-            آن ثبت خواهد شد.
+            میزبان ({hostName}) تحویل این کالا را در سیستم ثبت کرده است. با زدن
+            دکمه زیر، کد یک‌بارمصرف برای شما صادر می‌شود؛ پس از تأیید کد، دوره
+            اجاره فعال شده و زمان شروع واقعی آن ثبت خواهد شد.
           </p>
         </div>
 
@@ -69,8 +73,8 @@ export default function DeliveryConfirmCard({
         />
 
         <p className="text-[11px] text-slate-400 leading-relaxed border-t border-slate-50 pt-3">
-          در صورت مشاهده مغایرت در کالا، به‌جای تأیید از دکمه «اعلام خسارت» در همین صفحه استفاده
-          کنید تا پرونده به کارشناسان اورا ارجاع شود.
+          در صورت مشاهده مغایرت در کالا، به‌جای تأیید از دکمه «اعلام خسارت» در
+          همین صفحه استفاده کنید تا پرونده به کارشناسان اٌوِرا ارجاع شود.
         </p>
       </div>
     </article>

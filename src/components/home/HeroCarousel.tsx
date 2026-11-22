@@ -30,7 +30,7 @@ type Slide = {
 const SLIDES: Slide[] = [
   {
     image: "/assets/img/banner1.png",
-    alt: "دوربین حرفه‌ای سونی برای اجاره در اورا",
+    alt: "دوربین حرفه‌ای سونی برای اجاره در اٌوِرا",
     badge: "لوازم دیجیتال و دوربین",
     title: (
       <>
@@ -111,8 +111,7 @@ export default function HeroCarousel() {
   // Track selected slide (loop + user drag + programmatic scroll).
   useEffect(() => {
     if (!emblaApi) return;
-    const onSelect = () =>
-      setSelectedIndex(emblaApi.selectedScrollSnap());
+    const onSelect = () => setSelectedIndex(emblaApi.selectedScrollSnap());
     emblaApi.on("select", onSelect);
     return () => {
       emblaApi.off("select", onSelect);
@@ -135,8 +134,7 @@ export default function HeroCarousel() {
       else if (!reducedMotion.current) setPlaying(true);
     };
     document.addEventListener("visibilitychange", onVisibility);
-    return () =>
-      document.removeEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
 
   // Pause during drag; resume when released.
@@ -156,7 +154,7 @@ export default function HeroCarousel() {
 
   const scrollTo = useCallback(
     (index: number) => emblaApi?.scrollTo(index),
-    [emblaApi]
+    [emblaApi],
   );
 
   return (
@@ -257,7 +255,11 @@ export default function HeroCarousel() {
                       viewBox="0 0 24 24"
                       aria-hidden="true"
                     >
-                      <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"></path>
+                      <path
+                        d="M9 5l7 7-7 7"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      ></path>
                     </svg>
                   </Link>
                   <div className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-purple-200/95 bg-white/10 px-3.5 py-2 rounded-2xl border border-white/10 backdrop-blur-sm">

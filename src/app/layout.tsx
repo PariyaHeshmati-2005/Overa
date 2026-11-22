@@ -4,11 +4,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "اورا (Overa) | پلتفرم هوشمند اجاره آنلاین وسایل",
-    template: "%s | اورا (Overa)",
+    default: "اٌوِرا (Overa) | پلتفرم هوشمند اجاره آنلاین وسایل",
+    template: "%s | اٌوِرا (Overa)",
   },
   description:
-    "اورا؛ بزرگ‌ترین بستر تبادل و اجاره هوشمند وسایل در ایران — اجاره کن به‌جای خرید.",
+    "اٌوِرا؛ بزرگ‌ترین بستر تبادل و اجاره هوشمند وسایل در ایران — اجاره کن به‌جای خرید.",
   icons: {
     icon: "/assets/img/overa_logo_transparent.png",
     shortcut: "/assets/img/overa_logo_transparent.png",

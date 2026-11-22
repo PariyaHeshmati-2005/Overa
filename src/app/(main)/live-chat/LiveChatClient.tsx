@@ -11,7 +11,12 @@ type Conversation = {
   listing: { id: string; title: string; images: { url: string }[] } | null;
   other: { id: string; name: string } | null;
   reservationId: string | null;
-  lastMessage: { id: string; senderId: string; body: string; createdAt: string } | null;
+  lastMessage: {
+    id: string;
+    senderId: string;
+    body: string;
+    createdAt: string;
+  } | null;
   unread: number;
 };
 
@@ -27,14 +32,25 @@ type ChatMessage = {
 function timeFa(iso: string) {
   try {
     return toPersianDigits(
-      new Intl.DateTimeFormat("fa-IR", { hour: "2-digit", minute: "2-digit" }).format(new Date(iso)),
+      new Intl.DateTimeFormat("fa-IR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(iso)),
     );
   } catch {
     return "";
   }
 }
 
-function InitialAvatar({ name, size = "w-12 h-12", tone = "grad" }: { name: string; size?: string; tone?: "grad" | "solid" }) {
+function InitialAvatar({
+  name,
+  size = "w-12 h-12",
+  tone = "grad",
+}: {
+  name: string;
+  size?: string;
+  tone?: "grad" | "solid";
+}) {
   const initial = name?.trim()?.[0] ?? "؟";
   return (
     <div
@@ -51,12 +67,20 @@ function InitialAvatar({ name, size = "w-12 h-12", tone = "grad" }: { name: stri
   );
 }
 
-export default function LiveChatClient({ myUserId, myName }: { myUserId: string; myName: string }) {
+export default function LiveChatClient({
+  myUserId,
+  myName,
+}: {
+  myUserId: string;
+  myName: string;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialC = searchParams.get("c");
 
-  const [conversations, setConversations] = useState<Conversation[] | null>(null);
+  const [conversations, setConversations] = useState<Conversation[] | null>(
+    null,
+  );
   const [selectedId, setSelectedId] = useState<string | null>(initialC);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
@@ -83,7 +107,9 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
 
   const loadMessages = useCallback(async (conversationId: string) => {
     try {
-      const res = await fetch(`/api/conversations/${conversationId}/messages`, { cache: "no-store" });
+      const res = await fetch(`/api/conversations/${conversationId}/messages`, {
+        cache: "no-store",
+      });
       const body = await res.json();
       if (!res.ok) throw new Error(body?.error ?? "خطا در دریافت پیام‌ها");
       setMessages(body.messages ?? []);
@@ -155,12 +181,16 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
     if (!conversations) return null;
     if (!q) return conversations;
     return conversations.filter((c) => {
-      const hay = `${c.other?.name ?? ""} ${c.listing?.title ?? ""} ${c.lastMessage?.body ?? ""}`.toLowerCase();
+      const hay =
+        `${c.other?.name ?? ""} ${c.listing?.title ?? ""} ${c.lastMessage?.body ?? ""}`.toLowerCase();
       return hay.includes(q);
     });
   }, [conversations, listSearch]);
 
-  const totalUnread = (conversations ?? []).reduce((s, c) => s + (c.unread ? 1 : 0), 0);
+  const totalUnread = (conversations ?? []).reduce(
+    (s, c) => s + (c.unread ? 1 : 0),
+    0,
+  );
 
   /* --------------------------------- render --------------------------------- */
 
@@ -169,10 +199,14 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
       {/* Top breadcrumb & quick indicator */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4 px-2">
         <div className="flex items-center gap-2 text-xs md:text-sm text-on-surface-variant font-medium flex-wrap">
-          <span>اورا</span>
-          <span className="material-symbols-outlined text-[16px] text-m3-outline">chevron_left</span>
+          <span>اٌوِرا</span>
+          <span className="material-symbols-outlined text-[16px] text-m3-outline">
+            chevron_left
+          </span>
           <span>پیام‌ها و چت آنلاین</span>
-          <span className="material-symbols-outlined text-[16px] text-m3-outline">chevron_left</span>
+          <span className="material-symbols-outlined text-[16px] text-m3-outline">
+            chevron_left
+          </span>
           <span className="text-m3-primary font-bold">
             {selected
               ? `${selected.other?.name ?? "کاربر"}${selected.listing ? ` (${selected.listing.title})` : ""}`
@@ -199,7 +233,9 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
           <div className="p-4 border-b border-surface-container-high">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <h1 className="font-bold text-lg text-on-surface">صندوق پیام‌ها</h1>
+                <h1 className="font-bold text-lg text-on-surface">
+                  صندوق پیام‌ها
+                </h1>
                 {totalUnread > 0 && (
                   <span className="bg-m3-primary/10 text-m3-primary text-xs font-bold px-2 py-0.5 rounded-full">
                     {toPersianDigits(totalUnread)} پیام جدید
@@ -209,7 +245,9 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
             </div>
             {/* Search input inside chats */}
             <div className="relative mb-1">
-              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-m3-outline text-[18px]">search</span>
+              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-m3-outline text-[18px]">
+                search
+              </span>
               <input
                 className="w-full bg-surface-container-low border border-surface-variant rounded-xl pr-9 pl-4 py-2 text-xs focus:ring-2 focus:ring-m3-primary focus:outline-none placeholder:text-m3-outline transition-all text-on-surface"
                 placeholder="جستجو در نام، کالا، متن چت..."
@@ -222,14 +260,21 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
           {/* Conversations List */}
           <div className="flex-1 overflow-y-auto divide-y divide-surface-container custom-scroll">
             {filteredList === null && (
-              <div className="p-6 text-center text-xs text-on-surface-variant animate-pulse">در حال دریافت گفتگوها…</div>
+              <div className="p-6 text-center text-xs text-on-surface-variant animate-pulse">
+                در حال دریافت گفتگوها…
+              </div>
             )}
             {filteredList !== null && filteredList.length === 0 && (
               <div className="p-6 flex flex-col items-center gap-3 text-center">
-                <span className="material-symbols-outlined text-[40px] text-m3-outline">forum</span>
-                <p className="text-sm font-bold text-on-surface">گفتگویی وجود ندارد</p>
+                <span className="material-symbols-outlined text-[40px] text-m3-outline">
+                  forum
+                </span>
+                <p className="text-sm font-bold text-on-surface">
+                  گفتگویی وجود ندارد
+                </p>
                 <p className="text-xs text-on-surface-variant leading-relaxed">
-                  برای شروع مذاکره، از صفحه دسته‌بندی‌ها وسیله‌ای انتخاب کنید و «گفتگو با مالک» را بزنید.
+                  برای شروع مذاکره، از صفحه دسته‌بندی‌ها وسیله‌ای انتخاب کنید و
+                  «گفتگو با مالک» را بزنید.
                 </p>
                 <Link
                   href="/categories"
@@ -241,7 +286,7 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
             )}
             {filteredList?.map((c) => {
               const active = c.id === selectedId;
-              const name = c.other?.name ?? "کاربر اورا";
+              const name = c.other?.name ?? "کاربر اٌوِرا";
               return (
                 <div
                   key={c.id}
@@ -266,10 +311,19 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-sm text-on-surface truncate">{name}</span>
+                          <span className="font-bold text-sm text-on-surface truncate">
+                            {name}
+                          </span>
                         </div>
-                        <span className={"text-[11px] font-semibold " + (active ? "text-m3-primary" : "text-m3-outline")}>
-                          {c.lastMessage ? faTimeAgo(c.lastMessage.createdAt) : ""}
+                        <span
+                          className={
+                            "text-[11px] font-semibold " +
+                            (active ? "text-m3-primary" : "text-m3-outline")
+                          }
+                        >
+                          {c.lastMessage
+                            ? faTimeAgo(c.lastMessage.createdAt)
+                            : ""}
                         </span>
                       </div>
                       {c.listing && (
@@ -280,7 +334,9 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
                       <div className="flex items-center justify-between">
                         <p className="text-[11px] text-on-surface-variant truncate max-w-[170px] leading-relaxed">
                           {c.lastMessage
-                            ? (c.lastMessage.senderId === myUserId ? "شما: " : "") + c.lastMessage.body
+                            ? (c.lastMessage.senderId === myUserId
+                                ? "شما: "
+                                : "") + c.lastMessage.body
                             : "هنوز پیامی رد و بدل نشده است"}
                         </p>
                         {c.unread > 0 && (
@@ -303,10 +359,15 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
         <section className="lg:col-span-8 xl:col-span-6 bg-surface-container-lowest rounded-3xl border border-surface-variant shadow-sm flex flex-col overflow-hidden h-[780px]">
           {!selected ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 text-center">
-              <span className="material-symbols-outlined text-[48px] text-m3-outline">chat</span>
-              <p className="font-bold text-on-surface">یک گفتگو را از فهرست انتخاب کنید</p>
+              <span className="material-symbols-outlined text-[48px] text-m3-outline">
+                chat
+              </span>
+              <p className="font-bold text-on-surface">
+                یک گفتگو را از فهرست انتخاب کنید
+              </p>
               <p className="text-xs text-on-surface-variant max-w-sm leading-relaxed">
-                پیام‌های هر گفتگو هر {toPersianDigits(4)} ثانیه به‌صورت خودکار به‌روزرسانی می‌شوند.
+                پیام‌های هر گفتگو هر {toPersianDigits(4)} ثانیه به‌صورت خودکار
+                به‌روزرسانی می‌شوند.
               </p>
             </div>
           ) : (
@@ -315,17 +376,24 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
               <div className="px-5 py-3.5 border-b border-surface-container-high bg-white/90 backdrop-blur-md flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="relative shrink-0">
-                    <InitialAvatar name={selected.other?.name ?? "کاربر"} size="w-11 h-11" />
+                    <InitialAvatar
+                      name={selected.other?.name ?? "کاربر"}
+                      size="w-11 h-11"
+                    />
                     <span className="absolute -bottom-0.5 -left-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span>
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h2 className="font-bold text-base text-on-surface truncate">{selected.other?.name ?? "کاربر اورا"}</h2>
+                      <h2 className="font-bold text-base text-on-surface truncate">
+                        {selected.other?.name ?? "کاربر اٌوِرا"}
+                      </h2>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-on-surface-variant">
                       <span className="text-emerald-600 font-medium flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                        {selected.lastMessage ? `آخرین پیام ${faTimeAgo(selected.lastMessage.createdAt)}` : "گفتگوی جدید"}
+                        {selected.lastMessage
+                          ? `آخرین پیام ${faTimeAgo(selected.lastMessage.createdAt)}`
+                          : "گفتگوی جدید"}
                       </span>
                       <span>•</span>
                       <span>مذاکره و پیگیری رزرو</span>
@@ -339,14 +407,28 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
                     disabled
                     title="به‌زودی"
                   >
-                    <span className="material-symbols-outlined text-[16px]">phone_in_talk</span>
+                    <span className="material-symbols-outlined text-[16px]">
+                      phone_in_talk
+                    </span>
                     <span className="hidden sm:inline">تماس تلفنی امن</span>
                   </button>
-                  <button className="p-2 hover:bg-surface-container rounded-xl text-m3-outline hover:text-m3-error transition-colors" disabled title="به‌زودی">
-                    <span className="material-symbols-outlined text-[18px]">flag</span>
+                  <button
+                    className="p-2 hover:bg-surface-container rounded-xl text-m3-outline hover:text-m3-error transition-colors"
+                    disabled
+                    title="به‌زودی"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">
+                      flag
+                    </span>
                   </button>
-                  <button className="p-2 hover:bg-surface-container rounded-xl text-m3-outline hover:text-on-surface transition-colors" disabled title="به‌زودی">
-                    <span className="material-symbols-outlined text-[18px]">more_vert</span>
+                  <button
+                    className="p-2 hover:bg-surface-container rounded-xl text-m3-outline hover:text-on-surface transition-colors"
+                    disabled
+                    title="به‌زودی"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">
+                      more_vert
+                    </span>
                   </button>
                 </div>
               </div>
@@ -357,16 +439,23 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
                   className="bg-surface-container-high/60 border-b border-surface-variant px-5 py-2.5 flex items-center justify-between gap-3 text-xs hover:bg-surface-container-high transition-colors"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    { }
+                    {}
                     <img
                       className="w-8 h-8 rounded-lg object-cover border border-outline-variant shrink-0"
-                      src={selected.listing.images[0]?.url ?? "/assets/img/45fb8e31c9b9.jpg"}
+                      src={
+                        selected.listing.images[0]?.url ??
+                        "/assets/img/45fb8e31c9b9.jpg"
+                      }
                       alt={selected.listing.title}
                     />
                     <div className="truncate">
-                      <span className="font-bold text-on-surface">{selected.listing.title}</span>
+                      <span className="font-bold text-on-surface">
+                        {selected.listing.title}
+                      </span>
                       <span className="text-on-surface-variant mx-1.5">|</span>
-                      <span className="text-m3-primary font-semibold">مشاهده صفحه وسیله و شرایط اجاره</span>
+                      <span className="text-m3-primary font-semibold">
+                        مشاهده صفحه وسیله و شرایط اجاره
+                      </span>
                     </div>
                   </div>
                   <span className="shrink-0 bg-m3-primary/15 text-m3-primary font-bold px-2 py-0.5 rounded text-[11px]">
@@ -376,30 +465,49 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
               )}
               {/* Trust & Safety Banner */}
               <div className="mx-4 my-2.5 px-3.5 py-2 rounded-xl bg-surface-container border border-surface-variant flex items-center gap-2.5 text-xs text-on-surface-variant">
-                <span className="material-symbols-outlined text-m3-primary text-[20px] shrink-0 fill">verified_user</span>
+                <span className="material-symbols-outlined text-m3-primary text-[20px] shrink-0 fill">
+                  verified_user
+                </span>
                 <p className="leading-relaxed">
-                  <strong className="text-on-surface">ضمانت اورا گارد:</strong> جهت حفظ پوشش بیمه، تمام پرداخت‌ها و
-                  مذاکرات باید داخل سامانه انجام شود. از پرداخت کارت‌به‌کارت خودداری کنید.
+                  <strong className="text-on-surface">
+                    ضمانت اٌوِرا گارد:
+                  </strong>{" "}
+                  جهت حفظ پوشش بیمه، تمام پرداخت‌ها و مذاکرات باید داخل سامانه
+                  انجام شود. از پرداخت کارت‌به‌کارت خودداری کنید.
                 </p>
               </div>
               {/* Chat History Scroll View */}
-              <div className="flex-1 overflow-y-auto px-5 py-3 space-y-4 custom-scroll bg-m3-surface/30" ref={scrollRef}>
+              <div
+                className="flex-1 overflow-y-auto px-5 py-3 space-y-4 custom-scroll bg-m3-surface/30"
+                ref={scrollRef}
+              >
                 {messages.length === 0 && (
                   <div className="h-full flex items-center justify-center text-xs text-m3-outline">
-                    هنوز پیامی در این گفتگو ثبت نشده است — اولین پیام را بفرستید.
+                    هنوز پیامی در این گفتگو ثبت نشده است — اولین پیام را
+                    بفرستید.
                   </div>
                 )}
                 {messages.map((m) => {
                   const mine = m.senderId === myUserId;
                   const otherName = selected.other?.name ?? "کاربر";
                   return (
-                    <div key={m.id} className={"flex items-start gap-2.5 max-w-[85%] " + (mine ? "mr-auto flex-row-reverse" : "")}>
+                    <div
+                      key={m.id}
+                      className={
+                        "flex items-start gap-2.5 max-w-[85%] " +
+                        (mine ? "mr-auto flex-row-reverse" : "")
+                      }
+                    >
                       {mine ? (
                         <div className="w-8 h-8 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-xs shrink-0 mt-1 shadow-sm">
                           {myName?.trim()?.[0] ?? "ش"}
                         </div>
                       ) : (
-                        <InitialAvatar name={otherName} size="w-8 h-8" tone="solid" />
+                        <InitialAvatar
+                          name={otherName}
+                          size="w-8 h-8"
+                          tone="solid"
+                        />
                       )}
                       <div className="min-w-0">
                         <div
@@ -412,7 +520,9 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
                         >
                           {m.body}
                           {m.attachmentUrl && (
-                            <span className="block mt-1 text-[10px] opacity-80">📎 پیوست: {m.attachmentUrl}</span>
+                            <span className="block mt-1 text-[10px] opacity-80">
+                              📎 پیوست: {m.attachmentUrl}
+                            </span>
                           )}
                         </div>
                         <div
@@ -422,8 +532,16 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
                           }
                         >
                           <span>{timeFa(m.createdAt)}</span>
-                          {mine && <span className="material-symbols-outlined text-[13px] text-m3-primary fill">done_all</span>}
-                          {!mine && <span className="font-medium text-m3-secondary">{otherName}</span>}
+                          {mine && (
+                            <span className="material-symbols-outlined text-[13px] text-m3-primary fill">
+                              done_all
+                            </span>
+                          )}
+                          {!mine && (
+                            <span className="font-medium text-m3-secondary">
+                              {otherName}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -439,7 +557,9 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
                     disabled
                     title="آپلود فایل پس از اتصال فضای ذخیره‌سازی فعال می‌شود"
                   >
-                    <span className="material-symbols-outlined text-[20px]">attach_file</span>
+                    <span className="material-symbols-outlined text-[20px]">
+                      attach_file
+                    </span>
                   </button>
                   {/* Text Input */}
                   <textarea
@@ -462,14 +582,18 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
                     onClick={send}
                     disabled={sending || !text.trim()}
                   >
-                    <span className="material-symbols-outlined text-[18px] rotate-180">send</span>
+                    <span className="material-symbols-outlined text-[18px] rotate-180">
+                      send
+                    </span>
                   </button>
                 </div>
                 {/* Micro bottom caption */}
                 <div className="flex items-center justify-between px-2 pt-2 text-[10px] text-m3-outline">
                   <span className="flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[12px] text-emerald-600">verified</span>
-                    ارسال سریع و رمزگذاری‌شده سرتاسری اورا
+                    <span className="material-symbols-outlined text-[12px] text-emerald-600">
+                      verified
+                    </span>
+                    ارسال سریع و رمزگذاری‌شده سرتاسری اٌوِرا
                   </span>
                   <span>کلید Enter برای ارسال • Shift+Enter خط جدید</span>
                 </div>
@@ -484,8 +608,12 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
         <section className="lg:col-span-12 xl:col-span-3 bg-surface-container-lowest rounded-3xl border border-surface-variant shadow-sm flex flex-col overflow-hidden h-[780px] max-lg:h-auto">
           <div className="p-4 border-b border-surface-container-high flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-m3-primary text-[20px]">contract</span>
-              <h2 className="font-bold text-sm text-on-surface">خلاصه رزرو و قرارداد</h2>
+              <span className="material-symbols-outlined text-m3-primary text-[20px]">
+                contract
+              </span>
+              <h2 className="font-bold text-sm text-on-surface">
+                خلاصه رزرو و قرارداد
+              </h2>
             </div>
             <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-300">
               {selected?.reservationId ? "رزرو مرتبط فعال" : "بدون رزرو متصل"}
@@ -495,12 +623,18 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
             {selected?.listing ? (
               <>
                 {/* Item Card Thumbnail */}
-                <Link href={`/item-details/${selected.listing.id}`} className="block rounded-2xl border border-surface-variant overflow-hidden bg-surface-container-low group">
+                <Link
+                  href={`/item-details/${selected.listing.id}`}
+                  className="block rounded-2xl border border-surface-variant overflow-hidden bg-surface-container-low group"
+                >
                   <div className="relative h-36 w-full overflow-hidden bg-surface-container">
-                    { }
+                    {}
                     <img
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      src={selected.listing.images[0]?.url ?? "/assets/img/45fb8e31c9b9.jpg"}
+                      src={
+                        selected.listing.images[0]?.url ??
+                        "/assets/img/45fb8e31c9b9.jpg"
+                      }
                       alt={selected.listing.title}
                     />
                     <span className="absolute top-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-0.5 rounded-md backdrop-blur-sm">
@@ -508,9 +642,13 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
                     </span>
                   </div>
                   <div className="p-3">
-                    <h3 className="font-bold text-sm text-on-surface mb-1">{selected.listing.title}</h3>
+                    <h3 className="font-bold text-sm text-on-surface mb-1">
+                      {selected.listing.title}
+                    </h3>
                     <p className="text-[11px] text-on-surface-variant flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[13px] text-amber-500 fill">star</span>
+                      <span className="material-symbols-outlined text-[13px] text-amber-500 fill">
+                        star
+                      </span>
                       مشاهده مشخصات، قیمت روزانه و نظرات در صفحه وسیله
                     </p>
                   </div>
@@ -519,24 +657,36 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
                 <div className="bg-surface-container-low rounded-2xl p-3.5 border border-surface-variant space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-on-surface-variant flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[15px] text-m3-primary">location_on</span>
+                      <span className="material-symbols-outlined text-[15px] text-m3-primary">
+                        location_on
+                      </span>
                       مذاکره جاری:
                     </span>
-                    <span className="font-bold text-on-surface">{selected.other?.name ?? "کاربر اورا"}</span>
+                    <span className="font-bold text-on-surface">
+                      {selected.other?.name ?? "کاربر اٌوِرا"}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-on-surface-variant flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[15px] text-m3-primary">local_shipping</span>
+                      <span className="material-symbols-outlined text-[15px] text-m3-primary">
+                        local_shipping
+                      </span>
                       شیوه تحویل و ودیعه:
                     </span>
-                    <span className="font-bold text-emerald-700">طبق توافق در چت</span>
+                    <span className="font-bold text-emerald-700">
+                      طبق توافق در چت
+                    </span>
                   </div>
                   <div className="pt-2 border-t border-surface-variant flex items-center justify-between">
-                    <span className="text-on-surface-variant">طرفین گفتگو:</span>
+                    <span className="text-on-surface-variant">
+                      طرفین گفتگو:
+                    </span>
                     <div className="flex items-center gap-1 text-[11px] font-semibold">
                       <span className="text-m3-primary">شما</span>
                       <span>↔</span>
-                      <span className="text-on-surface">{selected.other?.name ?? "کاربر"}</span>
+                      <span className="text-on-surface">
+                        {selected.other?.name ?? "کاربر"}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -549,22 +699,29 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
             {selected?.reservationId ? (
               <div className="bg-surface-container-low rounded-2xl p-3.5 border border-surface-variant space-y-2">
                 <div className="text-xs font-bold text-on-surface mb-1 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[15px] text-m3-primary">calculate</span>
+                  <span className="material-symbols-outlined text-[15px] text-m3-primary">
+                    calculate
+                  </span>
                   رزرو متصل به این گفتگو
                 </div>
                 <p className="text-on-surface-variant leading-relaxed">
-                  وضعیت پرداخت، ودیعه و تحویل در صفحه چرخه رزرو قابل پیگیری است (مبالغ دفتر درون‌برنامه‌ای و
-                  شبیه‌سازی).
+                  وضعیت پرداخت، ودیعه و تحویل در صفحه چرخه رزرو قابل پیگیری است
+                  (مبالغ دفتر درون‌برنامه‌ای و شبیه‌سازی).
                 </p>
                 <p className="text-on-surface-variant">
-                  مبلغ ودیعه: <span className="font-bold text-on-surface">{faToman(0)}</span>{" "}
-                  <span className="text-[10px] text-m3-outline">(در چرخه رزرو نمایش داده می‌شود)</span>
+                  مبلغ ودیعه:{" "}
+                  <span className="font-bold text-on-surface">
+                    {faToman(0)}
+                  </span>{" "}
+                  <span className="text-[10px] text-m3-outline">
+                    (در چرخه رزرو نمایش داده می‌شود)
+                  </span>
                 </p>
               </div>
             ) : (
               <div className="bg-surface-container-low rounded-2xl p-3.5 border border-surface-variant text-on-surface-variant leading-relaxed">
-                هنوز رزروی به این گفتگو متصل نشده است؛ پس از ثبت درخواست اجاره، وضعیت قرارداد اینجا نمایش داده
-                می‌شود.
+                هنوز رزروی به این گفتگو متصل نشده است؛ پس از ثبت درخواست اجاره،
+                وضعیت قرارداد اینجا نمایش داده می‌شود.
               </div>
             )}
           </div>
@@ -575,7 +732,9 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
                 href={`/rental-lifecycle/${selected.reservationId}`}
                 className="w-full bg-m3-primary hover:bg-primary-container text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2"
               >
-                <span className="material-symbols-outlined text-[16px]">credit_card</span>
+                <span className="material-symbols-outlined text-[16px]">
+                  credit_card
+                </span>
                 <span>پیگیری پرداخت و چرخه رزرو</span>
               </Link>
             ) : (
@@ -584,7 +743,9 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
                 disabled
                 title="به‌زودی"
               >
-                <span className="material-symbols-outlined text-[16px]">credit_card</span>
+                <span className="material-symbols-outlined text-[16px]">
+                  credit_card
+                </span>
                 <span>پرداخت و نهایی‌سازی رزرو</span>
               </button>
             )}
@@ -593,7 +754,9 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
                 href={`/item-details/${selected.listing.id}`}
                 className="w-full bg-surface-container hover:bg-surface-variant text-on-surface font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5"
               >
-                <span className="material-symbols-outlined text-[16px]">description</span>
+                <span className="material-symbols-outlined text-[16px]">
+                  description
+                </span>
                 <span>مشاهده شرایط قرارداد و قوانین کالا</span>
               </Link>
             ) : (
@@ -602,7 +765,9 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
                 disabled
                 title="به‌زودی"
               >
-                <span className="material-symbols-outlined text-[16px]">description</span>
+                <span className="material-symbols-outlined text-[16px]">
+                  description
+                </span>
                 <span>مشاهده شرایط قرارداد و قوانین کالا</span>
               </button>
             )}
@@ -612,7 +777,10 @@ export default function LiveChatClient({ myUserId, myName }: { myUserId: string;
 
       {/* Error toast */}
       {err && (
-        <div className="fixed bottom-6 right-1/2 translate-x-1/2 z-[60] px-5 py-3 rounded-xl shadow-xl text-label-md font-semibold bg-m3-error text-m3-on-error max-w-[92vw] text-center" role="status">
+        <div
+          className="fixed bottom-6 right-1/2 translate-x-1/2 z-[60] px-5 py-3 rounded-xl shadow-xl text-label-md font-semibold bg-m3-error text-m3-on-error max-w-[92vw] text-center"
+          role="status"
+        >
           {err}
         </div>
       )}

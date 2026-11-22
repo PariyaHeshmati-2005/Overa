@@ -172,7 +172,7 @@ export default function PromissoryFlow() {
             <div className="flex justify-between py-1 border-b border-outline-variant/20">
               <span className="text-on-surface-variant">متعهدله (ذی‌نفع):</span>
               <span className="font-medium text-on-surface">
-                صندوق امانی اورا به نفع مالک
+                صندوق امانی اٌوِرا به نفع مالک
               </span>
             </div>
           </div>
@@ -188,7 +188,7 @@ export default function PromissoryFlow() {
                 OVR-89420
               </span>{" "}
               صادر شده است و هرگونه مطالبه یا وصول آن خارج از شروط تعیین‌شده در
-              پروتکل حل اختلاف اوراگارد، باطل و از درجه اعتبار ساقط است.»
+              پروتکل حل اختلاف اٌوِراگارد، باطل و از درجه اعتبار ساقط است.»
             </p>
           </div>
         </div>
@@ -214,7 +214,7 @@ export default function PromissoryFlow() {
           />
           <span className="text-xs text-on-surface leading-relaxed">
             تمامی اطلاعات مندرج در سفته الکترونیکی را مطالعه نمودم و قوانین
-            صندوق امانی اوراگارد را برای مسدودی موقت تا پایان قرارداد و ابطال
+            صندوق امانی اٌوِراگارد را برای مسدودی موقت تا پایان قرارداد و ابطال
             خودکار پس از تحویل کالا می‌پذیرم.
           </span>
         </label>

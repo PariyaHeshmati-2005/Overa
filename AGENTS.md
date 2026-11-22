@@ -5,7 +5,7 @@ repository. Read it fully before editing anything.
 
 ## 1. What this project is
 
-Overa (اورا) — Persian-first peer-to-peer rental marketplace. The original
+Overa (اٌوِرا) — Persian-first peer-to-peer rental marketplace. The original
 project was 29 static HTML pages (source of truth for visuals: mounted at
 `/home/z/my-project/overa-source/overa-marketplace/`). We are converting it
 into a Next.js 16 full-stack app **without changing the established visual
@@ -19,7 +19,7 @@ identity**. Persian RTL (`lang="fa"`, `dir="rtl"`) is already set in
    redesign, do not swap the palette, do not add generic shadcn styling where
    the source uses custom markup. shadcn/ui primitives (Dialog, Sheet,
    DropdownMenu, Tabs, Switch, Slider…) may be used only to replace the
-   *interactive behavior* of controls while keeping the source's visual
+   _interactive behavior_ of controls while keeping the source's visual
    classes via `className`.
 2. **Guest state rule (critical):** No page may render a hard-coded demo user
    name (سارا محمدی / علی رضایی) as if the visitor were signed in. Where the
@@ -75,8 +75,8 @@ available unchanged for unique names — `on-surface`, `on-surface-variant`,
 `primary-fixed-dim`, `on-primary-fixed`, `on-primary-fixed-variant`,
 `secondary-container`, `on-secondary-container`, `secondary-fixed`,
 `secondary-fixed-dim`, `on-secondary-fixed`, `on-secondary-fixed-variant`,
-`tertiary-*` family, `on-background`, `ov-bg`, `ov-blob(-1|-2|-3)`,
-`m3-inverse-*`.
+`tertiary-*`family,`on-background`, `ov-bg`, `ov-blob(-1|-2|-3)`,
+`m3-inverse-\*`.
 
 Names that COLLIDED and must be renamed in converted pages:
 | source class | use instead |
@@ -100,37 +100,37 @@ utilities. Keep them page-local; do not edit `globals.css`.
 
 ## 4. Route map (old .html → new route)
 
-| Source | New route | Notes |
-|---|---|---|
-| index.html | `/` | DONE (do not touch) |
-| categories.html | `/categories` | React mini-app: tabs via `?tab=` (all/camping/cameras/gaming/tools) + `?q=`, `?sort=`; filter/sort wired to `/api/listings` |
-| item-details.html | `/item-details/[id]` | dynamic; data from DB listing; reservation request → `/api/reservations` |
-| how-it-works.html | `/how-it-works` | static content |
-| about.html | `/about` | static content |
-| discounts.html | `/discounts` | coupon center (demo coupons listed, labelled) |
-| tos-support-faq.html | `/tos-support-faq` | static content + FAQ accordion |
-| signin.html | `/signin` | POST `/api/auth/login`; demo hint box |
-| signin-otp.html | `/signin-otp` | POST `/api/auth/otp/request` + `/verify`; shows devCode in demo mode |
-| signup.html | `/signup` | POST `/api/auth/register` |
-| account-settings.html | `/account-settings` | protected; profile prefs (client save → `/api/auth/me` PATCH or alert) |
-| rentals.html | `/rentals` | protected; GET `/api/reservations` |
-| rental-lifecycle.html | `/rental-lifecycle/[id]` | protected; one reservation's state machine UI; actions → PATCH `/api/reservations/[id]` |
-| submit-review.html | `/submit-review` | protected; `?reservation=<id>`; POST `/api/reviews` |
-| live-chat.html | `/live-chat` | protected; GET/POST `/api/conversations[...]` polling every 4s |
-| wallet.html | `/wallet` | protected; GET/POST `/api/wallet` |
-| Electronic-Promissory-Notes.html | `/promissory-notes` | info page; label as legal/process pending |
-| Registration-in-the-Treasury...html | `/promissory-notes/registration` | info page |
-| host-dashboard.html | `/host-dashboard` | protected host; DB queries + PATCH actions |
-| my-items.html | `/my-items` | protected host; listing CRUD → `/api/listings` |
-| create-listing.html | `/create-listing` | wizard; POST `/api/listings` (draft or submit) |
-| reviews.html | `/reviews` | protected host; reviews list + reply (UI) |
-| damage-claims.html | `/damage-claims` | protected; GET/POST `/api/claims` |
-| arbitration-panel.html | `/arbitration-panel` | protected admin; PATCH `/api/admin/claims/[id]` |
-| admin-dashboard.html | `/admin-dashboard` | protected admin; GET `/api/admin/stats`, moderation |
-| 404.html | `src/app/not-found.tsx` | global 404 (also keep `/404` page if simple) |
-| 500.html | `src/app/error.tsx` | global error boundary (client comp) |
-| loading.html | `/loading` + `src/app/(main)/loading.tsx` | |
-| pages.html | `/pages` | sitemap index (not linked in nav) |
+| Source                              | New route                                 | Notes                                                                                                                       |
+| ----------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| index.html                          | `/`                                       | DONE (do not touch)                                                                                                         |
+| categories.html                     | `/categories`                             | React mini-app: tabs via `?tab=` (all/camping/cameras/gaming/tools) + `?q=`, `?sort=`; filter/sort wired to `/api/listings` |
+| item-details.html                   | `/item-details/[id]`                      | dynamic; data from DB listing; reservation request → `/api/reservations`                                                    |
+| how-it-works.html                   | `/how-it-works`                           | static content                                                                                                              |
+| about.html                          | `/about`                                  | static content                                                                                                              |
+| discounts.html                      | `/discounts`                              | coupon center (demo coupons listed, labelled)                                                                               |
+| tos-support-faq.html                | `/tos-support-faq`                        | static content + FAQ accordion                                                                                              |
+| signin.html                         | `/signin`                                 | POST `/api/auth/login`; demo hint box                                                                                       |
+| signin-otp.html                     | `/signin-otp`                             | POST `/api/auth/otp/request` + `/verify`; shows devCode in demo mode                                                        |
+| signup.html                         | `/signup`                                 | POST `/api/auth/register`                                                                                                   |
+| account-settings.html               | `/account-settings`                       | protected; profile prefs (client save → `/api/auth/me` PATCH or alert)                                                      |
+| rentals.html                        | `/rentals`                                | protected; GET `/api/reservations`                                                                                          |
+| rental-lifecycle.html               | `/rental-lifecycle/[id]`                  | protected; one reservation's state machine UI; actions → PATCH `/api/reservations/[id]`                                     |
+| submit-review.html                  | `/submit-review`                          | protected; `?reservation=<id>`; POST `/api/reviews`                                                                         |
+| live-chat.html                      | `/live-chat`                              | protected; GET/POST `/api/conversations[...]` polling every 4s                                                              |
+| wallet.html                         | `/wallet`                                 | protected; GET/POST `/api/wallet`                                                                                           |
+| Electronic-Promissory-Notes.html    | `/promissory-notes`                       | info page; label as legal/process pending                                                                                   |
+| Registration-in-the-Treasury...html | `/promissory-notes/registration`          | info page                                                                                                                   |
+| host-dashboard.html                 | `/host-dashboard`                         | protected host; DB queries + PATCH actions                                                                                  |
+| my-items.html                       | `/my-items`                               | protected host; listing CRUD → `/api/listings`                                                                              |
+| create-listing.html                 | `/create-listing`                         | wizard; POST `/api/listings` (draft or submit)                                                                              |
+| reviews.html                        | `/reviews`                                | protected host; reviews list + reply (UI)                                                                                   |
+| damage-claims.html                  | `/damage-claims`                          | protected; GET/POST `/api/claims`                                                                                           |
+| arbitration-panel.html              | `/arbitration-panel`                      | protected admin; PATCH `/api/admin/claims/[id]`                                                                             |
+| admin-dashboard.html                | `/admin-dashboard`                        | protected admin; GET `/api/admin/stats`, moderation                                                                         |
+| 404.html                            | `src/app/not-found.tsx`                   | global 404 (also keep `/404` page if simple)                                                                                |
+| 500.html                            | `src/app/error.tsx`                       | global error boundary (client comp)                                                                                         |
+| loading.html                        | `/loading` + `src/app/(main)/loading.tsx` |                                                                                                                             |
+| pages.html                          | `/pages`                                  | sitemap index (not linked in nav)                                                                                           |
 
 All old `*.html` links inside converted markup must be rewritten to the new
 routes per this table (strip `.html`, add `/`).
@@ -145,7 +145,7 @@ routes per this table (strip `.html`, add `/`).
   Props: `user: { name, avatarUrl, isHost, isAdmin }`.
 - `@/components/overa/ListingCard` — the source product card. Props:
   `listing: { id, title, city, area?, dailyPrice, rating, reviewsCount,
-  instantBook?, discountBadge?, imageUrl }`.
+instantBook?, discountBadge?, imageUrl }`.
 - `@/lib/db` — Prisma client. Models: User, Session, OtpCode, Category,
   Listing, ListingImage, Favorite, Reservation, ReservationEvent,
   Conversation, ConversationParticipant, Message, WalletTransaction, Review,
@@ -169,11 +169,22 @@ import UserMenu from "@/components/layout/UserMenu";
 export default async function Page() {
   const user = await getCurrentUser();
   // ...render source header markup; where the source shows the demo user chip:
-  {user ? (
-    <UserMenu user={{ name: user.name, avatarUrl: user.avatarUrl, isHost: user.isHost, isAdmin: user.isAdmin }} />
-  ) : (
-    <a href="/signin-otp" className="...source guest button classes...">ورود | ثبت‌نام</a>
-  )}
+  {
+    user ? (
+      <UserMenu
+        user={{
+          name: user.name,
+          avatarUrl: user.avatarUrl,
+          isHost: user.isHost,
+          isAdmin: user.isAdmin,
+        }}
+      />
+    ) : (
+      <a href="/signin-otp" className="...source guest button classes...">
+        ورود | ثبت‌نام
+      </a>
+    );
+  }
 }
 ```
 

@@ -170,7 +170,9 @@ export default function SignInForm({ next }: { next: string }) {
             <span className="material-symbols-outlined text-sm text-m3-primary">
               security
             </span>
-            <span className="">ورود امن با تایید پیامکی در صورت فعالیت مشکوک</span>
+            <span className="">
+              ورود امن با تایید پیامکی در صورت فعالیت مشکوک
+            </span>
           </div>
         </div>
         {/* Primary Submit CTA */}
@@ -207,7 +209,11 @@ export default function SignInForm({ next }: { next: string }) {
       {/* Alternative: Quick OTP Link */}
       <Link
         className="w-full max-w-md mx-auto h-11 rounded-xl border border-outline-variant bg-surface-container-low hover:bg-surface-container flex items-center justify-center gap-2 text-xs font-bold text-on-surface transition-all"
-        href={next && next !== "/" ? `/signin-otp?next=${encodeURIComponent(next)}` : "/signin-otp"}
+        href={
+          next && next !== "/"
+            ? `/signin-otp?next=${encodeURIComponent(next)}`
+            : "/signin-otp"
+        }
       >
         <span className="material-symbols-outlined text-m3-primary text-lg">
           phonelink_ring
@@ -232,11 +238,13 @@ export default function SignInForm({ next }: { next: string }) {
           onClick={fillHostDemo}
           type="button"
         >
-          <span className="material-symbols-outlined text-sm">auto_fix_high</span>
+          <span className="material-symbols-outlined text-sm">
+            auto_fix_high
+          </span>
           پرکردن خودکار حساب میزبان
         </button>
         <p className="text-[10px] text-on-surface-variant/80">
-          این صفحه به محیط آزمایشی اورا متصل است؛ هیچ پیامک واقعی ارسال
+          این صفحه به محیط آزمایشی اٌوِرا متصل است؛ هیچ پیامک واقعی ارسال
           نمی‌شود.
         </p>
       </div>

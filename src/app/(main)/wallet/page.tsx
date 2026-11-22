@@ -33,13 +33,15 @@ export default async function WalletPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-space-2xl">
             <div className="space-y-space-md md:col-span-1">
               <div className="flex items-center gap-space-sm">
-                <div className="w-9 h-9 rounded-xl bg-m3-primary flex items-center justify-center text-on-primary">
-                  <span className="material-symbols-outlined text-[20px]">
-                    all_inclusive
-                  </span>
+                <div className="w-11 h-11 rounded-2xl from-primary to-primary-light flex items-center justify-center text-white shadow-md shadow-primary/20 group-hover:scale-105 transition-transform duration-200 overflow-hidden">
+                  <img
+                  src="/assets/img/overa_logo_transparent.png"
+                  alt="لوگوی اورا"
+                  className="w-full h-full object-contain"
+                  />
                 </div>
                 <span className="text-headline-md font-bold text-m3-primary">
-                  اورا
+                  اٌوِرا
                 </span>
               </div>
               <p className="text-body-sm text-on-surface-variant leading-relaxed">
@@ -172,7 +174,9 @@ export default async function WalletPage() {
             </div>
           </div>
           <div className="pt-space-lg flex flex-col sm:flex-row items-center justify-between gap-space-md text-body-sm text-on-surface-variant">
-            <p>© ۱۴۰۵ پلتفرم اورا (Overa). کلیه حقوق مادی و معنوی محفوظ است.</p>
+            <p>
+              © ۱۴۰۵ پلتفرم اٌوِرا (Overa). کلیه حقوق مادی و معنوی محفوظ است.
+            </p>
             <div className="flex items-center gap-space-lg text-label-sm">
               <Link
                 className="hover:text-m3-primary transition-colors"

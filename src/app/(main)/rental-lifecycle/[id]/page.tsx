@@ -143,7 +143,7 @@ export default async function RentalLifecyclePage({
             </h1>
             <p className="text-xs text-on-surface-variant leading-relaxed max-w-md">
               {reservation
-                ? "این رزرو متعلق به حساب کاربری شما نیست و تنها طرفین اجاره و مدیران اورا به روند آن دسترسی دارند."
+                ? "این رزرو متعلق به حساب کاربری شما نیست و تنها طرفین اجاره و مدیران اٌوِرا به روند آن دسترسی دارند."
                 : "رزروی با این شناسه یا کد پیگیری یافت نشد؛ کد پیگیری را از صفحه اجاره‌های من بررسی کنید."}
             </p>
             <div className="flex items-center gap-3 pt-2">
@@ -181,16 +181,20 @@ export default async function RentalLifecyclePage({
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-m3-primary flex items-center justify-center text-white font-bold text-sm">
-                  O
+                <div className="w-11 h-11 rounded-2xl from-primary to-primary-light flex items-center justify-center text-white shadow-md shadow-primary/20 group-hover:scale-105 transition-transform duration-200 overflow-hidden">
+                  <img
+                    src="/assets/img/overa_logo_transparent.png"
+                    alt="لوگوی اٌوِرا"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
-                <span className="font-bold text-base text-slate-800">
+                <span className="text-2xl font-black tracking-tight text-[#801E76] mt-3 mb-1">
                   اٌوِرا
                 </span>
               </div>
               <p className="text-xs text-slate-500 leading-relaxed">
                 سامانه هوشمند اشتراک و اجاره کالا و تجهیزات در سراسر کشور با
-                ضمانت امانی و پوشش بیمه اوراگارد.
+                ضمانت امانی و پوشش بیمه اٌوِراگارد.
               </p>
               <div className="text-xs text-m3-primary font-semibold flex items-center gap-1">
                 <span className="material-symbols-outlined text-sm">call</span>
@@ -246,7 +250,7 @@ export default async function RentalLifecyclePage({
                     href="/tos-support-faq"
                     className="hover:text-m3-primary transition"
                   >
-                    صندوق امانی و ضمانت اورا
+                    صندوق امانی و ضمانت اٌوِرا
                   </Link>
                 </li>
                 <li>
@@ -301,8 +305,8 @@ export default async function RentalLifecyclePage({
           </div>
           <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-3">
             <div>
-              © ۱۴۰۵ تمامی حقوق مادی و معنوی متعلق به پلتفرم هوشمند اورا (Overa)
-              می‌باشد.
+              © ۱۴۰۵ تمامی حقوق مادی و معنوی متعلق به پلتفرم هوشمند اٌوِرا
+              (Overa) می‌باشد.
             </div>
             <div className="flex gap-4">
               <Link href="/tos-support-faq" className="hover:text-m3-primary">

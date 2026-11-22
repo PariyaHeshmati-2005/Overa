@@ -54,8 +54,10 @@ const PRICE_CHIPS = [
 ] as const;
 
 const CAMERA_RE = /(دوربین|لنز|گیمبال|استابلایزر|GoPro|Ronin)/i;
-const GAMING_RE = /(کنسول|PS5|ایکس باکس|Xbox|Quest|واقعیت مجازی|فرمان|دسته بازی|VR)/i;
-const AUDIO_RE = /(اسپیکر|میکروفون|میکسر|دی‌جی|دودساز|رقص نور|صوتی|استیج|پارتی‌باکس|PartyBox)/i;
+const GAMING_RE =
+  /(کنسول|PS5|ایکس باکس|Xbox|Quest|واقعیت مجازی|فرمان|دسته بازی|VR)/i;
+const AUDIO_RE =
+  /(اسپیکر|میکروفون|میکسر|دی‌جی|دودساز|رقص نور|صوتی|استیج|پارتی‌باکس|PartyBox)/i;
 
 function matchesTab(item: CategoryTabListing, tab: TabKey): boolean {
   switch (tab) {
@@ -408,7 +410,7 @@ function AllScreen({ goTab }: { goTab: (t: TabKey) => void }) {
                     ۱۰۰٪ بیمه کالا
                   </span>
                   <span className="text-xs text-on-surface-variant font-medium">
-                    پوشش طلایی اوراگارد
+                    پوشش طلایی اٌوِراگارد
                   </span>
                 </div>
               </div>
@@ -420,7 +422,9 @@ function AllScreen({ goTab }: { goTab: (t: TabKey) => void }) {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-2">
           <div>
             <div className="flex items-center gap-2 text-m3-primary text-xs font-bold mb-1">
-              <span className="material-symbols-outlined text-[18px]">apps</span>
+              <span className="material-symbols-outlined text-[18px]">
+                apps
+              </span>
               <span>دسته‌های اصلی تجهیزات</span>
             </div>
             <h2 className="text-xl md:text-2xl font-bold text-on-surface">
@@ -550,12 +554,42 @@ function AllScreen({ goTab }: { goTab: (t: TabKey) => void }) {
           {/* Sub-category Quick Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
             {[
-              { tab: "cameras", icon: "lens", title: "لنزهای تله‌فوتو", sub: "۸۲۰ مورد فعال" },
-              { tab: "cameras", icon: "flight", title: "پهپاد و هلی‌شات", sub: "۳۱۰ مورد فعال" },
-              { tab: "audio", icon: "mic", title: "میکروفون یقه‌ای", sub: "۶۴۰ مورد فعال" },
-              { tab: "camping", icon: "solar_power", title: "پاوربانک خورشیدی", sub: "۲۹۰ مورد فعال" },
-              { tab: "gaming", icon: "videogame_asset", title: "دسته و کنترلر بازی", sub: "۵۷۰ مورد فعال" },
-              { tab: "tools", icon: "straighten", title: "تراز و متر لیزری", sub: "۴۱۵ مورد فعال" },
+              {
+                tab: "cameras",
+                icon: "lens",
+                title: "لنزهای تله‌فوتو",
+                sub: "۸۲۰ مورد فعال",
+              },
+              {
+                tab: "cameras",
+                icon: "flight",
+                title: "پهپاد و هلی‌شات",
+                sub: "۳۱۰ مورد فعال",
+              },
+              {
+                tab: "audio",
+                icon: "mic",
+                title: "میکروفون یقه‌ای",
+                sub: "۶۴۰ مورد فعال",
+              },
+              {
+                tab: "camping",
+                icon: "solar_power",
+                title: "پاوربانک خورشیدی",
+                sub: "۲۹۰ مورد فعال",
+              },
+              {
+                tab: "gaming",
+                icon: "videogame_asset",
+                title: "دسته و کنترلر بازی",
+                sub: "۵۷۰ مورد فعال",
+              },
+              {
+                tab: "tools",
+                icon: "straighten",
+                title: "تراز و متر لیزری",
+                sub: "۴۱۵ مورد فعال",
+              },
             ].map((q) => (
               <button
                 key={q.title}
@@ -585,7 +619,7 @@ function AllScreen({ goTab }: { goTab: (t: TabKey) => void }) {
             استانداردهای ایمنی کالا در تمام دسته‌بندی‌ها
           </span>
           <h3 className="text-lg md:text-2xl font-bold text-on-surface mt-1 mb-8">
-            چرا با خیال آسوده از دسته‌های اورا اجاره می‌کنید؟
+            چرا با خیال آسوده از دسته‌های اٌوِرا اجاره می‌کنید؟
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-right">
@@ -611,7 +645,7 @@ function AllScreen({ goTab }: { goTab: (t: TabKey) => void }) {
                 </span>
               </div>
               <h4 className="text-sm font-bold text-on-surface mb-1">
-                بیمه جامع اوراگارد
+                بیمه جامع اٌوِراگارد
               </h4>
               <p className="text-xs text-on-surface-variant leading-relaxed">
                 پوشش خسارت‌های ناخواسته، ضربه و حوادث تا سقف ۱۰۰ میلیون تومان با
@@ -644,7 +678,7 @@ function AllScreen({ goTab }: { goTab: (t: TabKey) => void }) {
                 تحویل اکسپرس در محل
               </h4>
               <p className="text-xs text-on-surface-variant leading-relaxed">
-                امکان ارسال سریع با ناوگان اختصاصی بیمه‌شده اورا در کمتر از ۲
+                امکان ارسال سریع با ناوگان اختصاصی بیمه‌شده اٌوِرا در کمتر از ۲
                 ساعت در سراسر تهران.
               </p>
             </div>
@@ -665,8 +699,8 @@ function AllScreen({ goTab }: { goTab: (t: TabKey) => void }) {
                 وسیله‌ای در این دسته‌بندی‌ها دارید که خاک می‌خورد؟
               </h3>
               <p className="text-xs md:text-sm text-on-primary-container leading-relaxed">
-                در کمتر از ۳ دقیقه کالا را ثبت کنید، قیمت دلخواه بگذارید و ماهانه
-                تا{" "}
+                در کمتر از ۳ دقیقه کالا را ثبت کنید، قیمت دلخواه بگذارید و
+                ماهانه تا{" "}
                 <strong className="text-white font-black">
                   ۳۵ میلیون تومان
                 </strong>{" "}
@@ -737,7 +771,9 @@ function CampingScreen({
               href="/"
               className="hover:text-m3-primary transition-colors flex items-center gap-1"
             >
-              <span className="material-symbols-outlined text-[16px]">home</span>
+              <span className="material-symbols-outlined text-[16px]">
+                home
+              </span>
               <span>خانه</span>
             </Link>
             <span className="material-symbols-outlined text-[14px]">
@@ -770,20 +806,21 @@ function CampingScreen({
               <span className="material-symbols-outlined text-[16px]">
                 verified_user
               </span>
-              <span>پوشش طلایی اوراگارد کمپینگ</span>
+              <span>پوشش طلایی اٌوِراگارد کمپینگ</span>
             </div>
             <h1 className="text-2xl md:text-4xl font-extrabold text-white leading-tight">
               اجاره تجهیزات سفر، کمپینگ و آفرود
             </h1>
             <p className="text-xs md:text-sm text-primary-fixed/90 leading-relaxed">
-              با بیش از ۲,۹۴۰ وسیله آماده تحویل با ضمانت اصالت، تست سلامت درزها و
-              کارکرد فنی. بدون نیاز به چک و سفته و با ارسال اکسپرس به لوکیشن سفر.
+              با بیش از ۲,۹۴۰ وسیله آماده تحویل با ضمانت اصالت، تست سلامت درزها
+              و کارکرد فنی. بدون نیاز به چک و سفته و با ارسال اکسپرس به لوکیشن
+              سفر.
             </p>
           </div>
 
           <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-2.5 mt-6">
             {[
-              { icon: "security", text: "بیمه اوراگارد تا ۱۰۰ م.ت" },
+              { icon: "security", text: "بیمه اٌوِراگارد تا ۱۰۰ م.ت" },
               { icon: "verified", text: "تست درزها و زیپ‌ها قبل تحویل" },
               { icon: "bolt", text: "تحویل فوری ۲ ساعته" },
               { icon: "lock", text: "ودیعه امن بانکی" },
@@ -916,7 +953,9 @@ function CampingScreen({
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] text-green-700 bg-green-50 px-2 py-0.5 rounded font-semibold">
-                          {item.instantBook ? "تحویل فوری ۲ ساعته" : "هماهنگی تحویل"}
+                          {item.instantBook
+                            ? "تحویل فوری ۲ ساعته"
+                            : "هماهنگی تحویل"}
                         </span>
                         <div className="flex items-center gap-1 text-xs font-bold text-on-surface">
                           <span className="material-symbols-outlined text-amber-500 text-[14px]">
@@ -978,7 +1017,9 @@ function CampingScreen({
                   </div>
                 </div>
               ))}
-              {filtered.length === 0 ? <EmptyStateColspan onReset={onReset} /> : null}
+              {filtered.length === 0 ? (
+                <EmptyStateColspan onReset={onReset} />
+              ) : null}
             </div>
           </div>
         </div>
@@ -1078,7 +1119,9 @@ function CamerasScreen({
                 شاخص رضایت فیلمسازان:
               </span>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black font-numeric-stat">۴.۹۴</span>
+                <span className="text-2xl font-black font-numeric-stat">
+                  ۴.۹۴
+                </span>
                 <span className="text-xs text-amber-400">★★★★★</span>
               </div>
               <span className="text-[11px] text-emerald-400 mt-2 block">
@@ -1091,7 +1134,10 @@ function CamerasScreen({
         {/* Products Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {items.map((cam) => {
-            const specs = (cam.specs ?? "").split("•").map((s) => s.trim()).filter(Boolean);
+            const specs = (cam.specs ?? "")
+              .split("•")
+              .map((s) => s.trim())
+              .filter(Boolean);
             return (
               <div
                 key={cam.id}
@@ -1105,7 +1151,9 @@ function CamerasScreen({
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-sm text-m3-primary text-xs font-bold shadow-sm">
-                      {cam.instantBook ? "تحویل فوری" : `${cam.city}، ${cam.area ?? ""}`}
+                      {cam.instantBook
+                        ? "تحویل فوری"
+                        : `${cam.city}، ${cam.area ?? ""}`}
                     </span>
                   </div>
 
@@ -1141,7 +1189,9 @@ function CamerasScreen({
                           <span className="material-symbols-outlined text-[15px] text-m3-primary">
                             check_circle
                           </span>
-                          <span className="line-clamp-1">{cam.description}</span>
+                          <span className="line-clamp-1">
+                            {cam.description}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -1250,7 +1300,9 @@ function GamingScreen({
                   className="w-full h-full object-cover"
                 />
                 <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-m3-primary text-on-primary text-xs font-bold shadow-sm">
-                  {item.instantBook ? "تحویل ۲ ساعته" : `${item.city}، ${item.area ?? ""}`}
+                  {item.instantBook
+                    ? "تحویل ۲ ساعته"
+                    : `${item.city}، ${item.area ?? ""}`}
                 </span>
               </div>
               <div className="p-4 flex-1 flex flex-col justify-between gap-3">
@@ -1333,7 +1385,7 @@ function DigitalScreen({
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-col gap-6">
         <section className="rounded-2xl bg-surface-container-low p-6 md:p-8 border border-surface-container-high">
           <span className="px-3 py-1 rounded-full bg-primary-fixed text-m3-primary text-xs font-bold">
-            پوشش بیمه اوراگارد تا ۸۰ م.ت
+            پوشش بیمه اٌوِراگارد تا ۸۰ م.ت
           </span>
           <h1 className="text-2xl md:text-3xl font-extrabold text-on-surface mt-2">
             اجاره لپ‌تاپ، مک‌بوک و تجهیزات دیجیتال
@@ -1346,7 +1398,10 @@ function DigitalScreen({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {items.map((lap) => {
-            const specs = (lap.specs ?? "").split("•").map((s) => s.trim()).filter(Boolean);
+            const specs = (lap.specs ?? "")
+              .split("•")
+              .map((s) => s.trim())
+              .filter(Boolean);
             return (
               <div
                 key={lap.id}
@@ -1532,7 +1587,7 @@ function ToolsScreen({
         <div className="rounded-2xl bg-surface-container-low p-6 md:p-8 border border-surface-container-high flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <span className="px-3 py-1 rounded-full bg-primary-container text-on-primary text-xs font-bold">
-              تضمین فوری اوراگارد صنعتی
+              تضمین فوری اٌوِراگارد صنعتی
             </span>
             <h1 className="text-2xl md:text-3xl font-extrabold text-on-surface mt-2">
               اجاره ابزارآلات و تجهیزات کارگاهی
@@ -1549,7 +1604,10 @@ function ToolsScreen({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {items.map((tool) => {
-            const specs = (tool.specs ?? "").split("•").map((s) => s.trim()).filter(Boolean);
+            const specs = (tool.specs ?? "")
+              .split("•")
+              .map((s) => s.trim())
+              .filter(Boolean);
             return (
               <div
                 key={tool.id}
@@ -1661,8 +1719,9 @@ export default function CategoriesApp({
   const tabCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const t of TABS) {
-      counts[t.key] = listings.filter((l) => matchesTab(l, t.key as TabKey))
-        .length;
+      counts[t.key] = listings.filter((l) =>
+        matchesTab(l, t.key as TabKey),
+      ).length;
     }
     return counts;
   }, [listings]);
@@ -1671,7 +1730,7 @@ export default function CategoriesApp({
     () =>
       listings
         .filter((l) =>
-          categoryParam ? l.categorySlug === categoryParam : true
+          categoryParam ? l.categorySlug === categoryParam : true,
         )
         .filter((l) => matchesTab(l, tab)),
     [listings, tab, categoryParam],

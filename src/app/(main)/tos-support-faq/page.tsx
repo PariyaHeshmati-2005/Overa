@@ -4,7 +4,7 @@ import TosFaqApp from "./TosFaqApp";
 
 export const metadata = {
   title: "قوانین و پرسش‌های متداول",
-  description: "مرکز شفافیت، قوانین و سوالات متداول اورا",
+  description: "مرکز شفافیت، قوانین و سوالات متداول اٌوِرا",
 };
 
 export default function TosSupportFaqPage() {

@@ -9,7 +9,7 @@ import HostCouponActions from "./HostCouponActions";
 
 export const metadata = {
   title: "تخفیف‌ها",
-  description: "مرکز کوپن‌ها و کدهای تخفیف اورا (کوپن‌های نمایشی)",
+  description: "مرکز کوپن‌ها و کدهای تخفیف اٌوِرا (کوپن‌های نمایشی)",
   robots: { index: false },
 };
 
@@ -22,7 +22,7 @@ const COUPONS: Coupon[] = [
     badgeCls: "bg-purple-100 text-m3-primary",
     status: "فعال و آماده",
     statusCls: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-    from: "از طرف پلتفرم اورا (ادمین)",
+    from: "از طرف پلتفرم اٌوِرا (ادمین)",
     title: "۳۰٪ تخفیف اولین سفارش اجاره",
     highlight: "تا سقف ۵۰۰,۰۰۰ تومان تخفیف روی کل فاکتور",
     category: "عمومی و تمام کالاها",
@@ -36,7 +36,7 @@ const COUPONS: Coupon[] = [
     code: "OVR-SPRING20",
     group: "platform",
     badgeIcon: "campaign",
-    badge: "جشنواره سراسری اورا",
+    badge: "جشنواره سراسری اٌوِرا",
     badgeCls: "bg-amber-100 text-amber-700",
     status: "فعال",
     statusCls: "bg-emerald-50 text-emerald-700 border border-emerald-200",
@@ -91,7 +91,7 @@ const COUPONS: Coupon[] = [
     badgeCls: "bg-purple-100 text-m3-primary",
     status: "دائمی",
     statusCls: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-    from: "باشگاه وفاداری کاربران اورا",
+    from: "باشگاه وفاداری کاربران اٌوِرا",
     title: "۱۰۰ هزار تومان تخفیف نقدی مستقیم",
     highlight: "به ازای هر دوست دعوت‌شده که اولین رزرو را ثبت کند",
     category: "عمومی و بدون محدودیت",
@@ -159,7 +159,7 @@ export default async function DiscountsPage() {
                   <span className="material-symbols-outlined text-[16px] text-amber-300">
                     confirmation_number
                   </span>
-                  <span>مرکز رسمی کوپن‌ها و تخفیف‌های ویژه اورا</span>
+                  <span>مرکز رسمی کوپن‌ها و تخفیف‌های ویژه اٌوِرا</span>
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-snug">
                   کدهای تخفیف و بن‌های اجاره فعال
@@ -251,7 +251,7 @@ export default async function DiscountsPage() {
                   <span className="material-symbols-outlined text-[18px]">
                     storefront
                   </span>
-                  <span>بخش اختصاصی میزبانان اورا</span>
+                  <span>بخش اختصاصی میزبانان اٌوِرا</span>
                 </div>
                 <h2 className="text-lg font-extrabold text-[#130e1b]">
                   ایجاد و صدور کد تخفیف جدید توسط میزبان
@@ -366,7 +366,7 @@ export default async function DiscountsPage() {
           {/* Bottom Footer Info */}
           <footer className="mt-auto py-6 border-t border-[#ece7f3] text-center text-xs text-on-surface-variant/80">
             <p>
-              © ۱۴۰۵ تمام حقوق برای سامانه اشتراک‌گذاری و اجاره تجهیزات اورا
+              © ۱۴۰۵ تمام حقوق برای سامانه اشتراک‌گذاری و اجاره تجهیزات اٌوِرا
               (Overa) محفوظ است.
             </p>
           </footer>

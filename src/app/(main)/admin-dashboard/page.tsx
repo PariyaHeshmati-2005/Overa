@@ -13,49 +13,63 @@ import AdminDashboardClient, {
   type AuditEntry,
 } from "./AdminDashboardClient";
 
-export const metadata: Metadata = { title: "مرکز فرماندهی و نظارت اورا" };
+export const metadata: Metadata = { title: "مرکز فرماندهی و نظارت اٌوِرا" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
   const user = await getCurrentUser();
 
   /* -------- guest → sign in -------- */
-  if (!user) redirect("/signin-otp?next=" + encodeURIComponent("/admin-dashboard"));
+  if (!user)
+    redirect("/signin-otp?next=" + encodeURIComponent("/admin-dashboard"));
 
   /* -------- non-admin → access denied (no data rendered at all) -------- */
   if (!user.isAdmin) {
     return (
       <>
-      <SiteHeader />
-      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-m3-background p-6">
-        <M3Styles />
-        <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/50 shadow-md p-8 max-w-md text-center flex flex-col items-center gap-4">
-          <span className="size-14 rounded-2xl bg-m3-error-container text-m3-on-error-container flex items-center justify-center">
-            <span className="material-symbols-outlined text-[28px]">shield_lock</span>
-          </span>
-          <h1 className="text-lg font-extrabold text-on-surface">دسترسی فقط برای مدیران</h1>
-          <p className="text-xs text-on-surface-variant leading-relaxed">
-            این بخش (مرکز فرماندهی و نظارت اورا) تنها برای حساب‌های مدیر پلتفرم فعال است؛ هیچ داده‌ای برای
-            سایر کاربران نمایش داده نمی‌شود.
-          </p>
-          <Link
-            className="px-5 py-2.5 rounded-xl bg-m3-primary text-white text-xs font-bold hover:bg-primary-container transition-colors"
-            href="/"
-          >
-            بازگشت به صفحه اصلی
-          </Link>
+        <SiteHeader />
+        <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-m3-background p-6">
+          <M3Styles />
+          <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/50 shadow-md p-8 max-w-md text-center flex flex-col items-center gap-4">
+            <span className="size-14 rounded-2xl bg-m3-error-container text-m3-on-error-container flex items-center justify-center">
+              <span className="material-symbols-outlined text-[28px]">
+                shield_lock
+              </span>
+            </span>
+            <h1 className="text-lg font-extrabold text-on-surface">
+              دسترسی فقط برای مدیران
+            </h1>
+            <p className="text-xs text-on-surface-variant leading-relaxed">
+              این بخش (مرکز فرماندهی و نظارت اٌوِرا) تنها برای حساب‌های مدیر
+              پلتفرم فعال است؛ هیچ داده‌ای برای سایر کاربران نمایش داده نمی‌شود.
+            </p>
+            <Link
+              className="px-5 py-2.5 rounded-xl bg-m3-primary text-white text-xs font-bold hover:bg-primary-container transition-colors"
+              href="/"
+            >
+              بازگشت به صفحه اصلی
+            </Link>
+          </div>
         </div>
-      </div>
       </>
     );
   }
 
   /* -------- admin: query moderation queues server-side -------- */
-  const [pendingListings, claims, users, auditLog, allListings, reservationCounts] = await Promise.all([
+  const [
+    pendingListings,
+    claims,
+    users,
+    auditLog,
+    allListings,
+    reservationCounts,
+  ] = await Promise.all([
     db.listing.findMany({
       where: { status: "PENDING" },
       include: {
-        owner: { select: { id: true, name: true, kycStatus: true, isHost: true } },
+        owner: {
+          select: { id: true, name: true, kycStatus: true, isHost: true },
+        },
         images: { orderBy: { sortOrder: "asc" }, take: 1 },
         category: { select: { name: true } },
       },
@@ -63,17 +77,35 @@ export default async function AdminDashboardPage() {
       take: 6,
     }),
     db.damageClaim.findMany({
-      where: { status: { in: ["OPEN", "COUNTER_EVIDENCE", "UNDER_REVIEW", "APPEALED"] } },
+      where: {
+        status: {
+          in: ["OPEN", "COUNTER_EVIDENCE", "UNDER_REVIEW", "APPEALED"],
+        },
+      },
       include: {
         claimant: { select: { id: true, name: true } },
         against: { select: { id: true, name: true } },
-        reservation: { select: { id: true, code: true, deposit: true, listing: { select: { title: true } } } },
+        reservation: {
+          select: {
+            id: true,
+            code: true,
+            deposit: true,
+            listing: { select: { title: true } },
+          },
+        },
       },
       orderBy: { updatedAt: "desc" },
       take: 8,
     }),
     db.user.findMany({
-      select: { id: true, name: true, phone: true, kycStatus: true, isHost: true, createdAt: true },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        kycStatus: true,
+        isHost: true,
+        createdAt: true,
+      },
       orderBy: { createdAt: "desc" },
       take: 8,
     }),
@@ -85,7 +117,9 @@ export default async function AdminDashboardPage() {
     // Full catalog for the products management section (all statuses).
     db.listing.findMany({
       include: {
-        owner: { select: { id: true, name: true, kycStatus: true, isHost: true } },
+        owner: {
+          select: { id: true, name: true, kycStatus: true, isHost: true },
+        },
         images: { orderBy: { sortOrder: "asc" }, take: 1 },
         category: { select: { name: true } },
       },
@@ -97,7 +131,7 @@ export default async function AdminDashboardPage() {
   ]);
 
   const reservationCountMap = new Map(
-    reservationCounts.map((r) => [r.listingId, r._count._all])
+    reservationCounts.map((r) => [r.listingId, r._count._all]),
   );
 
   const listings: AdminListing[] = pendingListings.map((l) => ({
@@ -108,7 +142,12 @@ export default async function AdminDashboardPage() {
     deposit: l.deposit,
     city: l.city,
     imageUrl: l.images[0]?.url ?? "/assets/img/45fb8e31c9b9.jpg",
-    owner: { id: l.owner.id, name: l.owner.name, kycStatus: l.owner.kycStatus, isHost: l.owner.isHost },
+    owner: {
+      id: l.owner.id,
+      name: l.owner.name,
+      kycStatus: l.owner.kycStatus,
+      isHost: l.owner.isHost,
+    },
   }));
 
   const catalog: AdminCatalogListing[] = allListings.map((l) => ({
@@ -123,7 +162,12 @@ export default async function AdminDashboardPage() {
     createdAt: l.createdAt.toISOString(),
     reservationsCount: reservationCountMap.get(l.id) ?? 0,
     imageUrl: l.images[0]?.url ?? "/assets/img/45fb8e31c9b9.jpg",
-    owner: { id: l.owner.id, name: l.owner.name, kycStatus: l.owner.kycStatus, isHost: l.owner.isHost },
+    owner: {
+      id: l.owner.id,
+      name: l.owner.name,
+      kycStatus: l.owner.kycStatus,
+      isHost: l.owner.isHost,
+    },
   }));
 
   const claimDtos: AdminClaim[] = claims.map((c) => ({
@@ -136,7 +180,9 @@ export default async function AdminDashboardPage() {
     evidenceUrls: (() => {
       try {
         const arr = JSON.parse(c.evidenceUrls || "[]");
-        return Array.isArray(arr) ? arr.filter((x) => typeof x === "string").slice(0, 3) : [];
+        return Array.isArray(arr)
+          ? arr.filter((x) => typeof x === "string").slice(0, 3)
+          : [];
       } catch {
         return [];
       }
@@ -173,9 +219,15 @@ export default async function AdminDashboardPage() {
 
   return (
     <>
-    {/* Shared site header — identical to the homepage (slide-out menu) */}
-    <SiteHeader />
-    <AdminDashboardClient listings={listings} catalog={catalog} claims={claimDtos} users={userDtos} auditLog={auditDtos} />
+      {/* Shared site header — identical to the homepage (slide-out menu) */}
+      <SiteHeader />
+      <AdminDashboardClient
+        listings={listings}
+        catalog={catalog}
+        claims={claimDtos}
+        users={userDtos}
+        auditLog={auditDtos}
+      />
     </>
   );
 }

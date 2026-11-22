@@ -31,7 +31,9 @@ function Stars({ rating }: { rating: number }) {
         <span
           key={i}
           className={`material-symbols-outlined text-lg ${i <= rating ? "" : "text-outline-variant"}`}
-          style={i <= rating ? { fontVariationSettings: '"FILL" 1' } : undefined}
+          style={
+            i <= rating ? { fontVariationSettings: '"FILL" 1' } : undefined
+          }
         >
           star
         </span>
@@ -53,7 +55,13 @@ export default function ReviewsClient({ reviews, listings }: Props) {
   const [submitting, setSubmitting] = useState(false);
 
   const ratingCounts = useMemo(() => {
-    const c: Record<string, number> = { all: reviews.length, "5": 0, "4": 0, "3": 0, "needs-reply": 0 };
+    const c: Record<string, number> = {
+      all: reviews.length,
+      "5": 0,
+      "4": 0,
+      "3": 0,
+      "needs-reply": 0,
+    };
     for (const r of reviews) {
       if (r.rating === 5) c["5"] += 1;
       if (r.rating === 4) c["4"] += 1;
@@ -65,9 +73,11 @@ export default function ReviewsClient({ reviews, listings }: Props) {
 
   const filtered = useMemo(() => {
     let list = [...reviews];
-    if (listingId !== "all") list = list.filter((r) => r.listing.id === listingId);
+    if (listingId !== "all")
+      list = list.filter((r) => r.listing.id === listingId);
     if (quick === "needs-reply") list = list.filter((r) => !r.hostReply);
-    else if (rating !== "all" && rating !== "needs-reply") list = list.filter((r) => r.rating === Number(rating));
+    else if (rating !== "all" && rating !== "needs-reply")
+      list = list.filter((r) => r.rating === Number(rating));
     if (q.trim()) {
       const needle = q.trim();
       list = list.filter(
@@ -78,10 +88,14 @@ export default function ReviewsClient({ reviews, listings }: Props) {
           r.listing.title.includes(needle),
       );
     }
-    if (sort === "newest") list.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+    if (sort === "newest")
+      list.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
     else if (sort === "highest") list.sort((a, b) => b.rating - a.rating);
     else if (sort === "lowest") list.sort((a, b) => a.rating - b.rating);
-    else if (sort === "unanswered") list.sort((a, b) => Number(Boolean(a.hostReply)) - Number(Boolean(b.hostReply)));
+    else if (sort === "unanswered")
+      list.sort(
+        (a, b) => Number(Boolean(a.hostReply)) - Number(Boolean(b.hostReply)),
+      );
     return list;
   }, [reviews, listingId, rating, quick, q, sort]);
 
@@ -149,7 +163,9 @@ export default function ReviewsClient({ reviews, listings }: Props) {
               }}
               className="w-full sm:w-auto appearance-none bg-surface-container-low border border-outline-variant/50 rounded-lg px-3 py-2.5 text-xs font-semibold text-on-surface focus:outline-none focus:ring-2 focus:ring-m3-primary cursor-pointer min-w-[170px]"
             >
-              <option value="all">تمام کالاها ({faNumber(listings.length)} مورد فعال)</option>
+              <option value="all">
+                تمام کالاها ({faNumber(listings.length)} مورد فعال)
+              </option>
               {listings.map((l) => (
                 <option key={l.id} value={l.id}>
                   {l.title}
@@ -169,7 +185,9 @@ export default function ReviewsClient({ reviews, listings }: Props) {
               <option value="5">۵ ستاره ({faNumber(ratingCounts["5"])})</option>
               <option value="4">۴ ستاره ({faNumber(ratingCounts["4"])})</option>
               <option value="3">۳ ستاره ({faNumber(ratingCounts["3"])})</option>
-              <option value="needs-reply">فقط نیازمند پاسخ ({faNumber(ratingCounts["needs-reply"])})</option>
+              <option value="needs-reply">
+                فقط نیازمند پاسخ ({faNumber(ratingCounts["needs-reply"])})
+              </option>
             </select>
             <select
               value={sort}
@@ -200,7 +218,9 @@ export default function ReviewsClient({ reviews, listings }: Props) {
         </div>
         {/* Quick Filter Pills */}
         <div className="flex items-center gap-2 mt-4 pt-3 border-t border-surface-container overflow-x-auto text-xs">
-          <span className="text-on-surface-variant font-medium shrink-0">فیلترهای سریع:</span>
+          <span className="text-on-surface-variant font-medium shrink-0">
+            فیلترهای سریع:
+          </span>
           <button
             type="button"
             onClick={() => {
@@ -208,7 +228,9 @@ export default function ReviewsClient({ reviews, listings }: Props) {
               setPage(1);
             }}
             className={`px-3 py-1 rounded-full font-medium shrink-0 ${
-              quick === "all" ? "bg-m3-primary text-white" : "bg-surface-container text-on-surface-variant hover:text-m3-primary hover:bg-surface-container-high"
+              quick === "all"
+                ? "bg-m3-primary text-white"
+                : "bg-surface-container text-on-surface-variant hover:text-m3-primary hover:bg-surface-container-high"
             }`}
           >
             همه ({faNumber(reviews.length)})
@@ -246,7 +268,9 @@ export default function ReviewsClient({ reviews, listings }: Props) {
             >
               {!r.hostReply && (
                 <div className="absolute top-0 left-0 bg-m3-primary text-white text-[10px] font-bold px-3 py-1 rounded-br-lg flex items-center gap-1">
-                  <span className="material-symbols-outlined text-xs">notifications_active</span>
+                  <span className="material-symbols-outlined text-xs">
+                    notifications_active
+                  </span>
                   نیازمند پاسخ سریع میزبان
                 </div>
               )}
@@ -261,22 +285,36 @@ export default function ReviewsClient({ reviews, listings }: Props) {
                       className="absolute -bottom-1 -left-1 size-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]"
                       title="مستاجر تایید هویت شده"
                     >
-                      <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: '"FILL" 1' }}>check</span>
+                      <span
+                        className="material-symbols-outlined text-xs"
+                        style={{ fontVariationSettings: '"FILL" 1' }}
+                      >
+                        check
+                      </span>
                     </span>
                   </div>
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="text-base font-bold text-on-surface">{r.author.name}</h4>
-                      <span className="text-xs text-on-surface-variant font-medium">| مستاجر اورا</span>
+                      <h4 className="text-base font-bold text-on-surface">
+                        {r.author.name}
+                      </h4>
+                      <span className="text-xs text-on-surface-variant font-medium">
+                        | مستاجر اٌوِرا
+                      </span>
                     </div>
                     <p className="text-xs text-on-surface-variant mt-1 flex flex-wrap items-center gap-1.5">
-                      <span className="material-symbols-outlined text-sm text-m3-primary">calendar_today</span>
+                      <span className="material-symbols-outlined text-sm text-m3-primary">
+                        calendar_today
+                      </span>
                       تاریخ ثبت نظر: {faDateTime(r.createdAt)}
                       {r.reservationCode && (
                         <>
                           <span className="text-outline-variant">●</span>
                           <span>
-                            کد رزرو: <strong className="text-on-surface font-mono">#{r.reservationCode}</strong>
+                            کد رزرو:{" "}
+                            <strong className="text-on-surface font-mono">
+                              #{r.reservationCode}
+                            </strong>
                           </span>
                         </>
                       )}
@@ -293,12 +331,18 @@ export default function ReviewsClient({ reviews, listings }: Props) {
                     />
                   ) : (
                     <div className="size-12 rounded-md border border-outline-variant/60 bg-surface-container flex items-center justify-center text-on-surface-variant">
-                      <span className="material-symbols-outlined text-lg">package_2</span>
+                      <span className="material-symbols-outlined text-lg">
+                        package_2
+                      </span>
                     </div>
                   )}
                   <div>
-                    <p className="text-xs text-on-surface-variant">کالای اجاره‌شده:</p>
-                    <h5 className="text-xs font-bold text-on-surface">{r.listing.title}</h5>
+                    <p className="text-xs text-on-surface-variant">
+                      کالای اجاره‌شده:
+                    </p>
+                    <h5 className="text-xs font-bold text-on-surface">
+                      {r.listing.title}
+                    </h5>
                   </div>
                 </div>
               </div>
@@ -314,18 +358,29 @@ export default function ReviewsClient({ reviews, listings }: Props) {
               </div>
 
               {/* Review body */}
-              <p className="text-sm leading-relaxed text-on-surface/90 mb-4">«{r.comment}»</p>
+              <p className="text-sm leading-relaxed text-on-surface/90 mb-4">
+                «{r.comment}»
+              </p>
 
               {/* Official host reply (existing) */}
               {r.hostReply && !editing && (
                 <div className="bg-surface-container-low border border-m3-primary/20 rounded-xl p-4 mr-4 md:mr-8 mb-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-m3-primary text-base" style={{ fontVariationSettings: '"FILL" 1' }}>
+                      <span
+                        className="material-symbols-outlined text-m3-primary text-base"
+                        style={{ fontVariationSettings: '"FILL" 1' }}
+                      >
                         reply
                       </span>
-                      <span className="text-xs font-bold text-m3-primary">پاسخ رسمی میزبان (شما):</span>
-                      {r.hostReplyAt && <span className="text-[11px] text-on-surface-variant">{r.hostReplyAt}</span>}
+                      <span className="text-xs font-bold text-m3-primary">
+                        پاسخ رسمی میزبان (شما):
+                      </span>
+                      {r.hostReplyAt && (
+                        <span className="text-[11px] text-on-surface-variant">
+                          {r.hostReplyAt}
+                        </span>
+                      )}
                     </div>
                     <button
                       type="button"
@@ -335,11 +390,15 @@ export default function ReviewsClient({ reviews, listings }: Props) {
                       }}
                       className="text-xs text-on-surface-variant hover:text-m3-primary flex items-center gap-1 font-medium"
                     >
-                      <span className="material-symbols-outlined text-xs">edit</span>
+                      <span className="material-symbols-outlined text-xs">
+                        edit
+                      </span>
                       ویرایش پاسخ
                     </button>
                   </div>
-                  <p className="text-xs leading-relaxed text-on-surface-variant">«{r.hostReply}»</p>
+                  <p className="text-xs leading-relaxed text-on-surface-variant">
+                    «{r.hostReply}»
+                  </p>
                 </div>
               )}
 
@@ -348,8 +407,14 @@ export default function ReviewsClient({ reviews, listings }: Props) {
                 <div className="bg-surface-container-low/70 border border-outline-variant/60 rounded-xl p-4 mr-4 md:mr-8 mb-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 text-xs font-bold text-on-surface">
-                      <span className="material-symbols-outlined text-m3-primary text-base">rate_review</span>
-                      <span>{r.hostReply ? "ویرایش پاسخ ثبت‌شده:" : "پاسخ میزبان به این بازخورد:"}</span>
+                      <span className="material-symbols-outlined text-m3-primary text-base">
+                        rate_review
+                      </span>
+                      <span>
+                        {r.hostReply
+                          ? "ویرایش پاسخ ثبت‌شده:"
+                          : "پاسخ میزبان به این بازخورد:"}
+                      </span>
                     </div>
                     <button
                       type="button"
@@ -376,7 +441,11 @@ export default function ReviewsClient({ reviews, listings }: Props) {
                       disabled={submitting}
                       className="px-4 py-1.5 rounded-lg bg-m3-primary text-white text-xs font-bold hover:bg-primary-container transition-colors shadow-sm disabled:opacity-60"
                     >
-                      {submitting ? "در حال ثبت..." : r.hostReply ? "ذخیره ویرایش پاسخ" : "ثبت و ارسال نهایی پاسخ"}
+                      {submitting
+                        ? "در حال ثبت..."
+                        : r.hostReply
+                          ? "ذخیره ویرایش پاسخ"
+                          : "ثبت و ارسال نهایی پاسخ"}
                     </button>
                   </div>
                 </div>
@@ -387,10 +456,14 @@ export default function ReviewsClient({ reviews, listings }: Props) {
                 <div className="bg-surface-container rounded-xl p-4 mr-4 md:mr-8 mb-3 border border-m3-primary/20">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-on-surface flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-m3-primary text-sm">chat</span>
+                      <span className="material-symbols-outlined text-m3-primary text-sm">
+                        chat
+                      </span>
                       ارسال پاسخ سریع:
                     </span>
-                    <span className="text-[11px] text-on-surface-variant">برای ارتقای نرخ پاسخ‌گویی به ۱۰۰٪ پاسخ دهید</span>
+                    <span className="text-[11px] text-on-surface-variant">
+                      برای ارتقای نرخ پاسخ‌گویی به ۱۰۰٪ پاسخ دهید
+                    </span>
                   </div>
                   <div className="relative">
                     <input
@@ -416,7 +489,11 @@ export default function ReviewsClient({ reviews, listings }: Props) {
                     <span>الگوهای آماده پاسخ سریع:</span>
                     <button
                       type="button"
-                      onClick={() => setReplyText("ممنون از امانت‌داری شما؛ خوشحالیم که راضی بودید.")}
+                      onClick={() =>
+                        setReplyText(
+                          "ممنون از امانت‌داری شما؛ خوشحالیم که راضی بودید.",
+                        )
+                      }
                       className="text-m3-primary hover:underline font-medium"
                     >
                       «تشکر از امانت‌داری شما»
@@ -424,7 +501,11 @@ export default function ReviewsClient({ reviews, listings }: Props) {
                     <span>●</span>
                     <button
                       type="button"
-                      onClick={() => setReplyText("خوشحالم که سفر خاطره‌انگیزی داشتید؛ منتظر دیدار دوباره هستیم.")}
+                      onClick={() =>
+                        setReplyText(
+                          "خوشحالم که سفر خاطره‌انگیزی داشتید؛ منتظر دیدار دوباره هستیم.",
+                        )
+                      }
                       className="text-m3-primary hover:underline font-medium"
                     >
                       «خوشحالم سفر خاطره‌انگیزی بود»
@@ -441,17 +522,23 @@ export default function ReviewsClient({ reviews, listings }: Props) {
                   title="به‌زودی"
                   type="button"
                 >
-                  <span className="material-symbols-outlined text-sm">thumb_up</span>
+                  <span className="material-symbols-outlined text-sm">
+                    thumb_up
+                  </span>
                   <span>مفید بود</span>
                 </button>
                 {r.hostReply ? (
                   <span className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
-                    <span className="material-symbols-outlined text-xs">done_all</span>
+                    <span className="material-symbols-outlined text-xs">
+                      done_all
+                    </span>
                     پاسخ داده شده
                   </span>
                 ) : (
                   <span className="text-[11px] text-amber-600 font-semibold flex items-center gap-1">
-                    <span className="material-symbols-outlined text-xs">hourglass_empty</span>
+                    <span className="material-symbols-outlined text-xs">
+                      hourglass_empty
+                    </span>
                     در انتظار پاسخ میزبان
                   </span>
                 )}
@@ -462,9 +549,15 @@ export default function ReviewsClient({ reviews, listings }: Props) {
 
         {shown.length === 0 && (
           <div className="bg-surface-container-lowest border border-outline-variant/60 rounded-xl p-10 shadow-sm flex flex-col items-center gap-3 text-center">
-            <span className="material-symbols-outlined text-4xl text-outline-variant">rate_review</span>
-            <p className="text-sm font-bold text-on-surface">دیدگاهی مطابق فیلترهای انتخابی یافت نشد</p>
-            <p className="text-xs text-on-surface-variant">فیلترها را بازنشانی کنید یا منتظر دیدگاه‌های جدید بمانید.</p>
+            <span className="material-symbols-outlined text-4xl text-outline-variant">
+              rate_review
+            </span>
+            <p className="text-sm font-bold text-on-surface">
+              دیدگاهی مطابق فیلترهای انتخابی یافت نشد
+            </p>
+            <p className="text-xs text-on-surface-variant">
+              فیلترها را بازنشانی کنید یا منتظر دیدگاه‌های جدید بمانید.
+            </p>
           </div>
         )}
       </div>
@@ -472,8 +565,10 @@ export default function ReviewsClient({ reviews, listings }: Props) {
       {/* Pagination bar — source composition */}
       <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 bg-surface-container-lowest border border-outline-variant/60 rounded-xl p-4">
         <p className="text-xs text-on-surface-variant font-medium">
-          نمایش {faNumber(filtered.length === 0 ? 0 : (current - 1) * PAGE_SIZE + 1)} تا{" "}
-          {faNumber(Math.min(current * PAGE_SIZE, filtered.length))} از {faNumber(filtered.length)} نظر ثبت‌شده
+          نمایش{" "}
+          {faNumber(filtered.length === 0 ? 0 : (current - 1) * PAGE_SIZE + 1)}{" "}
+          تا {faNumber(Math.min(current * PAGE_SIZE, filtered.length))} از{" "}
+          {faNumber(filtered.length)} نظر ثبت‌شده
         </p>
         <div className="flex items-center gap-2">
           <button
@@ -483,7 +578,9 @@ export default function ReviewsClient({ reviews, listings }: Props) {
             className="size-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-m3-primary disabled:opacity-50"
             title="قبلی"
           >
-            <span className="material-symbols-outlined text-base">chevron_right</span>
+            <span className="material-symbols-outlined text-base">
+              chevron_right
+            </span>
           </button>
           {Array.from({ length: pages }).map((_, i) => (
             <button
@@ -506,7 +603,9 @@ export default function ReviewsClient({ reviews, listings }: Props) {
             className="size-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-m3-primary disabled:opacity-50"
             title="بعدی"
           >
-            <span className="material-symbols-outlined text-base">chevron_left</span>
+            <span className="material-symbols-outlined text-base">
+              chevron_left
+            </span>
           </button>
         </div>
       </div>

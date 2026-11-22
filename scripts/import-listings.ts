@@ -95,7 +95,9 @@ async function main() {
 
   if (!filePath) fail("--file=<path-to-json> is required.");
   if (!ownerPhone || !/^0\d{10}$/.test(ownerPhone))
-    fail("--owner-phone=09XXXXXXXXX is required (an EXISTING account's phone).");
+    fail(
+      "--owner-phone=09XXXXXXXXX is required (an EXISTING account's phone).",
+    );
   if (!ALLOWED_STATUS.has(defaultStatus))
     fail(`--status must be one of: ${[...ALLOWED_STATUS].join(", ")}`);
 
@@ -103,12 +105,14 @@ async function main() {
   if (!owner)
     fail(
       `No user with phone ${ownerPhone}. Register this account in the app first — ` +
-        `the importer never creates fabricated owners.`
+        `the importer never creates fabricated owners.`,
     );
 
   let raw: string;
   try {
-    raw = await import("node:fs").then((fs) => fs.readFileSync(filePath, "utf-8"));
+    raw = await import("node:fs").then((fs) =>
+      fs.readFileSync(filePath, "utf-8"),
+    );
   } catch {
     fail(`Cannot read ${filePath}.`);
   }
@@ -142,7 +146,7 @@ async function main() {
         byName.get((item.category ?? "").trim());
       if (!cat)
         throw new Error(
-          `unknown category "${item.category}" (use a slug like digital/home/sport/tools/camping/beauty/kids/other or an exact Persian name)`
+          `unknown category "${item.category}" (use a slug like digital/home/sport/tools/camping/beauty/kids/other or an exact Persian name)`,
         );
 
       const dup = await db.listing.findFirst({
@@ -151,7 +155,9 @@ async function main() {
       });
       if (dup) {
         skippedDup++;
-        console.log(`  ↷ ${label} — already imported (same owner+title), skipped`);
+        console.log(
+          `  ↷ ${label} — already imported (same owner+title), skipped`,
+        );
         continue;
       }
 
@@ -173,7 +179,7 @@ async function main() {
           title: item.title.trim(),
           description:
             item.description?.trim() ||
-            "وسیله‌ای باکیفیت برای اجاره کوتاه‌مدت در اورا؛ تحویل منظم و تمیز، آماده استفاده.",
+            "وسیله‌ای باکیفیت برای اجاره کوتاه‌مدت در اٌوِرا؛ تحویل منظم و تمیز، آماده استفاده.",
           brand: item.brand?.trim() || null,
           specs: item.specs?.trim() || null,
           searchKey: buildListingSearchKey({
@@ -208,7 +214,9 @@ async function main() {
         select: { id: true },
       });
       created++;
-      console.log(`  ✓ ${label} — created (category: ${cat.slug}, status: ${status})`);
+      console.log(
+        `  ✓ ${label} — created (category: ${cat.slug}, status: ${status})`,
+      );
     } catch (e) {
       errors++;
       console.error(`  ✗ ${label} — ${(e as Error).message}`);
@@ -216,7 +224,7 @@ async function main() {
   }
 
   console.log(
-    `\nImport finished. created=${created}, duplicates-skipped=${skippedDup}, errors=${errors}.`
+    `\nImport finished. created=${created}, duplicates-skipped=${skippedDup}, errors=${errors}.`,
   );
   if (errors > 0) process.exitCode = 2;
 }

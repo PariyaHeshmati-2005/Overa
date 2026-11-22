@@ -51,7 +51,9 @@ export default async function SignInOtpPage({
 
   return (
     <div className="bg-m3-background text-on-surface min-h-screen flex flex-col selection:bg-primary-fixed selection:text-on-primary-fixed">
-      <style href="ov-card-auth" precedence="default">{OV_CARD_CSS}</style>
+      <style href="ov-card-auth" precedence="default">
+        {OV_CARD_CSS}
+      </style>
       <div aria-hidden="true" className="ov-bg">
         <span className="ov-blob ov-blob-1"></span>
         <span className="ov-blob ov-blob-2"></span>
@@ -59,7 +61,7 @@ export default async function SignInOtpPage({
       </div>
 
       {/* Minimal Focused Header — preserved from source */}
-            <SiteHeader />
+      <SiteHeader />
 
       {/* Main Centered / Split Authentication Content */}
       <main className="flex-1 flex items-center justify-center px-4 py-8 md:py-12">
@@ -96,7 +98,11 @@ export default async function SignInOtpPage({
                 </div>
                 <Link
                   className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-center text-on-surface-variant hover:text-on-surface transition-all flex items-center justify-center gap-2"
-                  href={next && next !== "/" ? `/signup?next=${encodeURIComponent(next)}` : "/signup"}
+                  href={
+                    next && next !== "/"
+                      ? `/signup?next=${encodeURIComponent(next)}`
+                      : "/signup"
+                  }
                 >
                   <span className="material-symbols-outlined text-lg">
                     person_add
@@ -110,7 +116,7 @@ export default async function SignInOtpPage({
             {/* Footer / Terms agreement */}
             <div className="mt-8 pt-4 border-t border-outline-variant/30 text-center">
               <p className="text-xs text-on-surface-variant leading-relaxed">
-                با ورود و ثبت‌نام در اورا,{" "}
+                با ورود و ثبت‌نام در اٌوِرا,{" "}
                 <Link
                   className="text-m3-primary font-semibold underline hover:text-on-primary-fixed-variant"
                   href="/tos-support-faq"
@@ -135,7 +141,7 @@ export default async function SignInOtpPage({
       <footer className="py-5 text-center text-xs text-on-surface-variant/80">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span className="">
-            تمامی حقوق مادی و معنوی متعلق به پلتفرم هوشمند «اورا» (Overa
+            تمامی حقوق مادی و معنوی متعلق به پلتفرم هوشمند «اٌوِرا» (Overa
             Technologies) می‌باشد.
           </span>
           <div className="flex items-center gap-4">

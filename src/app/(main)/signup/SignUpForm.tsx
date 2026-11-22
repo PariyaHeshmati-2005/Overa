@@ -51,7 +51,11 @@ export default function SignUpForm({ next }: { next: string }) {
           ? "متوسط"
           : "قوی";
   const strengthColor =
-    strength <= 1 ? "bg-m3-error" : strength === 2 ? "bg-accent-gold" : "bg-m3-primary";
+    strength <= 1
+      ? "bg-m3-error"
+      : strength === 2
+        ? "bg-accent-gold"
+        : "bg-m3-primary";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -78,7 +82,11 @@ export default function SignUpForm({ next }: { next: string }) {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), phone: normalizedPhone, password }),
+        body: JSON.stringify({
+          name: name.trim(),
+          phone: normalizedPhone,
+          password,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -86,7 +94,7 @@ export default function SignUpForm({ next }: { next: string }) {
         setLoading(false);
         return;
       }
-      toast.success("ثبت‌نام انجام شد! به اورا خوش آمدید.");
+      toast.success("ثبت‌نام انجام شد! به اٌوِرا خوش آمدید.");
       router.push(next || "/");
       router.refresh();
     } catch {
@@ -101,7 +109,10 @@ export default function SignUpForm({ next }: { next: string }) {
         <div className="space-y-4">
           {/* Field 1: Full Name */}
           <div>
-            <label className="block text-sm font-semibold text-on-surface mb-1.5" htmlFor="fullNameInput">
+            <label
+              className="block text-sm font-semibold text-on-surface mb-1.5"
+              htmlFor="fullNameInput"
+            >
               نام و نام خانوادگی
             </label>
             <div className="relative flex items-center rounded-xl border border-outline-variant bg-surface-container-low focus-within:border-m3-primary focus-within:ring-2 focus-within:ring-m3-primary/20 transition-all">
@@ -114,13 +125,18 @@ export default function SignUpForm({ next }: { next: string }) {
                 onChange={(e) => setName(e.target.value)}
               />
               <div className="pl-3.5 text-on-surface-variant flex items-center justify-center">
-                <span className="material-symbols-outlined text-xl">person</span>
+                <span className="material-symbols-outlined text-xl">
+                  person
+                </span>
               </div>
             </div>
           </div>
           {/* Field 2: Mobile Number */}
           <div>
-            <label className="block text-sm font-semibold text-on-surface mb-1.5" htmlFor="mobileInput">
+            <label
+              className="block text-sm font-semibold text-on-surface mb-1.5"
+              htmlFor="mobileInput"
+            >
               شماره موبایل
             </label>
             <div className="relative flex items-center rounded-xl border border-outline-variant bg-surface-container-low focus-within:border-m3-primary focus-within:ring-2 focus-within:ring-m3-primary/20 transition-all">
@@ -149,11 +165,16 @@ export default function SignUpForm({ next }: { next: string }) {
           {/* Field 3: National ID (demo: not stored — clearly labelled) */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-sm font-semibold text-on-surface" htmlFor="nationalCodeInput">
+              <label
+                className="block text-sm font-semibold text-on-surface"
+                htmlFor="nationalCodeInput"
+              >
                 کد ملی (جهت اعتبارسنجی و استعلام امن)
               </label>
               <span className="text-[11px] text-m3-primary font-medium flex items-center gap-1">
-                <span className="material-symbols-outlined text-xs">verified</span>
+                <span className="material-symbols-outlined text-xs">
+                  verified
+                </span>
                 تایید هویت آنی
               </span>
             </div>
@@ -175,12 +196,15 @@ export default function SignUpForm({ next }: { next: string }) {
             </div>
             <p className="text-[11px] text-on-surface-variant mt-1.5 leading-relaxed">
               تنها برای استعلام اصالت و فعال‌سازی پوشش بیمه ۵۰ میلیون تومانی
-              اوراگارد استفاده می‌شود.
+              اٌوِراگارد استفاده می‌شود.
             </p>
           </div>
           {/* Field 4: Password with strength meter */}
           <div>
-            <label className="block text-sm font-semibold text-on-surface mb-1.5" htmlFor="passwordInput">
+            <label
+              className="block text-sm font-semibold text-on-surface mb-1.5"
+              htmlFor="passwordInput"
+            >
               رمز عبور
             </label>
             <div className="relative flex items-center rounded-xl border border-outline-variant bg-surface-container-low focus-within:border-m3-primary focus-within:ring-2 focus-within:ring-m3-primary/20 transition-all">
@@ -211,7 +235,11 @@ export default function SignUpForm({ next }: { next: string }) {
                 <span className="">
                   امنیت رمز عبور:{" "}
                   {strengthLabel ? (
-                    <strong className={strength === 3 ? "text-m3-primary" : "text-accent-gold"}>
+                    <strong
+                      className={
+                        strength === 3 ? "text-m3-primary" : "text-accent-gold"
+                      }
+                    >
                       {strengthLabel}
                     </strong>
                   ) : (
@@ -223,16 +251,22 @@ export default function SignUpForm({ next }: { next: string }) {
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-1.5 h-1.5">
-                <div className={`rounded-full ${strength >= 1 ? strengthColor : "bg-surface-container-highest"}`}></div>
-                <div className={`rounded-full ${strength >= 2 ? strengthColor : "bg-surface-container-highest"}`}></div>
-                <div className={`rounded-full ${strength >= 3 ? strengthColor : "bg-primary-container/60"}`}></div>
+                <div
+                  className={`rounded-full ${strength >= 1 ? strengthColor : "bg-surface-container-highest"}`}
+                ></div>
+                <div
+                  className={`rounded-full ${strength >= 2 ? strengthColor : "bg-surface-container-highest"}`}
+                ></div>
+                <div
+                  className={`rounded-full ${strength >= 3 ? strengthColor : "bg-primary-container/60"}`}
+                ></div>
               </div>
             </div>
           </div>
           {/* Field 5: Intent / Role Selection Chips */}
           <div>
             <label className="block text-sm font-semibold text-on-surface mb-2">
-              قصد شما از عضویت در اورا چیست؟
+              قصد شما از عضویت در اٌوِرا چیست؟
             </label>
             <div className="grid grid-cols-3 gap-2">
               {INTENT_OPTIONS.map((opt) => (
@@ -257,7 +291,9 @@ export default function SignUpForm({ next }: { next: string }) {
                   >
                     {opt.icon}
                   </span>
-                  <span className={`text-xs ${intent === opt.value ? "font-bold text-m3-primary" : "font-semibold text-on-surface"}`}>
+                  <span
+                    className={`text-xs ${intent === opt.value ? "font-bold text-m3-primary" : "font-semibold text-on-surface"}`}
+                  >
                     {opt.label}
                   </span>
                 </label>
@@ -280,7 +316,7 @@ export default function SignUpForm({ next }: { next: string }) {
                 >
                   شرایط و قوانین استفاده
                 </Link>{" "}
-                از پلتفرم اورا و{" "}
+                از پلتفرم اٌوِرا و{" "}
                 <Link
                   className="text-m3-primary font-semibold underline hover:text-on-primary-fixed-variant"
                   href="/tos-support-faq"
@@ -324,7 +360,7 @@ export default function SignUpForm({ next }: { next: string }) {
         {/* Switch to Existing Account Option */}
         <div className="text-center pt-2">
           <p className="text-xs text-on-surface-variant">
-            قبلاً در اورا حساب کاربری ساخته‌اید؟
+            قبلاً در اٌوِرا حساب کاربری ساخته‌اید؟
             <Link
               className="text-m3-primary font-bold hover:underline transition-colors cursor-pointer mr-1"
               href="/signin"
@@ -339,7 +375,7 @@ export default function SignUpForm({ next }: { next: string }) {
       <div className="mt-6 rounded-2xl border border-dashed border-m3-primary/40 bg-primary-fixed/40 p-4 space-y-2">
         <div className="flex items-center gap-2 text-xs font-bold text-m3-primary">
           <span className="material-symbols-outlined text-base">science</span>
-          نسخه آزمایشی اورا
+          نسخه آزمایشی اٌوِرا
         </div>
         <p className="text-[11px] leading-relaxed text-on-surface-variant">
           حساب‌های آزمایشی آماده: اجاره‌دهنده{" "}
@@ -350,8 +386,8 @@ export default function SignUpForm({ next }: { next: string }) {
         </p>
         <p className="text-[10px] text-on-surface-variant/80">
           در این نسخه آزمایشی، کد ملی و انتخاب نقش ذخیره نمی‌شوند؛ ثبت‌نام با
-          شماره موبایل و رمز عبور انجام می‌شود و بلافاصله وارد حساب می‌شوید. برای
-          استفاده از حساب‌های آماده از{" "}
+          شماره موبایل و رمز عبور انجام می‌شود و بلافاصله وارد حساب می‌شوید.
+          برای استفاده از حساب‌های آماده از{" "}
           <Link className="font-bold text-m3-primary underline" href="/signin">
             صفحه ورود
           </Link>{" "}

@@ -23,7 +23,15 @@ async function assertViewable(id: string) {
   const viewer = await getCurrentUser();
   const listing = await db.listing.findUnique({
     where: { id },
-    select: { id: true, status: true, ownerId: true, title: true, description: true, dailyPrice: true, images: { orderBy: { sortOrder: "asc" }, take: 1 } },
+    select: {
+      id: true,
+      status: true,
+      ownerId: true,
+      title: true,
+      description: true,
+      dailyPrice: true,
+      images: { orderBy: { sortOrder: "asc" }, take: 1 },
+    },
   });
   if (!listing) notFound();
   const isOwner = viewer?.id === listing.ownerId;
@@ -43,9 +51,9 @@ export async function generateMetadata({
     title: listing.title,
     description:
       listing.description.slice(0, 150) +
-      ` — اجاره روزانه ${faToman(listing.dailyPrice)} تومان در اورا`,
+      ` — اجاره روزانه ${faToman(listing.dailyPrice)} تومان در اٌوِرا`,
     openGraph: {
-      title: `${listing.title} | اورا`,
+      title: `${listing.title} | اٌوِرا`,
       description: listing.description.slice(0, 200),
       images: ogImage ? [ogImage] : undefined,
     },
@@ -70,7 +78,9 @@ export default async function ItemDetailsPage({
     include: {
       images: { orderBy: { sortOrder: "asc" } },
       category: { select: { id: true, slug: true, name: true } },
-      owner: { select: { id: true, name: true, isHost: true, avatarUrl: true } },
+      owner: {
+        select: { id: true, name: true, isHost: true, avatarUrl: true },
+      },
       reviews: {
         orderBy: { createdAt: "desc" },
         include: { author: { select: { id: true, name: true } } },
@@ -81,7 +91,11 @@ export default async function ItemDetailsPage({
   if (!listing) notFound();
 
   const ownerItems = await db.listing.findMany({
-    where: { ownerId: listing.ownerId, status: "ACTIVE", id: { not: listing.id } },
+    where: {
+      ownerId: listing.ownerId,
+      status: "ACTIVE",
+      id: { not: listing.id },
+    },
     orderBy: { createdAt: "desc" },
     take: 2,
     include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
@@ -151,7 +165,9 @@ export default async function ItemDetailsPage({
   // heart button's initial state (Favorite table, unique per user+listing).
   const favorite = viewer
     ? await db.favorite.findUnique({
-        where: { userId_listingId: { userId: viewer.id, listingId: listing.id } },
+        where: {
+          userId_listingId: { userId: viewer.id, listingId: listing.id },
+        },
         select: { id: true },
       })
     : null;

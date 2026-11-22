@@ -2,7 +2,7 @@
 
 ## Project identity
 
-Overa (اورا) is a Persian-first peer-to-peer rental marketplace. The original
+Overa (اٌوِرا) is a Persian-first peer-to-peer rental marketplace. The original
 artifact was 29 static HTML pages + 5 mobile references + 3 embedded React
 mini-apps. This session converted it into a full-stack Next.js 16 application
 with Docker packaging and GitHub Actions CI/CD, preserving the established
@@ -76,7 +76,7 @@ visual identity.
 ## Copy-paste continuation prompt
 
 ```
-You are continuing the Overa (اورا) project — a Persian-first rental
+You are continuing the Overa (اٌوِرا) project — a Persian-first rental
 marketplace built as a Next.js 16 full-stack app (see AGENTS.md and
 docs/PROJECT-STATE.md first). Preserve the established visual identity and
 RTL Persian experience; never show demo identities to guests; keep all

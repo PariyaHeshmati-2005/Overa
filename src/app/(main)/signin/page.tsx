@@ -86,7 +86,7 @@ export default async function SignInPage({
               {/* Section Headings */}
               <div className="space-y-2 mb-6 text-center">
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">
-                  ورود به حساب کاربری در اورا
+                  ورود به حساب کاربری در اٌوِرا
                 </h2>
                 <p className="text-sm text-on-surface-variant font-normal">
                   خوش آمدید! برای دسترسی به پنل و اجاره وسایل، اطلاعات حساب خود
@@ -108,7 +108,7 @@ export default async function SignInPage({
             {/* Footer Card Meta */}
             <div className="pt-6 mt-6 border-t border-outline-variant/30 space-y-3 w-full max-w-md mx-auto">
               <div className="text-center text-xs text-on-surface-variant">
-                <span className="">هنوز در اورا ثبت‌نام نکرده‌اید؟ </span>
+                <span className="">هنوز در اٌوِرا ثبت‌نام نکرده‌اید؟ </span>
                 <Link
                   className="font-extrabold text-m3-primary hover:underline"
                   href="/signup"
@@ -117,7 +117,7 @@ export default async function SignInPage({
                 </Link>
               </div>
               <p className="text-[11px] text-center text-on-surface-variant/80 leading-relaxed">
-                با ورود به پلتفرم اورا،{" "}
+                با ورود به پلتفرم اٌوِرا،{" "}
                 <Link
                   className="text-m3-secondary font-semibold hover:underline"
                   href="/tos-support-faq"
@@ -143,7 +143,8 @@ export default async function SignInPage({
         <div className="max-w-[1360px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-on-surface-variant">
           <div className="flex items-center gap-2">
             <span className="">
-              © ۱۴۰۵ تمامی حقوق مادی و معنوی برای پلتفرم اورا (Overa) محفوظ است.
+              © ۱۴۰۵ تمامی حقوق مادی و معنوی برای پلتفرم اٌوِرا (Overa) محفوظ
+              است.
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-6 font-medium">
@@ -163,7 +164,7 @@ export default async function SignInPage({
               className="hover:text-m3-primary transition-colors"
               href="/tos-support-faq"
             >
-              قوانین و ضمانت اوراگارد
+              قوانین و ضمانت اٌوِراگارد
             </Link>
             <span className="inline-flex items-center gap-1 text-m3-secondary font-bold">
               <span className="material-symbols-outlined text-sm">

@@ -7,14 +7,10 @@ import { useEffect, useState } from "react";
  * Truthfulness fixes per playbook: provider/escrow claims are labelled as
  * simulation until a real provider is configured.
  */
-export default function ErrorContent({
-  reset,
-}: {
-  reset?: () => void;
-}) {
+export default function ErrorContent({ reset }: { reset?: () => void }) {
   const [seconds, setSeconds] = useState(30);
   const [statusText, setStatusText] = useState(
-    "در حال بررسی مجدد پاسخ پایانه اورا...",
+    "در حال بررسی مجدد پاسخ پایانه اٌوِرا...",
   );
 
   useEffect(() => {
@@ -33,7 +29,11 @@ export default function ErrorContent({
   const dashOffset = seconds > 0 ? 100 - (100 * seconds) / 30 : 100;
 
   return (
-    <div className="min-h-screen flex flex-col bg-m3-background text-on-surface antialiased" dir="rtl" lang="fa">
+    <div
+      className="min-h-screen flex flex-col bg-m3-background text-on-surface antialiased"
+      dir="rtl"
+      lang="fa"
+    >
       <main className="w-full max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pb-16 flex-1">
         <div className="flex flex-col w-full">
           {/* Ambient atmospheric glow */}
@@ -62,16 +62,19 @@ export default function ErrorContent({
                     در حال تنظیمات فنی و همگام‌سازی سرورها هستیم
                   </h1>
                   <p className="text-body-lg text-on-surface-variant leading-relaxed max-w-2xl">
-                    سرورهای اورا به دلیل اوج ترافیک رزروها یا به‌روزرسانی زیرساخت
-                    با وقفه روبه‌رو شده‌اند. جای هیچ‌گونه نگرانی نیست؛ اطلاعات
-                    حساب و قراردادهای اجاره شما با امنیت کامل ذخیره شده و محفوظ
-                    هستند.
+                    سرورهای اٌوِرا به دلیل اوج ترافیک رزروها یا به‌روزرسانی
+                    زیرساخت با وقفه روبه‌رو شده‌اند. جای هیچ‌گونه نگرانی نیست؛
+                    اطلاعات حساب و قراردادهای اجاره شما با امنیت کامل ذخیره شده
+                    و محفوظ هستند.
                   </p>
                 </div>
 
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-surface-container-lowest shadow-sm">
                   <div className="size-10 rounded-lg bg-surface-container flex items-center justify-center text-m3-primary shrink-0">
-                    <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    <span
+                      className="material-symbols-outlined text-2xl"
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
                       verified_user
                     </span>
                   </div>
@@ -80,7 +83,8 @@ export default function ErrorContent({
                       وضعیت مالی شما صرفاً در دفتر درون‌برنامه‌ای ثبت می‌شود
                     </span>
                     <span className="text-body-sm text-on-surface-variant">
-                      تا زمان اتصال درگاه پرداخت واقعی، همه عملیات مالی «شبیه‌سازی» هستند و هیچ پول واقعی جابه‌جا نمی‌شود.
+                      تا زمان اتصال درگاه پرداخت واقعی، همه عملیات مالی
+                      «شبیه‌سازی» هستند و هیچ پول واقعی جابه‌جا نمی‌شود.
                     </span>
                   </div>
                 </div>
@@ -89,8 +93,17 @@ export default function ErrorContent({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <div className="relative size-12 flex items-center justify-center shrink-0">
-                        <svg className="size-12 -rotate-90 text-surface-container" viewBox="0 0 36 36">
-                          <path className="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3.5"></path>
+                        <svg
+                          className="size-12 -rotate-90 text-surface-container"
+                          viewBox="0 0 36 36"
+                        >
+                          <path
+                            className="text-surface-container-highest"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3.5"
+                          ></path>
                           <path
                             className="text-m3-primary transition-all duration-1000 ease-linear"
                             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
@@ -110,13 +123,17 @@ export default function ErrorContent({
                         <span className="text-label-md text-on-surface font-bold">
                           تلاش خودکار برای برقراری مجدد ارتباط
                         </span>
-                        <span className="text-body-sm text-on-surface-variant">{statusText}</span>
+                        <span className="text-body-sm text-on-surface-variant">
+                          {statusText}
+                        </span>
                       </div>
                     </div>
                     <button
                       onClick={() => {
                         setSeconds(30);
-                        setStatusText("در حال بررسی مجدد پاسخ پایانه اورا...");
+                        setStatusText(
+                          "در حال بررسی مجدد پاسخ پایانه اٌوِرا...",
+                        );
                         if (reset) {
                           reset();
                         } else {
@@ -125,7 +142,9 @@ export default function ErrorContent({
                       }}
                       className="h-12 px-6 rounded-lg bg-m3-primary hover:bg-primary-container text-on-primary font-bold flex items-center justify-center gap-2 transition-transform active:scale-[0.98] shadow-sm self-stretch sm:self-auto"
                     >
-                      <span className="material-symbols-outlined text-xl">refresh</span>
+                      <span className="material-symbols-outlined text-xl">
+                        refresh
+                      </span>
                       <span>بارگذاری مجدد صفحه</span>
                     </button>
                   </div>
@@ -135,14 +154,18 @@ export default function ErrorContent({
                       className="h-10 px-4 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-secondary-container font-semibold flex items-center gap-2 transition-colors"
                       href="/"
                     >
-                      <span className="material-symbols-outlined text-lg">home</span>
+                      <span className="material-symbols-outlined text-lg">
+                        home
+                      </span>
                       <span>بازگشت به خانه</span>
                     </a>
                     <a
                       className="h-10 px-4 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-secondary-container font-semibold flex items-center gap-2 transition-colors"
                       href="tel:02191002424"
                     >
-                      <span className="material-symbols-outlined text-lg">call</span>
+                      <span className="material-symbols-outlined text-lg">
+                        call
+                      </span>
                       <span dir="ltr">۰۲۱-۹۱۰۰۲۴۲۴</span>
                       <span>پشتیبانی اضطراری</span>
                     </a>
@@ -155,27 +178,129 @@ export default function ErrorContent({
                 <div className="relative w-full rounded-xl bg-surface-container-lowest p-6 shadow-md flex flex-col items-center justify-center overflow-hidden min-h-[300px]">
                   <div className="absolute -top-12 -left-12 size-48 bg-m3-primary/10 rounded-full blur-xl pointer-events-none"></div>
                   <div className="relative size-44 flex items-center justify-center my-2">
-                    <svg className="w-full h-full text-m3-primary" fill="none" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
-                      <rect className="fill-surface-container stroke-primary-container" height="28" rx="8" strokeWidth="2" width="110" x="25" y="25"></rect>
-                      <circle className="fill-m3-primary animate-pulse" cx="42" cy="39" r="4"></circle>
-                      <circle className="fill-secondary-container" cx="56" cy="39" r="4"></circle>
-                      <line opacity="0.3" stroke="currentColor" strokeLinecap="round" strokeWidth="2.5" x1="72" x2="118" y1="39" y2="39"></line>
-                      <rect className="fill-surface-container-high stroke-m3-primary" height="28" rx="8" strokeWidth="2.5" width="110" x="25" y="66"></rect>
-                      <circle className="fill-m3-error animate-ping" cx="42" cy="80" r="4"></circle>
-                      <circle className="fill-m3-error" cx="42" cy="80" r="4"></circle>
-                      <circle className="fill-m3-secondary" cx="56" cy="80" r="4"></circle>
-                      <line opacity="0.4" stroke="currentColor" strokeLinecap="round" strokeWidth="2.5" x1="72" x2="100" y1="80" y2="80"></line>
-                      <rect className="fill-surface-container stroke-primary-container" height="28" rx="8" strokeWidth="2" width="110" x="25" y="107"></rect>
-                      <circle className="fill-m3-primary" cx="42" cy="121" r="4"></circle>
-                      <circle className="fill-m3-primary animate-pulse" cx="56" cy="121" r="4"></circle>
-                      <line opacity="0.3" stroke="currentColor" strokeLinecap="round" strokeWidth="2.5" x1="72" x2="114" y1="121" y2="121"></line>
-                      <circle className="fill-surface-container-lowest stroke-m3-primary shadow-lg" cx="120" cy="80" r="22" strokeWidth="3"></circle>
-                      <path d="M115 75 L125 85 M125 75 L115 85" stroke="currentColor" strokeLinecap="round" strokeWidth="2.5"></path>
+                    <svg
+                      className="w-full h-full text-m3-primary"
+                      fill="none"
+                      viewBox="0 0 160 160"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <rect
+                        className="fill-surface-container stroke-primary-container"
+                        height="28"
+                        rx="8"
+                        strokeWidth="2"
+                        width="110"
+                        x="25"
+                        y="25"
+                      ></rect>
+                      <circle
+                        className="fill-m3-primary animate-pulse"
+                        cx="42"
+                        cy="39"
+                        r="4"
+                      ></circle>
+                      <circle
+                        className="fill-secondary-container"
+                        cx="56"
+                        cy="39"
+                        r="4"
+                      ></circle>
+                      <line
+                        opacity="0.3"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeWidth="2.5"
+                        x1="72"
+                        x2="118"
+                        y1="39"
+                        y2="39"
+                      ></line>
+                      <rect
+                        className="fill-surface-container-high stroke-m3-primary"
+                        height="28"
+                        rx="8"
+                        strokeWidth="2.5"
+                        width="110"
+                        x="25"
+                        y="66"
+                      ></rect>
+                      <circle
+                        className="fill-m3-error animate-ping"
+                        cx="42"
+                        cy="80"
+                        r="4"
+                      ></circle>
+                      <circle
+                        className="fill-m3-error"
+                        cx="42"
+                        cy="80"
+                        r="4"
+                      ></circle>
+                      <circle
+                        className="fill-m3-secondary"
+                        cx="56"
+                        cy="80"
+                        r="4"
+                      ></circle>
+                      <line
+                        opacity="0.4"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeWidth="2.5"
+                        x1="72"
+                        x2="100"
+                        y1="80"
+                        y2="80"
+                      ></line>
+                      <rect
+                        className="fill-surface-container stroke-primary-container"
+                        height="28"
+                        rx="8"
+                        strokeWidth="2"
+                        width="110"
+                        x="25"
+                        y="107"
+                      ></rect>
+                      <circle
+                        className="fill-m3-primary"
+                        cx="42"
+                        cy="121"
+                        r="4"
+                      ></circle>
+                      <circle
+                        className="fill-m3-primary animate-pulse"
+                        cx="56"
+                        cy="121"
+                        r="4"
+                      ></circle>
+                      <line
+                        opacity="0.3"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeWidth="2.5"
+                        x1="72"
+                        x2="114"
+                        y1="121"
+                        y2="121"
+                      ></line>
+                      <circle
+                        className="fill-surface-container-lowest stroke-m3-primary shadow-lg"
+                        cx="120"
+                        cy="80"
+                        r="22"
+                        strokeWidth="3"
+                      ></circle>
+                      <path
+                        d="M115 75 L125 85 M125 75 L115 85"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeWidth="2.5"
+                      ></path>
                     </svg>
                   </div>
                   <div className="text-center mt-2">
                     <span className="text-label-md text-on-surface font-bold">
-                      زیرساخت ابری اورا در منطقه مرکزی
+                      زیرساخت ابری اٌوِرا در منطقه مرکزی
                     </span>
                     <p className="text-body-sm text-on-surface-variant mt-1">
                       تیم فنی در حال هدایت بار شبکه به کلاسترهای پشتیبان هستند.
@@ -186,25 +311,56 @@ export default function ErrorContent({
                 <div className="rounded-xl bg-surface-container-lowest p-6 shadow-sm flex flex-col gap-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-headline-sm text-on-surface font-bold flex items-center gap-2 text-lg">
-                      <span className="material-symbols-outlined text-m3-primary text-xl">pulse_alert</span>
+                      <span className="material-symbols-outlined text-m3-primary text-xl">
+                        pulse_alert
+                      </span>
                       <span>وضعیت سرویس‌های اصلی</span>
                     </h3>
-                    <span className="text-label-sm text-on-surface-variant font-mono">بروزرسانی زنده</span>
+                    <span className="text-label-sm text-on-surface-variant font-mono">
+                      بروزرسانی زنده
+                    </span>
                   </div>
                   {[
-                    { name: "سامانه ودیعه و تراکنش‌ها", sub: "حالت شبیه‌سازی (Sandbox) — بدون اتصال بانکی", dot: "bg-emerald-600", badge: "فعال (شبیه‌سازی)", badgeCls: "bg-emerald-50 text-emerald-800" },
-                    { name: "پایگاه داده آگهی‌ها و جستجوی اقلام", sub: "همگام‌سازی فهرست‌ها و زمان‌بندی تقویم", dot: "bg-amber-500 animate-pulse", badge: "در حال بازیابی", badgeCls: "bg-amber-100 text-amber-900" },
-                    { name: "تیم داوری و پشتیبانی اضطراری", sub: "خطوط تلفنی و سامانه پیامک", dot: "bg-emerald-600", badge: "پاسخ‌گوی فوری", badgeCls: "bg-emerald-50 text-emerald-800" },
+                    {
+                      name: "سامانه ودیعه و تراکنش‌ها",
+                      sub: "حالت شبیه‌سازی (Sandbox) — بدون اتصال بانکی",
+                      dot: "bg-emerald-600",
+                      badge: "فعال (شبیه‌سازی)",
+                      badgeCls: "bg-emerald-50 text-emerald-800",
+                    },
+                    {
+                      name: "پایگاه داده آگهی‌ها و جستجوی اقلام",
+                      sub: "همگام‌سازی فهرست‌ها و زمان‌بندی تقویم",
+                      dot: "bg-amber-500 animate-pulse",
+                      badge: "در حال بازیابی",
+                      badgeCls: "bg-amber-100 text-amber-900",
+                    },
+                    {
+                      name: "تیم داوری و پشتیبانی اضطراری",
+                      sub: "خطوط تلفنی و سامانه پیامک",
+                      dot: "bg-emerald-600",
+                      badge: "پاسخ‌گوی فوری",
+                      badgeCls: "bg-emerald-50 text-emerald-800",
+                    },
                   ].map((s) => (
-                    <div key={s.name} className="flex items-center justify-between p-3 rounded-lg bg-surface-container-low">
+                    <div
+                      key={s.name}
+                      className="flex items-center justify-between p-3 rounded-lg bg-surface-container-low"
+                    >
                       <div className="flex items-center gap-3">
                         <span className={`size-2 rounded-full ${s.dot}`}></span>
                         <div className="flex flex-col">
-                          <span className="text-label-md text-on-surface font-semibold">{s.name}</span>
-                          <span className="text-label-sm text-on-surface-variant">{s.sub}</span>
+                          <span className="text-label-md text-on-surface font-semibold">
+                            {s.name}
+                          </span>
+                          <span className="text-label-sm text-on-surface-variant">
+                            {s.sub}
+                          </span>
                         </div>
                       </div>
-                      <span className={`px-2.5 py-1 rounded-full text-label-sm font-bold ${s.badgeCls}`}>
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-label-sm font-bold ${s.badgeCls}`}
+                      >
                         {s.badge}
                       </span>
                     </div>

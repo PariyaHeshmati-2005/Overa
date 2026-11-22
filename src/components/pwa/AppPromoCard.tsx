@@ -6,7 +6,7 @@ import { usePwaInstall } from "@/lib/pwa";
 import { toPersianDigits } from "@/lib/format";
 
 /**
- * Compact app promotion card (placed inside the existing dark «اپلیکیشن اورا»
+ * Compact app promotion card (placed inside the existing dark «اپلیکیشن اٌوِرا»
  * banner on the homepage). Matches the banner's glass styling.
  *
  * The «نصب اپلیکیشن» button is wired to the REAL browser install flow:
@@ -48,12 +48,14 @@ export default function AppPromoCard({
         <span className="w-12 h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center overflow-hidden shrink-0">
           <img
             src="/assets/img/overa_logo_transparent.png"
-            alt="لوگوی اورا"
+            alt="لوگوی اٌوِرا"
             className="w-full h-full object-contain p-1"
           />
         </span>
         <div className="flex flex-col">
-          <span className="text-base font-black text-white">اپلیکیشن اورا</span>
+          <span className="text-base font-black text-white">
+            اپلیکیشن اٌوِرا
+          </span>
           <span className="text-[11px] text-purple-200">
             نصب روی گوشی و دسکتاپ — بدون فروشگاه اپلیکیشن
           </span>
@@ -61,15 +63,29 @@ export default function AppPromoCard({
       </div>
 
       <p className="text-xs text-purple-100/90 leading-relaxed">
-        اورا را مثل یک اپلیکیشن واقعی روی دستگاه خودت داشته باش؛ سریع‌تر باز
+        اٌوِرا را مثل یک اپلیکیشن واقعی روی دستگاه خودت داشته باش؛ سریع‌تر باز
         می‌شود و همیشه در دسترس است.
       </p>
 
       <ul className="flex flex-col gap-1.5" aria-label="ویژگی‌های اپلیکیشن">
         {FEATURES.map((f) => (
-          <li key={f} className="flex items-center gap-2 text-[11px] text-purple-100/90">
-            <svg className="w-3.5 h-3.5 text-emerald-300 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"></path>
+          <li
+            key={f}
+            className="flex items-center gap-2 text-[11px] text-purple-100/90"
+          >
+            <svg
+              className="w-3.5 h-3.5 text-emerald-300 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                d="M5 13l4 4L19 7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              ></path>
             </svg>
             {f}
           </li>
@@ -79,8 +95,19 @@ export default function AppPromoCard({
       <div className="flex items-center gap-3 pt-1">
         {isInstalled || justInstalled ? (
           <span className="flex-1 inline-flex items-center justify-center gap-2 h-11 rounded-2xl bg-emerald-500/20 border border-emerald-300/30 text-emerald-200 text-xs font-bold">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"></path>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                d="M5 13l4 4L19 7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              ></path>
             </svg>
             اپلیکیشن روی این دستگاه نصب شده است
           </span>
@@ -105,7 +132,7 @@ export default function AppPromoCard({
         {qr ? (
           <Link
             href="/install"
-            aria-label="اسکن کد QR برای نصب اورا"
+            aria-label="اسکن کد QR برای نصب اٌوِرا"
             className="w-14 h-14 rounded-xl bg-white p-1 shrink-0 block shadow-md"
             title="اسکن کد QR برای نصب روی گوشی"
           >

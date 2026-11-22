@@ -243,8 +243,8 @@ export default async function AccountSettingsPage() {
             {/* فوتر پنل */}
             <footer className="mt-12 py-6 px-4 sm:px-10 border-t border-surface-container text-center text-xs text-on-surface-variant flex flex-col md:flex-row items-center justify-between gap-4">
               <span className="">
-                تمامی حقوق مادی و معنوی متعلق به پلتفرم اجاره وسایل اورا (Overa
-                Host) است © ۱۴۰۵
+                تمامی حقوق مادی و معنوی متعلق به پلتفرم اجاره وسایل اٌوِرا
+                (Overa Host) است © ۱۴۰۵
               </span>
               <div className="flex items-center gap-4 text-xs text-m3-secondary font-medium">
                 <Link className="hover:underline" href="/how-it-works">

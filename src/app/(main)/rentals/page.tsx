@@ -120,6 +120,13 @@ export default async function RentalsPage() {
       <footer className="mt-16 border-t border-outline-variant/50 bg-surface-container-lowest py-8 text-center text-xs text-on-surface-variant">
         <div className="max-w-[1240px] mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
+            <div className="w-11 h-11 rounded-2xl from-primary to-primary-light flex items-center justify-center text-white shadow-md shadow-primary/20 group-hover:scale-105 transition-transform duration-200 overflow-hidden">
+              <img
+                src="/assets/img/overa_logo_transparent.png"
+                alt="لوگوی اورا"
+                className="w-full h-full object-contain"
+              />
+            </div>
             <span className="font-bold text-on-surface">اٌوِرا</span>
             <span>— سامانه هوشمند کرایه و اشتراک تجهیزات در سراسر کشور</span>
           </div>

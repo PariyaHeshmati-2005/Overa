@@ -651,7 +651,7 @@ export default function CreateListingWizard({
           </h1>
           <p className="text-sm text-m3-tertiary max-w-2xl leading-relaxed">
             وسیله‌های کم‌استفاده خود را به جریان بیندازید و به سادگی کسب درآمد
-            کنید. پس از ثبت، آگهی شما برای تایید کارشناس اورا ارسال می‌شود.
+            کنید. پس از ثبت، آگهی شما برای تایید کارشناس اٌوِرا ارسال می‌شود.
           </p>
         </div>
         {initial && (
@@ -668,7 +668,7 @@ export default function CreateListingWizard({
     <footer className="mt-16 border-t border-outline-variant/30 bg-surface-container-lowest py-6 text-center text-xs text-m3-tertiary">
       <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
         <span>
-          تمامی حقوق مادی و معنوی متعلق به پلتفرم اجاره کالای «اورا» (Overa)
+          تمامی حقوق مادی و معنوی متعلق به پلتفرم اجاره کالای «اٌوِرا» (Overa)
           می‌باشد © ۱۴۰۵
         </span>
         <div className="flex items-center gap-4">
@@ -688,7 +688,7 @@ export default function CreateListingWizard({
             className="hover:text-m3-primary transition-colors"
             href="/tos-support-faq"
           >
-            پوشش بیمه اوراگارد
+            پوشش بیمه اٌوِراگارد
           </Link>
         </div>
       </div>
@@ -988,7 +988,7 @@ export default function CreateListingWizard({
                   }
                   className="rounded text-m3-primary focus:ring-m3-primary"
                 />
-                <span>ارسال با پیک اکسپرس اورا (هزینه به عهده مستاجر)</span>
+                <span>ارسال با پیک اکسپرس اٌوِرا (هزینه به عهده مستاجر)</span>
               </label>
             </div>
 
@@ -1168,7 +1168,7 @@ export default function CreateListingWizard({
                   <span className="material-symbols-outlined text-[16px] text-m3-primary">
                     collections
                   </span>
-                  بانک نمونه تصاویر اورا
+                  بانک نمونه تصاویر اٌوِرا
                 </span>
                 <button
                   type="button"
@@ -1225,7 +1225,7 @@ export default function CreateListingWizard({
               </span>
               <p>
                 <strong className="font-bold">
-                  راهنمای هوشمند عکاسی اورا:
+                  راهنمای هوشمند عکاسی اٌوِرا:
                 </strong>
                 نور طبیعی روز، پس‌زمینه مرتب، و نمایش صادقانه خط و خش‌های
                 احتمالی احتمال اجاره موفق وسیله را تا ۳ برابر افزایش داده و از
@@ -1300,7 +1300,7 @@ export default function CreateListingWizard({
                   <span className="material-symbols-outlined text-[14px]">
                     lock
                   </span>
-                  محرمانه نزد اورا
+                  محرمانه نزد اٌوِرا
                 </span>
               </div>
               <input
@@ -1448,7 +1448,7 @@ export default function CreateListingWizard({
                   </span>
                   <div>
                     <span className="text-xs font-bold text-on-surface block">
-                      ارسال با پیک اکسپرس و سفیر اختصاصی اورا
+                      ارسال با پیک اکسپرس و سفیر اختصاصی اٌوِرا
                     </span>
                     <span className="text-[11px] text-m3-tertiary">
                       سفیر بیمه‌شده کالا را تست و درب منزل مستاجر تحویل می‌دهد
@@ -1471,15 +1471,6 @@ export default function CreateListingWizard({
                   <span className="material-symbols-outlined text-emerald-600 text-[22px]">
                     badge
                   </span>
-                  <div>
-                    <span className="text-xs font-bold text-on-surface block">
-                      احراز هویت بیومتریک و تطبیق چهره در زمان تحویل
-                    </span>
-                    <span className="text-[11px] text-m3-tertiary">
-                      مستاجر موظف به ثبت امضای دیجیتال و تطبیق کارت ملی هوشمند
-                      خواهد بود
-                    </span>
-                  </div>
                 </div>
                 <input
                   type="checkbox"
@@ -1568,7 +1559,7 @@ export default function CreateListingWizard({
                       {userName}
                     </span>
                   </div>
-                  <span className="text-on-surface-variant">میزبان اورا</span>
+                  <span className="text-on-surface-variant">میزبان اٌوِرا</span>
                 </div>
                 <div className="pt-2 border-t border-outline-variant/20 flex items-center justify-between">
                   <div>
@@ -1717,7 +1708,7 @@ export default function CreateListingWizard({
               <div className="p-3.5 rounded-lg bg-surface-container-low flex items-center justify-between gap-3">
                 <div className="space-y-0.5">
                   <span className="text-on-surface-variant block text-sm">
-                    میانگین نرخ این دسته در اورا
+                    میانگین نرخ این دسته در اٌوِرا
                   </span>
                   <span className="font-bold text-on-surface text-sm">
                     {avgPrice ? `${faNumber(avgPrice)} تومان` : "—"}
@@ -1889,7 +1880,7 @@ export default function CreateListingWizard({
                   ۲. ودیعه ضمانت امانت و شرایط اسکرو
                 </h2>
                 <p className="text-sm text-on-surface-variant">
-                  مبلغ امانی در حساب واسط اورا مسدود می‌ماند و پس از تست سلامت
+                  مبلغ امانی در حساب واسط اٌوِرا مسدود می‌ماند و پس از تست سلامت
                   به مستاجر عودت داده می‌شود.
                 </p>
                 <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-full">
@@ -1901,7 +1892,7 @@ export default function CreateListingWizard({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
                 <p className="text-m3-tertiary text-sm">
-                  سقف پوشش ضمانت اورا تا سقف مشخص‌شده در قوانین فعال است.
+                  سقف پوشش ضمانت اٌوِرا تا سقف مشخص‌شده در قوانین فعال است.
                 </p>
               </div>
               <div className="p-4 rounded-xl bg-surface-container-low flex flex-col justify-between">
@@ -1912,7 +1903,7 @@ export default function CreateListingWizard({
                   >
                     verified_user
                   </span>
-                  <span>تعهد اوراگارد (OveraGuard)</span>
+                  <span>تعهد اٌوِراگارد (OveraGuard)</span>
                 </div>
                 <p className="text-sm text-on-surface-variant mt-2 leading-relaxed">
                   ودیعه نقدی در صورت بروز خسارت یا تاخیر، پس از ارائه صورت‌جلسه
@@ -2157,13 +2148,13 @@ export default function CreateListingWizard({
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-on-surface-variant">
-                  <span>کارمزد پلتفرم اورا (۱۰٪):</span>
+                  <span>کارمزد پلتفرم اٌوِرا (۱۰٪):</span>
                   <span>
                     {Number.isFinite(fee) ? `- ${faNumber(fee)} تومان` : "—"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-emerald-700 font-medium">
-                  <span>بیمه سلامت کالا (اوراگارد):</span>
+                  <span>بیمه سلامت کالا (اٌوِراگارد):</span>
                   <span className="font-bold">رایگان برای میزبان</span>
                 </div>
               </div>
@@ -2275,7 +2266,7 @@ export default function CreateListingWizard({
                 </div>
               </div>
               <span className="hidden sm:inline-flex px-3 py-1 bg-surface-container text-m3-primary rounded-full text-sm">
-                امنیت لجستیک اورا
+                امنیت لجستیک اٌوِرا
               </span>
             </div>
 
@@ -2338,7 +2329,7 @@ export default function CreateListingWizard({
                   )}
                 </div>
                 <span className="font-bold text-on-surface">
-                  ارسال با سفیر اختصاصی اورا
+                  ارسال با سفیر اختصاصی اٌوِرا
                 </span>
                 <span className="text-sm text-on-surface-variant mt-1">
                   ناوگان امن مجهز به جعبه ضدضربه
@@ -2475,7 +2466,7 @@ export default function CreateListingWizard({
                   <span className="material-symbols-outlined text-m3-primary text-[18px]">
                     policy
                   </span>
-                  خلاصه سند امانت‌سپاری اورا (نسخه نمایشی)
+                  خلاصه سند امانت‌سپاری اٌوِرا (نسخه نمایشی)
                 </span>
                 <span className="bg-surface-container px-2 py-0.5 rounded text-m3-tertiary">
                   Sandbox — سند قطعی پس از رزرو
@@ -2486,7 +2477,7 @@ export default function CreateListingWizard({
                 تنظیم گردیده و مطابق آن، مالک متعهد می‌شود کالای فوق‌الذکر را با
                 سلامت کامل فنی در زمان مشخص تحویل دهد و مستاجر متعهد است در موعد
                 مقرر کالا را عودت دهد. هرگونه خسارت ناشی از استفاده نامتعارف
-                توسط کارشناسان اورا ارزیابی و جبران می‌گردد.
+                توسط کارشناسان اٌوِرا ارزیابی و جبران می‌گردد.
               </p>
             </div>
 
@@ -2512,7 +2503,7 @@ export default function CreateListingWizard({
                 />
                 <span className="text-sm text-on-surface leading-snug">
                   قوانین و مقررات میزبانی کالا و شیوه حل اختلاف سامانه داوری
-                  اورا را مطالعه نموده و می‌پذیرم.
+                  اٌوِرا را مطالعه نموده و می‌پذیرم.
                 </span>
               </label>
             </div>
@@ -2547,7 +2538,7 @@ export default function CreateListingWizard({
                 >
                   verified
                 </span>
-                <span>تایید اصالت اورا</span>
+                <span>تایید اصالت اٌوِرا</span>
               </div>
               <div className="absolute bottom-3 right-3 left-3 text-on-primary">
                 <span className="text-xs text-primary-fixed block font-medium">
@@ -2612,7 +2603,7 @@ export default function CreateListingWizard({
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-on-surface-variant mt-0.5">
-                  <span>میزبان اورا</span>
+                  <span>میزبان اٌوِرا</span>
                 </div>
               </div>
             </div>

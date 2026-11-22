@@ -154,9 +154,9 @@ export default function TosFaqApp() {
         <>
           <p>
             ودیعه امانی به عنوان پشتوانه حفظ سلامت کالا، در هنگام نهایی‌سازی
-            سفارش در درگاه امن شاپرک اورا به صورت امانی مسدود می‌گردد. این مبلغ
-            تا انتهای دوره اجاره نزد پلتفرم باقی می‌ماند و در دسترس هیچ‌یک از
-            طرفین نیست.
+            سفارش در درگاه امن شاپرک اٌوِرا به صورت امانی مسدود می‌گردد. این
+            مبلغ تا انتهای دوره اجاره نزد پلتفرم باقی می‌ماند و در دسترس هیچ‌یک
+            از طرفین نیست.
           </p>
           <div className="bg-surface-container-high/60 border border-secondary-container/50 rounded-xl p-3.5 flex items-start gap-3">
             <span className="material-symbols-outlined text-m3-primary text-xl shrink-0 mt-0.5">
@@ -177,7 +177,7 @@ export default function TosFaqApp() {
             <span className="material-symbols-outlined text-sm">info</span>
             <span>
               در صورت اعلام مغایرت یا آسیب‌دیدگی توسط مالک، ودیعه تا زمان بررسی
-              کارشناس حقوقی اورا مسدود می‌ماند.
+              کارشناس حقوقی اٌوِرا مسدود می‌ماند.
             </span>
           </div>
         </>
@@ -187,16 +187,16 @@ export default function TosFaqApp() {
       id: "item-2",
       num: "۰۲",
       question:
-        "سقف پوشش بیمه اختصاصی اورا (تا ۵۰ میلیون تومان) شامل چه مواردی است؟",
+        "سقف پوشش بیمه اختصاصی اٌوِرا (تا ۵۰ میلیون تومان) شامل چه مواردی است؟",
       search: "بیمه گارانتی پوشش استثنا فرانشیز سرقت خسارت ۵۰ میلیون",
       body: (
         <>
           <p>
             کلیه کالاهایی که با برچسب{" "}
-            <strong>«پوشش گارانتی و بیمه اورا»</strong> ثبت می‌شوند، در طول دوره
-            اجاره تحت قرارداد گروهی با بیمه معتبر طرف قرارداد پوشش داده می‌شوند.
-            سقف این بیمه تا ۵۰,۰۰۰,۰۰۰ تومان ارزش کارشناسی شده کالا را شامل
-            می‌شود.
+            <strong>«پوشش گارانتی و بیمه اٌوِرا»</strong> ثبت می‌شوند، در طول
+            دوره اجاره تحت قرارداد گروهی با بیمه معتبر طرف قرارداد پوشش داده
+            می‌شوند. سقف این بیمه تا ۵۰,۰۰۰,۰۰۰ تومان ارزش کارشناسی شده کالا را
+            شامل می‌شود.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
             <div className="p-3 bg-surface-container-low rounded-xl border border-outline-variant/30 flex items-start gap-2">
@@ -321,8 +321,8 @@ export default function TosFaqApp() {
               نموده و عکس‌های نقص را بارگذاری می‌کند.
             </li>
             <li>
-              کارشناس فنی حوزه تخصصی اورا ظرف حداکثر ۱۲ ساعت کاری مستندات تحویل
-              و بازگشت را مقایسه می‌کند.
+              کارشناس فنی حوزه تخصصی اٌوِرا ظرف حداکثر ۱۲ ساعت کاری مستندات
+              تحویل و بازگشت را مقایسه می‌کند.
             </li>
             <li>
               در صورت تایید قصور مستاجر، هزینه تعمیرات یا افت قیمت کارشناسی از
@@ -359,7 +359,7 @@ export default function TosFaqApp() {
         <p>
           <strong>خیر.</strong> جهت حفاظت از حریم شخصی و امنیت دادوستد،
           شماره‌های تماس تا زمان تایید نهایی سفارش و پرداخت ودیعه مخفی خواهند
-          ماند. کلیه هماهنگی‌های اولیه از طریق چت اختصاصی اورا صورت می‌گیرد و
+          ماند. کلیه هماهنگی‌های اولیه از طریق چت اختصاصی اٌوِرا صورت می‌گیرد و
           تبادل هرگونه شماره تماس خارج از بستر پلتفرم قبل از ثبت رزرو، مطابق
           قوانین مندرج در بند ۶ باعث غیرفعال شدن پوشش بیمه‌ای خواهد شد.
         </p>
@@ -386,7 +386,7 @@ export default function TosFaqApp() {
       clause: "ماده ۳",
       icon: "history_edu",
       title: "قرارداد الکترونیک لازم‌الاجرا",
-      text: "توافقات حاصل در بستر اورا طبق قانون تجارت الکترونیک جمهوری اسلامی ایران سند معتبر رسمی تلقی شده و در تمامی مراجع قضایی و انتظامی دارای وجاهت قانونی است.",
+      text: "توافقات حاصل در بستر اٌوِرا طبق قانون تجارت الکترونیک جمهوری اسلامی ایران سند معتبر رسمی تلقی شده و در تمامی مراجع قضایی و انتظامی دارای وجاهت قانونی است.",
       ref: "ماده ۱۰ قانون مدنی",
     },
     {
@@ -409,7 +409,7 @@ export default function TosFaqApp() {
       <div className="flex flex-wrap justify-between gap-3 p-4">
         <div className="flex w-full sm:min-w-72 flex-col gap-3">
           <p className="text-[#130e1b] text-4xl font-black leading-tight tracking-[-0.033em]">
-            مرکز شفافیت، قوانین و سوالات متداول اورا
+            مرکز شفافیت، قوانین و سوالات متداول اٌوِرا
           </p>
           <p className="text-[#694d99] text-base font-normal leading-normal">
             همه چیز درباره حقوق کاربران، ضمانت سلامت وسایل، ودیعه امانی، بیمه و
@@ -557,8 +557,8 @@ export default function TosFaqApp() {
                 <span>ضمانت بازگشت ودیعه تا حداکثر ۲۴ ساعت</span>
               </div>
               <p className="text-xs text-m3-outline leading-relaxed">
-                تمام مبادلات مالی در حساب امانی شاپرکی پلتفرم اورا نگهداری شده و
-                تا تایید دوطرفه سلامت تجهیزات، به مالک تسویه نخواهد شد.
+                تمام مبادلات مالی در حساب امانی شاپرکی پلتفرم اٌوِرا نگهداری شده
+                و تا تایید دوطرفه سلامت تجهیزات، به مالک تسویه نخواهد شد.
               </p>
             </div>
           </aside>
@@ -628,7 +628,7 @@ export default function TosFaqApp() {
                 <span>چهارچوب رسمی و تعهدات قراردادی</span>
               </div>
               <h2 className="text-2xl font-black text-on-surface tracking-tight">
-                خلاصه مواد کلیدی منشور حقوقی پلتفرم اورا
+                خلاصه مواد کلیدی منشور حقوقی پلتفرم اٌوِرا
               </h2>
             </div>
           </div>
@@ -675,14 +675,14 @@ export default function TosFaqApp() {
               <span className="material-symbols-outlined text-sm">
                 support_agent
               </span>
-              <span>مرکز داوری و حل اختلاف پلتفرم اورا</span>
+              <span>مرکز داوری و حل اختلاف پلتفرم اٌوِرا</span>
             </div>
             <h3 className="text-xl md:text-2xl font-black text-on-surface">
               پاسخ سوال خود را نیافتید یا در معامله جاری نیاز به داوری دارید؟
             </h3>
             <p className="text-xs md:text-sm text-m3-outline leading-relaxed">
-              تیم حقوقی و کارشناسان فنی اورا هفت روز هفته، ۲۴ ساعته در کنار شما
-              هستند تا هرگونه ابهام درباره تسویه حساب، پیگیری وضعیت سلامت
+              تیم حقوقی و کارشناسان فنی اٌوِرا هفت روز هفته، ۲۴ ساعته در کنار
+              شما هستند تا هرگونه ابهام درباره تسویه حساب، پیگیری وضعیت سلامت
               تجهیزات، یا حل اختلافات ملکی را بررسی نمایند.
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-3">
@@ -727,7 +727,7 @@ export default function TosFaqApp() {
           <div className="flex items-center gap-2">
             <div className="size-3.5 bg-m3-primary rounded-full"></div>
             <span className="font-bold text-on-surface">
-              پلتفرم به اشتراک‌گذاری و اجاره تجهیزات اورا (Overa)
+              پلتفرم به اشتراک‌گذاری و اجاره تجهیزات اٌوِرا (Overa)
             </span>
             <span>- کلیه حقوق محفوظ است © ۱۴۰۵</span>
           </div>

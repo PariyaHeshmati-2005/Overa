@@ -163,8 +163,9 @@ export default async function PromissoryRegistrationPage() {
                     </h1>
                     <p className="text-sm text-on-surface-variant max-w-4xl leading-relaxed">
                       ضمانت حسن انجام تعهدات قرارداد اجاره دوربین Sony Alpha 7
-                      IV به ارزش ۱۵,۰۰۰,۰۰۰ تومان در صندوق امنیتی امانی اوراگارد
-                      فعال شد. بدون نیاز به مسدودی وجه نقد از حساب شما.
+                      IV به ارزش ۱۵,۰۰۰,۰۰۰ تومان در صندوق امنیتی امانی
+                      اٌوِراگارد فعال شد. بدون نیاز به مسدودی وجه نقد از حساب
+                      شما.
                     </p>
                   </div>
                 </div>
@@ -278,7 +279,7 @@ export default async function PromissoryRegistrationPage() {
                         </span>
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-bold text-on-surface">
-                            {user ? user.name : "کاربر اورا"} (نمونه)
+                            {user ? user.name : "کاربر اٌوِرا"} (نمونه)
                           </span>
                           <span className="text-xs text-m3-outline font-mono">
                             کد ملی: ۰۰۱۲۳۴۵۶۷۸
@@ -301,7 +302,7 @@ export default async function PromissoryRegistrationPage() {
                         </span>
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-bold text-on-surface">
-                            صندوق امانی پلتفرم اورا
+                            صندوق امانی پلتفرم اٌوِرا
                           </span>
                           <span className="text-xs text-m3-outline font-mono">
                             شناسه ملی: ۱۴۰۰۹۸۷۲۱۱۰
@@ -377,10 +378,10 @@ export default async function PromissoryRegistrationPage() {
                         <p className="text-xs text-on-primary-fixed-variant leading-relaxed">
                           مطابق مفاد بند (ب) ماده ۶ قانون تجارت الکترونیک، این
                           سند صرفاً به منظور تضمین سلامت، نگهداری اصولی و عودت
-                          به موقع تجهیزات مورد اجاره نزد صندوق امانی اورا توثیق
-                          گردیده است. بلافاصله پس از ثبت کد تایید دوطرفه تحویل
-                          در اپلیکیشن اورا و بررسی سلامت کالا، این سند در بستر
-                          خزانه‌داری به صورت خودکار به وضعیت
+                          به موقع تجهیزات مورد اجاره نزد صندوق امانی اٌوِرا
+                          توثیق گردیده است. بلافاصله پس از ثبت کد تایید دوطرفه
+                          تحویل در اپلیکیشن اٌوِرا و بررسی سلامت کالا، این سند
+                          در بستر خزانه‌داری به صورت خودکار به وضعیت
                           <strong className="text-on-primary-fixed font-bold">
                             {" "}
                             «باطل‌شده و فاقد اثر حقوقی»{" "}
@@ -547,7 +548,7 @@ export default async function PromissoryRegistrationPage() {
                         strokeLinecap="round"
                       ></path>
                     </svg>
-                    پرسش‌های متداول در خصوص سفته الکترونیک اورا
+                    پرسش‌های متداول در خصوص سفته الکترونیک اٌوِرا
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-4 bg-surface-container-low rounded-lg flex flex-col gap-1.5">
@@ -623,7 +624,7 @@ export default async function PromissoryRegistrationPage() {
                           وضعیت فعلی: فعال و امانت‌گذاری‌شده
                         </span>
                         <span className="text-xs text-on-surface-variant leading-relaxed">
-                          سند در گاوصندوق امنیتی دیجیتال اورا توثیق شده است.
+                          سند در گاوصندوق امنیتی دیجیتال اٌوِرا توثیق شده است.
                         </span>
                       </div>
                     </div>
@@ -781,7 +782,7 @@ export default async function PromissoryRegistrationPage() {
                     </div>
                     <div className="flex flex-col">
                       <span className="text-xs font-bold text-emerald-900">
-                        پوشش بیمه اوراگارد فعال است
+                        پوشش بیمه اٌوِراگارد فعال است
                       </span>
                       <span className="text-[11px] text-emerald-700">
                         پوشش حوادث و خسارت ناگهانی تا سقف ۵۰ میلیون تومان
@@ -810,8 +811,8 @@ export default async function PromissoryRegistrationPage() {
                     </h4>
                   </div>
                   <p className="text-xs text-on-surface-variant leading-relaxed">
-                    کارشناسان حقوقی و مالی اورا در تمام مراحل تحویل و عودت کالا
-                    همراه شما هستند.
+                    کارشناسان حقوقی و مالی اٌوِرا در تمام مراحل تحویل و عودت
+                    کالا همراه شما هستند.
                   </p>
                   <div className="flex flex-col gap-2 pt-1">
                     <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-lg">
@@ -868,7 +869,7 @@ export default async function PromissoryRegistrationPage() {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xl font-black text-m3-primary">
-                    اورا
+                    اٌوِرا
                   </span>
                   <span className="text-[11px] text-m3-outline font-medium">
                     پلتفرم امن کرایه و اشتراک تجهیزات تخصصی
@@ -876,7 +877,7 @@ export default async function PromissoryRegistrationPage() {
                 </div>
               </div>
               <p className="text-xs leading-relaxed text-m3-outline max-w-sm">
-                اورا نخستین پلتفرم هوشمند اجاره و تبادل وسایل در ایران است که
+                اٌوِرا نخستین پلتفرم هوشمند اجاره و تبادل وسایل در ایران است که
                 امکان کرایه مطمئن تجهیزات عکاسی، دیجیتال، کمپینگ و ابزارآلات را
                 با تضمین اصالت، سفته الکترونیک خزانه‌داری و بیمه کامل فراهم
                 می‌سازد.
@@ -1079,7 +1080,7 @@ export default async function PromissoryRegistrationPage() {
                 </svg>
               </div>
               <span className="font-bold text-on-surface">
-                پلتفرم اجاره وسایل اورا (Overa)
+                پلتفرم اجاره وسایل اٌوِرا (Overa)
               </span>
               <span>— تمامی حقوق محفوظ است ۱۴۰۵</span>
             </div>

@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "نتایج جستجو",
-  description: "جستجوی وسایل قابل اجاره در اورا",
+  description: "جستجوی وسایل قابل اجاره در اٌوِرا",
   robots: { index: false },
 };
 
@@ -38,8 +38,13 @@ export default async function SearchPage({
       <div className="flex-1 w-full bg-[#fafafa]">
         <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-6 flex flex-col gap-6">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-xs text-neutral-muted" aria-label="مسیر صفحه">
-            <Link href="/" className="hover:text-primary font-medium">خانه</Link>
+          <nav
+            className="flex items-center gap-2 text-xs text-neutral-muted"
+            aria-label="مسیر صفحه"
+          >
+            <Link href="/" className="hover:text-primary font-medium">
+              خانه
+            </Link>
             <span className="text-purple-100">/</span>
             <span className="font-bold text-neutral-text">نتایج جستجو</span>
           </nav>
@@ -104,10 +109,29 @@ function SearchEmptyState({
       aria-label="نتیجه‌ای پیدا نشد"
     >
       <div className="w-20 h-20 rounded-3xl bg-primary-soft flex items-center justify-center">
-        <svg className="w-10 h-10 text-primary" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24" aria-hidden="true">
+        <svg
+          className="w-10 h-10 text-primary"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
           <circle cx="11" cy="11" r="7"></circle>
-          <line x1="16.5" x2="21" y1="16.5" y2="21" strokeLinecap="round"></line>
-          <line x1="8.5" x2="12.5" y1="8.5" y2="12.5" strokeLinecap="round"></line>
+          <line
+            x1="16.5"
+            x2="21"
+            y1="16.5"
+            y2="21"
+            strokeLinecap="round"
+          ></line>
+          <line
+            x1="8.5"
+            x2="12.5"
+            y1="8.5"
+            y2="12.5"
+            strokeLinecap="round"
+          ></line>
         </svg>
       </div>
       <div className="flex flex-col gap-2 max-w-lg">
@@ -118,7 +142,7 @@ function SearchEmptyState({
         </h2>
         <p className="text-sm text-neutral-muted leading-relaxed">
           {query
-            ? `در حال حاضر وسیله‌ای مطابق «${query}» در اورا ثبت نشده است. عبارت دیگری را امتحان کنید یا از دسته‌بندی‌های زیر استفاده کنید.`
+            ? `در حال حاضر وسیله‌ای مطابق «${query}» در اٌوِرا ثبت نشده است. عبارت دیگری را امتحان کنید یا از دسته‌بندی‌های زیر استفاده کنید.`
             : "نام وسیله، برند یا دسته‌بندی موردنظر خود را در کادر زیر بنویسید."}
         </p>
       </div>
@@ -126,10 +150,15 @@ function SearchEmptyState({
       {/* Refine search — preserves the query and lets the user correct it */}
       <SearchRefineForm initialQuery={query} />
 
-      <div className="w-full h-px bg-purple-100/70 max-w-md" aria-hidden="true"></div>
+      <div
+        className="w-full h-px bg-purple-100/70 max-w-md"
+        aria-hidden="true"
+      ></div>
 
       <div className="flex flex-col gap-3 items-center">
-        <p className="text-xs font-bold text-neutral-text">دسته‌بندی‌های پرطرفدار</p>
+        <p className="text-xs font-bold text-neutral-text">
+          دسته‌بندی‌های پرطرفدار
+        </p>
         <div className="flex flex-wrap justify-center gap-2">
           {categories.map((c) => (
             <Link

@@ -1,5 +1,6 @@
 # Claude Code entry point
-Overa (اورا) — Persian-first peer-to-peer rental marketplace.
+
+Overa (اٌوِرا) — Persian-first peer-to-peer rental marketplace.
 
 **Start here: read [`AGENTS.md`](./AGENTS.md)** — it is the authoritative,
 persistent instruction set for any coding agent working on this repository
