@@ -1090,24 +1090,6 @@ export default function CreateListingWizard({
                 <span>ارسال با پیک اکسپرس اٌوِرا (هزینه به عهده مستاجر)</span>
               </label>
             </div>
-
-            <div className="relative w-full h-48 rounded-xl overflow-hidden shadow-inner mt-2">
-              <div
-                className="w-full h-full bg-cover bg-center"
-                style={{
-                  backgroundImage: "url('/assets/img/ee288b739678.jpg')",
-                }}
-              ></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-m3-inverse-surface/60 via-transparent to-transparent pointer-events-none"></div>
-              <div className="absolute bottom-3 right-3 flex items-center gap-2 bg-surface-container-lowest/95 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-sm">
-                <span className="material-symbols-outlined text-m3-primary text-[18px]">
-                  my_location
-                </span>
-                <span className="text-on-surface text-sm">
-                  محدوده شعاع تقریبی ۲ کیلومتری {form.area || form.city}
-                </span>
-              </div>
-            </div>
           </section>
 
           <section className="bg-surface-container-lowest p-5 rounded-xl shadow-sm flex flex-col-reverse sm:flex-row items-center gap-4 justify-end">
@@ -1585,20 +1567,6 @@ export default function CreateListingWizard({
                   onChange={(e) =>
                     update({ deliveryCourier: e.target.checked })
                   }
-                  className="rounded text-m3-primary focus:ring-m3-primary"
-                />
-              </label>
-
-              <label className="flex items-center justify-between p-3 rounded-xl border border-outline-variant/40 bg-surface-container-lowest cursor-pointer hover:bg-surface-container-low/30 transition-colors">
-                <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-emerald-600 text-[22px]">
-                    badge
-                  </span>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={form.biometricAuth}
-                  onChange={(e) => update({ biometricAuth: e.target.checked })}
                   className="rounded text-m3-primary focus:ring-m3-primary"
                 />
               </label>
