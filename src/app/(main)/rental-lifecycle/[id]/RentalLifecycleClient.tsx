@@ -349,9 +349,10 @@ export default function RentalLifecycleClient({
     if (role === "renter") {
       nextStep = {
         title: "در پایان دوره اجاره، بازگشت کالا را ثبت کنید",
-        body: `مهلت عودت ${formatJalaliIso(r.endDate.slice(0, 10))} است؛ از دکمه «درخواست بازگشت» استفاده کنید.`,
+        // No anchor jump: the «ثبت بازگشت کالا» panel renders directly below
+        // this card, so on the return day the action is already open.
+        body: `مهلت عودت ${formatJalaliIso(r.endDate.slice(0, 10))} است؛ کارت «ثبت بازگشت کالا» در همین‌جا باز است.`,
         icon: "replay",
-        anchor: "#protocol",
       };
     } else {
       waitingOnOther = "دوره اجاره فعال است؛ در انتظار ثبت بازگشت از سوی مستأجر.";
@@ -360,9 +361,10 @@ export default function RentalLifecycleClient({
     if (role === "host") {
       nextStep = {
         title: "سلامت کالا را بررسی و بازگشت را تأیید کنید",
-        body: "در صورت سلامت، کارت تأیید بازگشت را با کد یک‌بارمصرف تکمیل کنید تا ودیعه آزاد شود.",
+        // No anchor jump: the host decision card (OTP / damage) renders
+        // directly below this guidance card.
+        body: "کارت «تأیید دریافت کالا» در همین‌جا باز است؛ در صورت سلامت با کد یک‌بارمصرف تأیید کنید یا خسارت را اعلام کنید.",
         icon: "fact_check",
-        anchor: "#protocol",
       };
     } else {
       waitingOnOther = "بازگشت شما ثبت شده است؛ در انتظار تأیید میزبان هستید.";
@@ -1275,15 +1277,8 @@ export default function RentalLifecycleClient({
         )}
         {protocolActive && (
           <>
-            {/* Host decision card (OTP healthy-return / damage declaration). */}
-            {role === "host" && status === "RETURN_REQUESTED" && (
-              <ReturnConfirmCard
-                reservationId={r.id}
-                code={r.code}
-                listingTitle={r.listing.title}
-                renterName={r.renter.name}
-              />
-            )}
+            {/* Host decision card moved to the inline return panel right under
+                the «گام بعدی شما» guidance — no scrolling to #protocol needed. */}
             <div className="bg-white rounded-2xl border border-purple-100 shadow-sm overflow-hidden">
               <div className="p-4 bg-gradient-to-r from-purple-50 via-indigo-50/40 to-white border-b border-purple-100 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -1435,6 +1430,48 @@ export default function RentalLifecycleClient({
             </a>
           )}
         </div>
+      )}
+      {/* Inline return flow — opens automatically at the return stage, right
+          below the guidance card. The renter registers the hand-back here
+          (one press, no jump); the host gets the OTP healthy-return /
+          damage-declaration card in the same spot. Every action lands in the
+          «رویدادهای این اجاره» timeline below. */}
+      {!terminal && role === "renter" && status === "RENTAL_ACTIVE" && (
+        <div className="rounded-2xl border border-purple-100 bg-white shadow-sm p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-m3-primary text-xl">
+              replay
+            </span>
+            <p className="text-xs font-extrabold text-slate-800">
+              ثبت بازگشت کالا به میزبان
+            </p>
+          </div>
+          <p className="text-[11px] text-slate-500 leading-relaxed">
+            وسیله را در روز عودت ({formatJalaliIso(r.endDate.slice(0, 10))}) به
+            میزبان بازگردانید و دکمهٔ زیر را بزنید؛ میزبان اعلان می‌گیرد، سلامت
+            کالا را بررسی و با کد یک‌بارمصرف تأیید می‌کند. ثبت بازگشت بلافاصله
+            در رویدادهای همین اجاره نوشته می‌شود.
+          </p>
+          <button
+            type="button"
+            onClick={() => handleAction("request_return")}
+            disabled={busy === "request_return"}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-m3-primary text-white text-xs font-bold shadow-md shadow-m3-primary/25 transition active:scale-[0.99] disabled:opacity-60"
+          >
+            <span className="material-symbols-outlined text-base">replay</span>
+            {busy === "request_return"
+              ? "در حال ثبت بازگشت…"
+              : "ثبت درخواست بازگشت کالا"}
+          </button>
+        </div>
+      )}
+      {!terminal && role === "host" && status === "RETURN_REQUESTED" && (
+        <ReturnConfirmCard
+          reservationId={r.id}
+          code={r.code}
+          listingTitle={r.listing.title}
+          renterName={r.renter.name}
+        />
       )}
       {waitingOnOther && !terminal && (
         <div className="rounded-2xl border border-slate-200 bg-surface-container-low p-3.5 text-xs text-slate-600 font-semibold flex items-center gap-2">

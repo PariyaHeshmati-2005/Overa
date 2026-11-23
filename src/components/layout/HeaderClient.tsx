@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import UserMenu, { type HeaderUser } from "./UserMenu";
 import SearchBox from "@/components/search/SearchBox";
@@ -39,6 +39,37 @@ export default function HeaderClient({
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  // Live unread badge: the server render provides the initial count, then the
+  // bell polls /api/notifications every 30s so date-aware reminders (return
+  // deadline, overdue, …) show up while the user is on any page — without a
+  // manual reload. That fetch also drives the server-side reminder sweep.
+  const [unread, setUnread] = useState(unreadCount);
+  useEffect(() => {
+    setUnread(unreadCount);
+  }, [unreadCount]);
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    const timer = setInterval(async () => {
+      try {
+        const res = await fetch("/api/notifications", { cache: "no-store" });
+        const data = await res.json().catch(() => null);
+        if (alive && res.ok && Array.isArray(data?.notifications)) {
+          setUnread(
+            data.notifications.filter(
+              (n: { read: boolean }) => !n.read,
+            ).length,
+          );
+        }
+      } catch {
+        /* transient network issue — the next tick retries */
+      }
+    }, 30_000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [user]);
 
   function goHome() {
     setMenuOpen(false);
@@ -179,9 +210,9 @@ export default function HeaderClient({
                     strokeLinejoin="round"
                   ></path>
                 </svg>
-                {user && unreadCount > 0 && (
+                {user && unread > 0 && (
                   <span className="absolute top-1 right-1 min-w-4 h-4 px-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
-                    {new Intl.NumberFormat("fa-IR").format(unreadCount)}
+                    {new Intl.NumberFormat("fa-IR").format(unread)}
                   </span>
                 )}
               </button>

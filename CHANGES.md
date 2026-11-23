@@ -103,6 +103,23 @@
 - در `POST /api/reservations` هر درخواستی که با هر رزرو فعال دیگر همان وسیله (از «ثبت‌شده» تا «در انتظار بازگشت») هم‌پوشانی داشته باشد، با خطای **۴۰۹** و پیام «این بازه با اجاره دیگری هم‌پوشانی دارد؛ بازه دیگری انتخاب کنید.» رد می‌شود؛ رزروهای لغوشده یا ردشده تاریخ‌هایشان را آزاد می‌کنند و روزهای مسدودشده از سوی میزبان هم جداگانه بررسی می‌شوند.
 - تقویم شمسی صفحهٔ آگهی نیز روزهای رزروشده را از دیتای واقعی رزروها (`activeReservations`) غیرفعال نشان می‌دهد؛ یعنی از همان لحظهٔ انتخاب تاریخ، بازه‌های اشغال‌شده قابل انتخاب نیستند و دو کاربر هرگز نمی‌توانند یک وسیله را در یک بازهٔ مشترک اجاره کنند.
 
+## ۱۱) بازگشت کالا بدون پرش، اعلان‌های زنده و حذف اعلان‌ها (نسخهٔ ۴)
+
+### مرحلهٔ بازگشت کالا، باز و آمادهٔ عمل زیر کارت «گام بعدی شما»
+- در صفحهٔ روند اجاره، پنل بازگشت دیگر یک دکمهٔ پرش («رفتن به مرحله مربوطه») نیست:
+  - **مستأجر (اجارهٔ فعال):** کارت **«ثبت بازگشت کالا به میزبان»** دقیقاً زیر کارت «گام بعدی شما» باز است؛ در روز عودت با یک فشار روی «ثبت درخواست بازگشت کالا» مرحله ثبت می‌شود. برای مستأجر کد OTP لازم نیست — طبق طراحی، تأیید سلامت بازگشت با کد یک‌بارمصرف کار میزبان است (آینهٔ تحویل، که کدش سمت مستأجر بود).
+  - **میزبان (بازگشت ثبت‌شده):** کارت **«تأیید دریافت کالا»** به همان‌جا منتقل شد — دکمهٔ «سالم تحویل گرفتم» جریان کد یک‌بارمصرف دمو را باز می‌کند و دکمهٔ «اعلام خسارت» هم در همان کارت است؛ دیگر لازم نیست به پایین صفحه (بخش پروتکل) اسکرول کند.
+- دکمهٔ «رفتن به مرحله مربوطه» فقط برای همین دو مرحله حذف شد؛ بقیهٔ مراحل (قرارداد، پرداخت، تحویل و…) همان‌طور قبلی کار می‌کنند.
+- **رویدادها:** هر کدام از این کنش‌ها («ثبت بازگشت»، «تأیید بازگشت با کد»، «اعلام خسارت») بلافاصله در تایم‌لاین «رویدادهای این اجاره» با نام کنش‌گر و زمان دقیق نوشته می‌شود.
+
+### اعلان‌ها حالا زنده می‌رسند (رفع «اعلانی نیامد»)
+- علت: شمارندهٔ زنگ اعلان‌ها فقط یک بار هنگام باز شدن صفحه از سرور می‌آمد و تا رفرش دستی به‌روز نمی‌شد. اکنون زنگ بالای صفحه هر **۳۰ ثانیه** `/api/notifications` را چک می‌کند و شمارندهٔ قرمز بدون رفرش صفحه به‌روز می‌شود؛ همان درخواست، اسکن یادآوری‌های سمت سرور (روز عودت، تأخیر و…) را هم راه می‌اندازد — پس یادآوری «امروز مهلت بازگشت کالاست» همان روزی که سایت باز است، در زنگ ظاهر می‌شود.
+
+### حذف اعلان‌ها با سطل زباله (جدول دیتابیس پر نمی‌ماند)
+- در صفحهٔ «اعلان‌ها» کنار دکمه‌های «علامت‌گذاری» و «مشاهده» یک **آیکون سطل زباله** برای هر اعلان اضافه شد؛ زدنش آن اعلان را برای همیشه از دیتابیس حذف می‌کند (فقط اعلان‌های خود کاربر — مالکیت در سرور با همان کوئری چک می‌شود).
+- دکمهٔ **«حذف همه»** هم کنار «علامت‌گذاری همه…» اضافه شد که تمام اعلان‌های کاربر را با یک تایید پاک می‌کند.
+- API جدید: `DELETE /api/notifications` با `{ id }` برای تک‌اعلان و `{ all: true }` برای پاک‌سازی کامل؛ پاسخ شامل تعداد ردیف‌های حذف‌شده است.
+
 ---
 
 ## اصلاح تکمیلی (نسخه ۲)
@@ -112,6 +129,11 @@
 - مسیر کامل بازگشت کالا به مالک + اطلاع‌رسانی مدیر از بازگشت سالم و اختلاف‌ها (بخش ۱۰).
 - یادآوری هوشمند روز تحویل و مهلت عودت، با نمایش در همان سیستم اعلان‌ها (بخش ۱۰).
 - مستندسازی و تایید منع اجارهٔ هم‌زمان (۴۰۹ روی هم‌پوشانی + تقویم غیرفعال برای روزهای رزروشده) (بخش ۱۰).
+
+## اصلاح تکمیلی (نسخه ۴)
+- پنل بازگشت کالا به‌صورت خودکار و آمادهٔ عمل زیر کارت «گام بعدی شما» (بدون دکمهٔ پرش) — مستأجر یک فشار، میزبان کد OTP دمو و اعلام خسارت در همان‌جا (بخش ۱۱).
+- زنگ اعلان‌ها هر ۳۰ ثانیه به‌روز می‌شود؛ یادآوری‌ها بدون رفرش صفحه ظاهر می‌شوند (بخش ۱۱).
+- سطل زباله برای حذف تک‌اعلان و «حذف همه» + API حذف مخصوص هر کاربر (بخش ۱۱).
 
 ## فایل‌های جدید
 | مسیر | نقش |
@@ -134,7 +156,7 @@
 | `tests/rental-reminders.test.ts` | ۷ تست یادآوری تاریخ‌ها |
 
 ## فایل‌های اصلاح‌شده (مهم‌ترین‌ها)
-`prisma/schema.prisma` · `src/app/(main)/create-listing/CreateListingWizard.tsx` (+`page.tsx`) · `src/app/(main)/item-details/[id]/ItemDetailsApp.tsx` (+`page.tsx`) · `src/app/(main)/rental-lifecycle/[id]/RentalLifecycleClient.tsx` (+`page.tsx`) · `src/app/(main)/damage-claims/DamageClaimsClient.tsx` (+`page.tsx`) · `src/app/(main)/wallet/WalletClient.tsx` (+`page.tsx`) · `src/app/(main)/rentals/RentalsClient.tsx` · `src/app/(main)/notifications/NotificationsClient.tsx` · `src/lib/rental-state.ts` · `src/lib/reservation-otp.ts` · `src/app/api/reservations/route.ts` · `src/app/api/reservations/[id]/route.ts` · `src/app/api/reservations/[id]/otp/verify/route.ts` · `src/app/api/reviews/route.ts` · `src/app/api/conversations/[id]/messages/route.ts` · `src/app/api/listings/route.ts` · `src/app/api/listings/[id]/route.ts` · `src/app/api/notifications/route.ts` · `src/app/layout.tsx` · `scripts/seed.ts` · `package.json` · `README.md`
+`prisma/schema.prisma` · `src/app/(main)/create-listing/CreateListingWizard.tsx` (+`page.tsx`) · `src/app/(main)/item-details/[id]/ItemDetailsApp.tsx` (+`page.tsx`) · `src/app/(main)/rental-lifecycle/[id]/RentalLifecycleClient.tsx` (+`page.tsx`) · `src/app/(main)/damage-claims/DamageClaimsClient.tsx` (+`page.tsx`) · `src/app/(main)/wallet/WalletClient.tsx` (+`page.tsx`) · `src/app/(main)/rentals/RentalsClient.tsx` · `src/app/(main)/notifications/NotificationsClient.tsx` · `src/components/layout/HeaderClient.tsx` · `src/lib/rental-state.ts` · `src/lib/reservation-otp.ts` · `src/app/api/reservations/route.ts` · `src/app/api/reservations/[id]/route.ts` · `src/app/api/reservations/[id]/otp/verify/route.ts` · `src/app/api/reviews/route.ts` · `src/app/api/conversations/[id]/messages/route.ts` · `src/app/api/listings/route.ts` · `src/app/api/listings/[id]/route.ts` · `src/app/api/notifications/route.ts` · `src/app/layout.tsx` · `scripts/seed.ts` · `package.json` · `README.md`
 
 ## اجرا (برای ماشین شما)
 ```bash

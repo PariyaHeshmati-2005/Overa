@@ -104,6 +104,8 @@ export default function NotificationsClient({
   const [items, setItems] = useState<NotificationRow[]>(initialNotifications);
   const [filter, setFilter] = useState<Filter>("all");
   const [markingAll, setMarkingAll] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingAll, setDeletingAll] = useState(false);
 
   const unreadCount = items.filter((n) => !n.read).length;
   const visible = filter === "all" ? items : items.filter((n) => !n.read);
@@ -156,6 +158,50 @@ export default function NotificationsClient({
       toast.error("علامت‌گذاری اعلان‌ها انجام نشد؛ دوباره تلاش کنید.");
     } finally {
       setMarkingAll(false);
+    }
+  }
+
+  /** Trash icon per card — permanently deletes THIS user's notification from
+   *  the database (DELETE /api/notifications { id }) so the table never piles
+   *  up. Ownership is enforced server-side inside the where clause. */
+  async function removeOne(id: string) {
+    setDeletingId(id);
+    setItems((prev) => prev.filter((n) => n.id !== id)); // optimistic
+    try {
+      const res = await fetch("/api/notifications", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("اعلان حذف شد.");
+      router.refresh();
+    } catch {
+      toast.error("حذف اعلان انجام نشد؛ دوباره تلاش کنید.");
+      void reload();
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  /** «حذف همه» — clears every notification of the signed-in user from the DB. */
+  async function removeAll() {
+    if (!window.confirm("همه اعلان‌های شما برای همیشه حذف شوند؟")) return;
+    setDeletingAll(true);
+    try {
+      const res = await fetch("/api/notifications", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ all: true }),
+      });
+      if (!res.ok) throw new Error();
+      setItems([]);
+      toast.success("همه اعلان‌ها حذف شدند.");
+      router.refresh();
+    } catch {
+      toast.error("حذف اعلان‌ها انجام نشد؛ دوباره تلاش کنید.");
+    } finally {
+      setDeletingAll(false);
     }
   }
 
@@ -212,6 +258,19 @@ export default function NotificationsClient({
                 className="px-4 py-2 rounded-full bg-primary text-white text-xs font-bold hover:opacity-90 transition-all shadow-sm shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {markingAll ? "در حال ثبت…" : "علامت‌گذاری همه به‌عنوان خوانده‌شده"}
+              </button>
+              {/* Trash everything — permanently frees this user's rows. */}
+              <button
+                type="button"
+                onClick={removeAll}
+                disabled={deletingAll || items.length === 0}
+                title="حذف همه اعلان‌ها از دیتابیس"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-red-50 text-red-600 border border-red-200 text-xs font-bold hover:bg-red-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.9" viewBox="0 0 24 24">
+                  <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round"></path>
+                </svg>
+                {deletingAll ? "در حال حذف…" : "حذف همه"}
               </button>
             </div>
           </div>
@@ -304,6 +363,19 @@ export default function NotificationsClient({
                               مشاهده
                             </Link>
                           ) : null}
+                          {/* Per-item trash — deletes this user's row from the DB. */}
+                          <button
+                            type="button"
+                            onClick={() => removeOne(n.id)}
+                            disabled={deletingId === n.id}
+                            aria-label="حذف این اعلان"
+                            title="حذف این اعلان از دیتابیس"
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-neutral-muted/70 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.9" viewBox="0 0 24 24">
+                              <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round"></path>
+                            </svg>
+                          </button>
                         </div>
                       </div>
                     </div>
