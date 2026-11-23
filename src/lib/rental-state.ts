@@ -89,6 +89,7 @@ export type ReservationAction =
   | "complete_inspection"
   | "release_deposit"
   | "dispute"
+  | "refuse_delivery"
   | "cancel";
 
 /** Which side (renter / host / admin) may perform each action. */
@@ -104,6 +105,9 @@ export const ACTION_ACTORS: Record<ReservationAction, ("renter" | "host" | "admi
   complete_inspection: ["renter", "host"],
   release_deposit: ["host"],
   dispute: ["renter", "host"],
+  // Renter refuses the item AT DELIVERY (damage found on arrival) — the whole
+  // order is voided and every paid Toman flows back to the renter (sandbox).
+  refuse_delivery: ["renter"],
   cancel: ["renter", "host"],
 };
 
@@ -155,6 +159,9 @@ const TRANSITIONS: Record<ReservationStatus, Partial<Record<ReservationAction, R
   // renter verifies receipt with a one-time code (OTP flow).
   DELIVERED: {
     confirm_delivery: "RENTAL_ACTIVE",
+    // Renter found the item damaged on arrival and refuses the hand-over:
+    // the order is voided entirely (full sandbox refund, no active rental).
+    refuse_delivery: "CANCELLED",
     dispute: "DISPUTED",
   },
   RENTAL_ACTIVE: {

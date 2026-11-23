@@ -15,6 +15,7 @@ import type { ReservationAction } from "@/lib/rental-state";
 import DeliveryConfirmCard from "@/components/overa/DeliveryConfirmCard";
 import ReturnConfirmCard from "@/components/overa/ReturnConfirmCard";
 import SignatureCard from "@/components/overa/SignatureCard";
+import SaktehSignaturePad from "@/components/overa/SaktehSignaturePad";
 import MapView from "@/components/overa/MapView";
 
 /* ------------------------------------------------------------------ types */
@@ -34,6 +35,12 @@ export type LifecycleReservation = {
   renterProtocol: string | null;
   hostProtocol: string | null;
   depositStatus?: string | null;
+  /** CASH (deposit escrowed) | PROMISSORY (deposit guaranteed by sakteh). */
+  paymentMethod?: string | null;
+  /** Delivery inspection outcome: PENDING | ACCEPTED_CLEAN | ACCEPTED_WITH_ISSUES | REFUSED_DAMAGE */
+  deliveryStatus?: string | null;
+  /** Renter's issue notes taken at delivery — arbitration evidence. */
+  deliveryNote?: string | null;
   /** Timestamp of the renter's verified digital signature (null = unsigned). */
   signedByRenterAt?: string | null;
   listing: {
@@ -214,6 +221,10 @@ const EVENT_META: Record<string, { title: string; icon: string }> = {
   COMPLETE_INSPECTION: { title: "ثبت صورت‌جلسه تحویل", icon: "task_alt" },
   RELEASE_DEPOSIT: { title: "آزادسازی ودیعه", icon: "payments" },
   DISPUTE: { title: "اعلام خسارت / اختلاف", icon: "gavel" },
+  REFUSE_DELIVERY: {
+    title: "اعلام خسارت و ابطال اجاره هنگام تحویل",
+    icon: "block",
+  },
   CANCEL: { title: "لغو رزرو", icon: "block" },
 };
 
@@ -245,7 +256,13 @@ export default function RentalLifecycleClient({
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [contractTab, setContractTab] = useState(0);
-  const [depositMode, setDepositMode] = useState("cash");
+  const [depositMode, setDepositModeState] = useState("cash");
+  const [saktehSignature, setSaktehSignature] = useState<string | null>(null);
+  /** Switching the guarantee mode invalidates a previous sakteh signature. */
+  function setDepositMode(mode: string) {
+    setDepositModeState(mode);
+    setSaktehSignature(null);
+  }
   const [agreed, setAgreed] = useState(false);
   const [protocol, setProtocol] = useState("");
   const [disputeNote, setDisputeNote] = useState("");
@@ -262,8 +279,12 @@ export default function RentalLifecycleClient({
     role === "renter" && ["REQUESTED", "APPROVED"].includes(status);
   const renterSigned = Boolean(r.signedByRenterAt);
   const totalDue = r.subtotal + r.deposit;
+  /* سفته الکترونیک: the promissory note guarantees the deposit, so the
+     gateway charge covers the RENTAL FEE ONLY. */
+  const payableNow = depositMode === "promissory" ? r.subtotal : totalDue;
+  const saktehReady = depositMode !== "promissory" || Boolean(saktehSignature);
   const insufficientBalance =
-    role === "renter" && can("pay") && viewerWalletBalance < totalDue;
+    role === "renter" && can("pay") && viewerWalletBalance < payableNow;
 
   /* Plain-language next step for the CURRENT viewer (kills the "what now?" deadlock). */
   type NextStep = { title: string; body: string; icon: string; anchor?: string };
@@ -310,16 +331,27 @@ export default function RentalLifecycleClient({
     }
   } else if (status === "AGREEMENT" || status === "PAYMENT") {
     if (role === "renter") {
-      nextStep = {
-        title: insufficientBalance
-          ? "ابتدا کیف پول را شارژ کنید، سپس پرداخت آزمایشی را انجام دهید"
-          : "پرداخت آزمایشی (اجاره + ودیعه) را انجام دهید",
-        body: insufficientBalance
-          ? `موجودی کیف پول شما ${faToman(viewerWalletBalance)} تومان است؛ برای این سفارش ${faToman(totalDue)} تومان لازم است.`
-          : `مجموع قابل پرداخت ${faToman(totalDue)} تومان است (اجاره + ودیعه بازگشت‌پذیر).`,
-        icon: insufficientBalance ? "account_balance_wallet" : "lock_open",
-        anchor: "#payment",
-      };
+      nextStep = depositMode === "promissory"
+        ? {
+            title: saktehSignature
+              ? "امضای سفته ثبت شده است؛ پرداخت هزینه اجاره را نهایی کنید"
+              : "سفته الکترونیک را امضا کنید تا پرداخت فعال شود",
+            body: saktehSignature
+              ? `مبلغ قابل پرداخت در درگاه فقط هزینهٔ اجاره است: ${faToman(payableNow)} تومان (ودیعه با سفته تضمین شده است).`
+              : "متن سفته را بخوانید، در کادر سفید امضا کنید و سپس فقط هزینهٔ اجاره را در درگاه پرداخت کنید.",
+            icon: insufficientBalance ? "account_balance_wallet" : "draw",
+            anchor: "#payment",
+          }
+        : {
+            title: insufficientBalance
+              ? "ابتدا کیف پول را شارژ کنید، سپس پرداخت آزمایشی را انجام دهید"
+              : "پرداخت آزمایشی (اجاره + ودیعه) را انجام دهید",
+            body: insufficientBalance
+              ? `موجودی کیف پول شما ${faToman(viewerWalletBalance)} تومان است؛ برای این سفارش ${faToman(payableNow)} تومان لازم است.`
+              : `مجموع قابل پرداخت ${faToman(payableNow)} تومان است (اجاره + ودیعه بازگشت‌پذیر).`,
+            icon: insufficientBalance ? "account_balance_wallet" : "lock_open",
+            anchor: "#payment",
+          };
     } else {
       waitingOnOther = "در انتظار انجام پرداخت آزمایشی توسط مستأجر هستید.";
     }
@@ -402,6 +434,11 @@ export default function RentalLifecycleClient({
     (a) =>
       can(a) &&
       a !== "confirm_delivery" &&
+      /* «اعلام خسارت» is contextual: at DELIVERED it lives in the renter's
+         three-option delivery card; at RETURN_REQUESTED the host's damage
+         button opens /declare-damage. Only the mid-rental stage keeps ONE
+         plain row button (item broke during the rental period). */
+      !(a === "dispute" && status !== "RENTAL_ACTIVE") &&
       !(a === "confirm_return" && status === "RETURN_REQUESTED") &&
       // While the signature card is active, «تایید قرارداد» happens through
       // the renter's one-time-code signature — not a plain button.
@@ -1033,7 +1070,9 @@ export default function RentalLifecycleClient({
                 </div>
                 <div className="flex justify-between items-center p-3 rounded-xl bg-surface-container-high text-xs">
                   <span className="font-bold text-m3-primary">
-                    ودیعه امانی مسدودشونده (قابل استرداد):
+                    {depositMode === "promissory"
+                      ? "ودیعه — تضمین با سفته الکترونیک (بدون مسدودی وجه):"
+                      : "ودیعه امانی مسدودشونده (قابل استرداد):"}
                   </span>
                   <span className="font-extrabold text-m3-primary text-sm">
                     {faToman(r.deposit)} تومان
@@ -1045,11 +1084,13 @@ export default function RentalLifecycleClient({
                       مجموع پرداختی در درگاه:
                     </span>
                     <div className="text-[11px] text-slate-400">
-                      شامل هزینه اجاره + ودیعه بازگشت‌پذیر امانی
+                      {depositMode === "promissory"
+                        ? "فقط هزینه اجاره — ودیعه با سفته الکترونیک تضمین شده است"
+                        : "شامل هزینه اجاره + ودیعه بازگشت‌پذیر امانی"}
                     </div>
                   </div>
                   <div className="text-base font-extrabold text-m3-primary">
-                    {faToman(r.total)} تومان
+                    {faToman(payableNow)} تومان
                   </div>
                 </div>
 
@@ -1063,6 +1104,45 @@ export default function RentalLifecycleClient({
                   </span>
                 </div>
 
+                {/* سفته الکترونیک flow: the legal note + a white canvas the
+                    renter signs with mouse/touch. The pay button stays
+                    disabled until the signature is confirmed — the server
+                    re-validates the signature server-side. */}
+                {depositMode === "promissory" && role === "renter" && can("pay") && (
+                  <div className="space-y-3 rounded-xl border border-m3-primary/30 bg-surface-container-low p-4">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-m3-primary text-lg">
+                        description
+                      </span>
+                      <h3 className="text-xs font-extrabold text-on-surface">
+                        سند سفته الکترونیک — متن سفته
+                      </h3>
+                    </div>
+                    <div className="rounded-xl bg-white border border-outline-variant/60 p-4 text-[11px] leading-6 text-slate-700">
+                      <p className="font-bold text-slate-800 mb-2 text-center">
+                        سفته الکترونیک اجارهٔ اٌوِرا
+                      </p>
+                      <p>
+                        من، مستأجر سفارش <b>{r.code}</b>، متعهد می‌شوم مبلغ
+                        ودیعهٔ <b>{faToman(r.deposit)} تومان</b> مربوط به اجارهٔ
+                        «<b>{r.listing.title}</b>» به مدت{" "}
+                        {faNumber(r.days)} روز را در صورت اعلام خسارت میزبان و
+                        تأیید کارشناسان اٌوِرا، طبق قوانین و مقررات سایت و
+                        بدون هیچ‌گونه اعتراضی بپردازم. در صورت بازگشت سالم
+                        کالا، این سفته بدون هیچ اقدامی از طرف من لغو و آزاد
+                        می‌شود. مبلغ فوق از وجوه نقدی پرداخت‌شده کسر نمی‌گردد.
+                      </p>
+                    </div>
+                    <SaktehSignaturePad
+                      signed={Boolean(saktehSignature)}
+                      onConfirmed={(dataUrl) => {
+                        setSaktehSignature(dataUrl);
+                        toast.success("امضای سفته ثبت شد؛ حالا فقط هزینهٔ اجاره را در درگاه پرداخت کنید.");
+                      }}
+                    />
+                  </div>
+                )}
+
                 {/* Wallet balance guard: no negative balances — the renter must
                     top up first (server enforces the same rule). */}
                 {insufficientBalance && (
@@ -1075,7 +1155,7 @@ export default function RentalLifecycleClient({
                     </p>
                     <p className="text-[11px] text-on-surface-variant leading-relaxed">
                       موجودی فعلی: {faToman(viewerWalletBalance)} تومان — مجموع
-                      لازم برای این سفارش: {faToman(totalDue)} تومان. ابتدا کیف
+                      لازم برای این سفارش: {faToman(payableNow)} تومان. ابتدا کیف
                       پول را شارژ کنید، سپس پرداخت را انجام دهید.
                     </p>
                     <Link
@@ -1092,15 +1172,22 @@ export default function RentalLifecycleClient({
 
                 <button
                   type="button"
-                  onClick={() => can("pay") && act("pay")}
-                  disabled={!can("pay") || busy === "pay"}
+                  onClick={() =>
+                    can("pay") &&
+                    (depositMode === "promissory"
+                      ? act("pay", { method: "PROMISSORY", signature: saktehSignature ?? "" })
+                      : act("pay"))
+                  }
+                  disabled={!can("pay") || busy === "pay" || !saktehReady}
                   title={
                     insufficientBalance
                       ? "ابتدا کیف پول را شارژ کنید"
-                      : undefined
+                      : depositMode === "promissory" && !saktehReady
+                        ? "برای پرداخت با سفته، ابتدا متن سفته را امضا کنید"
+                        : undefined
                   }
                   className={`w-full mt-2 py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md transition active:scale-[0.99] ${
-                    can("pay") && !insufficientBalance
+                    can("pay") && !insufficientBalance && saktehReady
                       ? "bg-m3-primary hover:bg-primary-container text-white shadow-m3-primary/25"
                       : "bg-surface-container-high text-on-surface-variant cursor-not-allowed"
                   }`}
@@ -1129,6 +1216,36 @@ export default function RentalLifecycleClient({
           title="تحویل و بازرسی سلامت کالا"
           state={deliveryDone ? "done" : deliveryActive ? "active" : "locked"}
         />
+        {/* Host's hand-over recording — one clear CTA in the stage where it
+            belongs (previously buried in the sticky bar). */}
+        {role === "host" && status === "PAID" && (
+          <div className="rounded-2xl border border-purple-100 bg-white shadow-sm p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-m3-primary text-xl">
+                local_shipping
+              </span>
+              <p className="text-xs font-extrabold text-slate-800">
+                تحویل کالا به مستأجر
+              </p>
+            </div>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              کالا را در قرار مقرر به مستأجر تحویل دهید و دکمهٔ زیر را بزنید؛
+              پس از ثبت تحویل، کد یک‌بارمصرف تأیید دریافت برای مستأجر صادر
+              می‌شود و دورهٔ اجاره با تأیید او فعال خواهد شد.
+            </p>
+            <button
+              type="button"
+              onClick={() => handleAction("deliver")}
+              disabled={busy === "deliver"}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-m3-primary text-white text-xs font-bold shadow-md shadow-m3-primary/25 transition active:scale-[0.99] disabled:opacity-60"
+            >
+              <span className="material-symbols-outlined text-base">
+                local_shipping
+              </span>
+              {busy === "deliver" ? "در حال ثبت تحویل…" : "ثبت تحویل کالا (تحویل شد)"}
+            </button>
+          </div>
+        )}
         {role === "renter" && status === "DELIVERED" && (
           <DeliveryConfirmCard
             reservationId={r.id}
@@ -1136,6 +1253,26 @@ export default function RentalLifecycleClient({
             listingTitle={r.listing.title}
             hostName={r.host.name}
           />
+        )}
+        {/* The renter's delivery inspection note — visible to BOTH sides and
+            used as arbitration evidence if a damage claim follows. */}
+        {r.deliveryNote && (
+          <div className="rounded-2xl border border-accent-gold/40 bg-accent-gold/10 p-4 space-y-1.5">
+            <div className="flex items-center gap-2 text-xs font-extrabold text-accent-gold">
+              <span className="material-symbols-outlined text-base">
+                report_problem
+              </span>
+              یادداشت بازرسی تحویل مستأجر
+              {r.deliveryStatus === "REFUSED_DAMAGE" && " — اجاره باطل شد"}
+            </div>
+            <p className="text-xs text-slate-700 leading-6 whitespace-pre-wrap">
+              {r.deliveryNote}
+            </p>
+            <p className="text-[11px] text-slate-500">
+              این یادداشت در پرونده‌های خسارت و داوری کارشناسان اٌوِرا مبنای
+              رسیدگی قرار می‌گیرد.
+            </p>
+          </div>
         )}
         {deliveryActive && (
           <>
@@ -1219,15 +1356,6 @@ export default function RentalLifecycleClient({
                 جایگزین مراجع قانونی نیست.
               </p>
             </div>
-            {/* Available actions in DELIVERED (dispute escape hatch — the renter's
-                delivery confirmation itself is OTP-gated and lives in the card above). */}
-            {status === "DELIVERED" && visibleActions.length > 0 && (
-              <ActionRow
-                busy={busy}
-                visible={visibleActions}
-                onAction={handleAction}
-              />
-            )}
           </>
         )}
         {deliveryDone && (
@@ -1595,58 +1723,10 @@ export default function RentalLifecycleClient({
             >
               گفتگو
             </button>
-            {can("pay") && (
-              <Link
-                href="/wallet"
-                title={
-                  insufficientBalance
-                    ? "موجودی کیف پول کافی نیست — ابتدا شارژ کنید"
-                    : undefined
-                }
-                className={`px-6 py-2.5 rounded-xl text-xs font-bold shadow-md transition inline-flex items-center gap-1.5 ${
-                  insufficientBalance
-                    ? "bg-amber-100 text-amber-800 hover:bg-amber-200"
-                    : "bg-m3-primary hover:bg-primary-container text-white shadow-m3-primary/25"
-                }`}
-              >
-                <span className="material-symbols-outlined text-sm">
-                  {insufficientBalance ? "add_card" : "lock_open"}
-                </span>
-                {insufficientBalance ? "شارژ کیف پول و پرداخت" : "پرداخت آزمایشی (Sandbox)"}
-              </Link>
-            )}
-            {can("confirm_agreement") &&
-              visibleActions.includes("confirm_agreement") && (
-              <button
-                type="button"
-                onClick={() =>
-                  agreed
-                    ? act("confirm_agreement")
-                    : toast.error("لطفاً ابتدا شرایط قرارداد را تایید فرمایید.")
-                }
-                disabled={busy === "confirm_agreement"}
-                className="px-6 py-2.5 bg-m3-primary hover:bg-primary-container text-white rounded-xl text-xs font-bold shadow-md shadow-m3-primary/25 transition flex items-center justify-center gap-1"
-              >
-                <span>
-                  {busy === "confirm_agreement"
-                    ? "در حال ثبت..."
-                    : "تایید قرارداد"}
-                </span>
-                <span className="material-symbols-outlined text-sm">
-                  arrow_left
-                </span>
-              </button>
-            )}
-            {can("deliver") && (
-              <button
-                type="button"
-                onClick={() => act("deliver")}
-                disabled={busy === "deliver"}
-                className="px-6 py-2.5 bg-m3-primary hover:bg-primary-container text-white rounded-xl text-xs font-bold shadow-md shadow-m3-primary/25 transition"
-              >
-                {busy === "deliver" ? "در حال ثبت..." : "تحویل شد"}
-              </button>
-            )}
+            {/* Deliberately minimal: every PRIMARY action (pay, agreement,
+                delivery, return, damage) lives inside its own stage card in
+                the page flow — the sticky bar only carries navigation aids so
+                the user never faces duplicate or confusing buttons. */}
             <Link
               href="/rentals"
               className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"

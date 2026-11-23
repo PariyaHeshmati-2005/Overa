@@ -39,6 +39,12 @@ type Props = {
   successMessage: string;
   /** Optional extra callback after a verified code (e.g. reload a list). */
   onVerified?: () => void;
+  /**
+   * Optional extra fields sent along with the verify request — e.g. the
+   * renter's «تحویل کالا با وجود برخی مشکلات» note (issuesNote) which the
+   * server stores on the order as arbitration evidence.
+   */
+  extraBody?: Record<string, string>;
 };
 
 export default function OtpConfirmFlow({
@@ -47,6 +53,7 @@ export default function OtpConfirmFlow({
   requestLabel,
   successMessage,
   onVerified,
+  extraBody,
 }: Props) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("idle");
@@ -127,7 +134,7 @@ export default function OtpConfirmFlow({
       const res = await fetch(`/api/reservations/${reservationId}/otp/verify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stage, code }),
+        body: JSON.stringify({ stage, code, ...extraBody }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {

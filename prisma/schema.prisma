@@ -214,6 +214,20 @@ model Reservation {
   // (one-time code, AGREEMENT_SIGNATURE stage). Only the renter signs the
   // contract; the host's approval is the plain state-machine action.
   signedByRenterAt DateTime?
+  // Payment guarantee chosen by the renter at the PAYMENT stage (lifecycle
+  // payment card): CASH — the deposit is escrowed together with the rent
+  // (sandbox); PROMISSORY — «سفته الکترونیک»: the deposit is guaranteed by a
+  // signed electronic promissory note, NO deposit money is charged and the
+  // gateway charge covers the RENTAL FEE ONLY.
+  paymentMethod   String    @default("CASH") // CASH | PROMISSORY
+  saktehSignature String?   // data-URL PNG of the renter's promissory-note signature
+  saktehSignedAt  DateTime?
+  // Delivery inspection outcome recorded at the DELIVERED stage (renter side):
+  // PENDING | ACCEPTED_CLEAN | ACCEPTED_WITH_ISSUES | REFUSED_DAMAGE
+  deliveryStatus String @default("PENDING")
+  // Renter's issue notes taken at delivery — kept on the order as arbitration
+  // evidence (surfaced to the host's damage page and the admin arbitration).
+  deliveryNote   String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -370,6 +384,10 @@ model DamageClaim {
   decidedAt     DateTime?
   appealMessage String?
   settlementNote String?
+  // Deduction (Toman) decided by the arbitration verdict: 0 = deposit fully
+  // released to the renter, deposit = paid to the host, in-between = partial
+  // deduction (settlement moves the wallet balances accordingly — sandbox).
+  chargeAmount  Int?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

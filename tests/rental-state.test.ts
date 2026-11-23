@@ -32,6 +32,22 @@ describe("rental state machine", () => {
     expect(assertTransition("INSPECTION", "complete_inspection")).toBe("COMPLETED");
   });
 
+  test("refuse_delivery: renter voids the order at the DELIVERED stage", () => {
+    // DELIVERED --refuse_delivery--> CANCELLED (damage found on arrival).
+    expect(assertTransition("DELIVERED", "refuse_delivery")).toBe("CANCELLED");
+    // Renter-only action…
+    expect(canAct("DELIVERED", "refuse_delivery", "renter")).toBe(true);
+    // …the host and the admin can never refuse on the renter's behalf.
+    expect(canAct("DELIVERED", "refuse_delivery", "host")).toBe(false);
+    expect(canAct("DELIVERED", "refuse_delivery", "admin")).toBe(false);
+    // And it is impossible anywhere else in the lifecycle.
+    expect(canAct("PAID", "refuse_delivery", "renter")).toBe(false);
+    expect(canAct("RENTAL_ACTIVE", "refuse_delivery", "renter")).toBe(false);
+    expect(() => assertTransition("RENTAL_ACTIVE", "refuse_delivery")).toThrow(
+      TransitionError,
+    );
+  });
+
   test("invalid jumps are rejected", () => {
     expect(() => assertTransition("REQUESTED", "pay")).toThrow(TransitionError);
     expect(() => assertTransition("REQUESTED", "deliver")).toThrow();

@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
 import OtpConfirmFlow from "./OtpConfirmFlow";
 
 /**
@@ -32,35 +31,12 @@ export default function ReturnConfirmCard({
 }: ReturnConfirmCardProps) {
   const router = useRouter();
   const [otpOpen, setOtpOpen] = useState(false);
-  const [disputing, setDisputing] = useState(false);
 
-  async function declareDamage() {
-    if (
-      !window.confirm(
-        `آیا برای سفارش «${code}» اعلام خسارت ثبت شود؟ سفارش به مرحله بررسی اختلاف منتقل می‌شود و تکمیل خودکار آن متوقف خواهد شد.`,
-      )
-    )
-      return;
-    setDisputing(true);
-    try {
-      const res = await fetch(`/api/reservations/${reservationId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "dispute" }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        toast.error(data.error ?? "ثبت اعلام خسارت ممکن نشد.");
-        return;
-      }
-      toast.success("درخواست اعلام خسارت ثبت شد. سفارش برای بررسی اختلاف به مرحله بررسی منتقل گردید.");
-      onSettled?.();
-      router.refresh();
-    } catch {
-      toast.error("خطا در ارتباط با سرور");
-    } finally {
-      setDisputing(false);
-    }
+  /* The damage button is a NAVIGATION, not an instant action: the host lands
+     on /declare-damage/[id] where the damage description MUST be written —
+     submitting there creates the DamageClaim + flips the order to DISPUTED. */
+  function goDeclareDamage() {
+    router.push(`/declare-damage/${reservationId}`);
   }
 
   return (
@@ -128,21 +104,19 @@ export default function ReturnConfirmCard({
             <button
               type="button"
               onClick={() => setOtpOpen(true)}
-              disabled={disputing}
-              className="py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md transition active:scale-[0.99] bg-m3-primary hover:bg-primary-container text-white shadow-m3-primary/25 disabled:opacity-60"
+              className="py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md transition active:scale-[0.99] bg-m3-primary hover:bg-primary-container text-white shadow-m3-primary/25"
             >
               <span className="material-symbols-outlined text-base">check_circle</span>
               سالم تحویل گرفتم
             </button>
-            {/* Option 2: declare damage (existing dispute action) */}
+            {/* Option 2: declare damage → dedicated description page */}
             <button
               type="button"
-              onClick={() => void declareDamage()}
-              disabled={disputing}
-              className="py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition active:scale-[0.99] bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 disabled:opacity-60"
+              onClick={goDeclareDamage}
+              className="py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition active:scale-[0.99] bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200"
             >
               <span className="material-symbols-outlined text-base">gavel</span>
-              {disputing ? "در حال ثبت اعلام خسارت..." : "اعلام خسارت"}
+              اعلام خسارت
             </button>
           </div>
         )}

@@ -103,6 +103,9 @@ export default async function RentalLifecyclePage({
           renterProtocol: reservation.renterProtocol,
           hostProtocol: reservation.hostProtocol,
           depositStatus: reservation.depositStatus,
+          paymentMethod: reservation.paymentMethod,
+          deliveryStatus: reservation.deliveryStatus,
+          deliveryNote: reservation.deliveryNote,
           signedByRenterAt: reservation.signedByRenterAt
             ? reservation.signedByRenterAt.toISOString()
             : null,

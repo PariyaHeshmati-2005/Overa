@@ -21,9 +21,19 @@ export type PanelClaim = {
     id: string;
     code: string;
     deposit: number;
+    paymentMethod?: string | null;
+    deliveryStatus?: string | null;
+    deliveryNote?: string | null;
     itemTitle: string | null;
     imageUrl: string | null;
   } | null;
+};
+
+const DELIVERY_STATUS_LABELS: Record<string, string> = {
+  PENDING: "بدون یادداشت بازرسی",
+  ACCEPTED_CLEAN: "سالم تحویل گرفته شد",
+  ACCEPTED_WITH_ISSUES: "با یادداشت مشکلات تحویل گرفته شد",
+  REFUSED_DAMAGE: "تحویل رد شد (اجاره باطل شد)",
 };
 
 const STATUS_BADGES: Record<string, { label: string; cls: string }> = {
@@ -74,6 +84,9 @@ export default function ArbitrationPanelClient({
 
   const [busy, setBusy] = useState(false);
   const [decisionText, setDecisionText] = useState("");
+  const [verdict, setVerdict] = useState<string>("RELEASE_TO_RENTER");
+  const [chargeAmount, setChargeAmount] = useState("");
+  const [settleNote, setSettleNote] = useState("");
   const [toast, setToast] = useState<{
     text: string;
     kind: "ok" | "err";
@@ -290,7 +303,9 @@ export default function ArbitrationPanelClient({
                     </div>
                     <div>
                       <span className="text-xs text-amber-700 font-medium block mt-2">
-                        ودیعه مسدود نزد اٌوِرا:
+                        {selected.reservation.paymentMethod === "PROMISSORY"
+                          ? "ودیعه با سفته الکترونیک تضمین شده (نقدی نشده):"
+                          : "ودیعه مسدود نزد اٌوِرا:"}
                       </span>
                       <div className="text-lg font-black font-mono text-amber-800 tracking-wider mt-2">
                         {faToman(selected.reservation.deposit)}{" "}
@@ -299,6 +314,15 @@ export default function ArbitrationPanelClient({
                         </span>
                       </div>
                     </div>
+                  </div>
+                )}
+                {selected.reservation?.deliveryNote && (
+                  <div className="md:col-span-3 rounded-xl border border-amber-300 bg-amber-50/70 p-3 text-xs text-slate-700 leading-6">
+                    <span className="font-bold text-amber-800 block mb-1">
+                      یادداشت بازرسی تحویل مستأجر (
+                      {DELIVERY_STATUS_LABELS[selected.reservation.deliveryStatus ?? ""] ?? selected.reservation.deliveryStatus}):
+                    </span>
+                    {selected.reservation.deliveryNote}
                   </div>
                 )}
               </div>
@@ -531,26 +555,90 @@ export default function ArbitrationPanelClient({
                         {selected.decision ?? "—"}
                       </div>
                       {selected.status === "DECIDED" && (
-                        <button
-                          className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow transition flex items-center justify-center gap-2 disabled:opacity-60"
-                          disabled={busy}
-                          onClick={() =>
-                            patchClaim(
-                              selected.id,
-                              {
-                                status: "SETTLED",
-                                settlementNote:
-                                  "تسویه ودیعه مطابق رأی داوری ثبت شد (شبیه‌سازی).",
-                              },
-                              "تسویه پرونده ثبت شد (شبیه‌سازی).",
-                            )
-                          }
-                        >
-                          <span className="material-symbols-outlined text-sm">
-                            handshake
-                          </span>
-                          تسویه از ودیعه و بستن پرونده
-                        </button>
+                        <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/50 p-3.5">
+                          <p className="text-xs font-extrabold text-slate-800">
+                            رأی دربارهٔ ودیعه (اجرای رأی، کیف پول طرفین را واقعاً تسویه می‌کند — شبیه‌سازی):
+                          </p>
+                          {[
+                            { id: "RELEASE_TO_RENTER", label: "آزادسازی کامل ودیعه به نفع مستأجر", icon: "undo" },
+                            { id: "PARTIAL_DEDUCTION", label: "کسر بخشی از ودیعه (سهم میزبان) و آزادسازی مابقی", icon: "content_cut" },
+                            { id: "PAY_TO_HOST", label: "پرداخت کامل ودیعه به میزبان", icon: "payments" },
+                          ].map((v) => (
+                            <label
+                              key={v.id}
+                              className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-xs font-bold cursor-pointer transition ${
+                                verdict === v.id
+                                  ? "border-m3-primary bg-white shadow-sm text-slate-900"
+                                  : "border-slate-200 bg-white/60 text-slate-600 hover:bg-white"
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name="verdict"
+                                value={v.id}
+                                checked={verdict === v.id}
+                                onChange={() => setVerdict(v.id)}
+                                className="accent-[#630ed4]"
+                              />
+                              <span className="material-symbols-outlined text-base text-m3-primary">
+                                {v.icon}
+                              </span>
+                              {v.label}
+                            </label>
+                          ))}
+                          {verdict === "PARTIAL_DEDUCTION" && selected.reservation && (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                inputMode="numeric"
+                                min={1}
+                                max={selected.reservation.deposit}
+                                value={chargeAmount}
+                                onChange={(e) => setChargeAmount(e.target.value)}
+                                placeholder={`مبلغ کسر به تومان (حداکثر ${selected.reservation.deposit.toLocaleString("en-US")})`}
+                                className="w-full text-xs rounded-xl bg-white border border-slate-200 px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-m3-primary/30"
+                              />
+                              <span className="text-[11px] text-slate-500 whitespace-nowrap">
+                                از {faToman(selected.reservation.deposit)} تومان ودیعه
+                              </span>
+                            </div>
+                          )}
+                          <textarea
+                            rows={2}
+                            value={settleNote}
+                            onChange={(e) => setSettleNote(e.target.value)}
+                            placeholder="متن تسویه/توضیح اجرای رأی (اختیاری — به طرفین اعلام می‌شود)…"
+                            className="w-full text-xs rounded-xl bg-white border border-slate-200 px-3 py-2.5 text-slate-800 placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-m3-primary/30"
+                          />
+                          <button
+                            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow transition flex items-center justify-center gap-2 disabled:opacity-60"
+                            disabled={busy}
+                            onClick={() =>
+                              patchClaim(
+                                selected.id,
+                                {
+                                  status: "SETTLED",
+                                  verdict,
+                                  ...(verdict === "PARTIAL_DEDUCTION"
+                                    ? { chargeAmount: Number(chargeAmount) || 0 }
+                                    : {}),
+                                  ...(settleNote.trim() ? { settlementNote: settleNote.trim() } : {}),
+                                },
+                                "رأی اجرا و ودیعه تسویه شد؛ سفارش تکمیل شد (شبیه‌سازی).",
+                              )
+                            }
+                          >
+                            <span className="material-symbols-outlined text-sm">
+                              handshake
+                            </span>
+                            اجرای رأی و تسویه ودیعه و بستن پرونده
+                          </button>
+                          <p className="text-[10px] text-slate-400 leading-tight">
+                            با اجرای رأی، مبلغ ودیعه طبق انتخاب شما بین کیف پول
+                            مستأجر و میزبان جابه‌جا می‌شود و سفارش تکمیل می‌گردد
+                            (شبیه‌سازی — هر رأی فقط یک‌بار قابل اجراست).
+                          </p>
+                        </div>
                       )}
                       {selected.status === "APPEALED" && (
                         <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 font-semibold">

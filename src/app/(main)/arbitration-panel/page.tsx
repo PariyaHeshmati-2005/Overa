@@ -58,6 +58,9 @@ export default async function ArbitrationPanelPage() {
           id: true,
           code: true,
           deposit: true,
+          paymentMethod: true,
+          deliveryStatus: true,
+          deliveryNote: true,
           listing: {
             select: {
               title: true,
@@ -105,6 +108,9 @@ export default async function ArbitrationPanelPage() {
           id: c.reservation.id,
           code: c.reservation.code,
           deposit: c.reservation.deposit,
+          paymentMethod: c.reservation.paymentMethod,
+          deliveryStatus: c.reservation.deliveryStatus,
+          deliveryNote: c.reservation.deliveryNote,
           itemTitle: c.reservation.listing?.title ?? null,
           imageUrl: c.reservation.listing?.images?.[0]?.url ?? null,
         }
