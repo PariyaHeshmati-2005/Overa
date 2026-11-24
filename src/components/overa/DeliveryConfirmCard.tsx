@@ -123,57 +123,93 @@ export default function DeliveryConfirmCard({
           </p>
           <p className="text-xs text-slate-500 leading-relaxed">
             میزبان ({hostName}) تحویل این کالا را در سیستم ثبت کرده است. کالا
-            را بازرسی کنید و یکی از سه گزینهٔ زیر را انتخاب نمایید؛ انتخاب شما
+            را بازرسی کنید و یکی از گزینه‌های زیر را انتخاب نمایید؛ انتخاب شما
             در رویدادهای اجاره ثبت می‌شود.
           </p>
         </div>
 
         {mode === null && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* Option 1: clean hand-over (OTP-gated) */}
-            <button
-              type="button"
-              onClick={() => setMode("clean")}
-              className="py-3 px-2 rounded-xl text-xs sm:text-sm font-bold flex flex-col items-center justify-center gap-1.5 shadow-md transition active:scale-[0.99] bg-m3-primary hover:bg-primary-container text-white shadow-m3-primary/25"
-            >
-              <span className="material-symbols-outlined text-base">
-                check_circle
-              </span>
-              کالا را سالم تحویل گرفتم
-            </button>
-            {/* Option 2: accept WITH issues + written note */}
-            <button
-              type="button"
-              onClick={() => setMode("issues")}
-              className="py-3 px-2 rounded-xl text-xs sm:text-sm font-bold flex flex-col items-center justify-center gap-1.5 transition active:scale-[0.99] bg-accent-gold/10 hover:bg-accent-gold/20 text-accent-gold border border-accent-gold/40"
-            >
-              <span className="material-symbols-outlined text-base">
-                report_problem
-              </span>
-              تحویل کالا با وجود برخی مشکلات
-            </button>
-            {/* Option 3: declare damage AND still take delivery — the damage
-                description page keeps the order in DELIVERED so the OTP flow
-                continues; the claim shows up in all three panels. */}
-            <button
-              type="button"
-              onClick={goDeclareDamage}
-              className="sm:col-span-3 py-3 px-2 rounded-xl text-xs sm:text-sm font-bold flex flex-row items-center justify-center gap-1.5 transition active:scale-[0.99] bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200"
-            >
-              <span className="material-symbols-outlined text-base">gavel</span>
-              اعلام خسارت و تحویل کالا (دریافت با ثبت توضیحات خسارت)
-            </button>
-            {/* Option 4: refuse + void the whole rental */}
-            <button
-              type="button"
-              onClick={() => setMode("refuse")}
-              className="py-3 px-2 rounded-xl text-xs sm:text-sm font-bold flex flex-col items-center justify-center gap-1.5 transition active:scale-[0.99] bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200"
-            >
-              <span className="material-symbols-outlined text-base">
-                block
-              </span>
-              اعلام خسارت و عدم تحویل کالا و باطل کردن اجاره
-            </button>
+          <div className="space-y-3">
+            {/* Primary row: clean hand-over / accept with issues */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Option 1: clean hand-over (OTP-gated) */}
+              <button
+                type="button"
+                onClick={() => setMode("clean")}
+                className="group min-h-[88px] py-3 px-3 rounded-2xl text-xs sm:text-sm font-bold flex flex-col items-center justify-center gap-1.5 bg-gradient-to-b from-m3-primary to-primary-container text-white shadow-lg shadow-m3-primary/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-m3-primary/30 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-m3-primary/50 focus-visible:ring-offset-2"
+              >
+                <span className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center transition-transform group-hover:scale-110">
+                  <span className="material-symbols-outlined text-lg">
+                    check_circle
+                  </span>
+                </span>
+                کالا را سالم تحویل گرفتم
+                <span className="text-[10px] font-medium text-white/75">
+                  تأیید نهایی با کد پیامکی
+                </span>
+              </button>
+              {/* Option 2: accept WITH issues + written note */}
+              <button
+                type="button"
+                onClick={() => setMode("issues")}
+                className="group min-h-[88px] py-3 px-3 rounded-2xl text-xs sm:text-sm font-bold flex flex-col items-center justify-center gap-1.5 bg-accent-gold/10 text-accent-gold border border-accent-gold/40 transition-all duration-200 hover:bg-accent-gold/20 hover:border-accent-gold/60 hover:-translate-y-0.5 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold/40 focus-visible:ring-offset-2"
+              >
+                <span className="w-9 h-9 rounded-full bg-accent-gold/15 flex items-center justify-center transition-transform group-hover:scale-110">
+                  <span className="material-symbols-outlined text-lg">
+                    report_problem
+                  </span>
+                </span>
+                تحویل کالا با وجود برخی مشکلات
+                <span className="text-[10px] font-medium text-accent-gold/70">
+                  دریافت همراه با ثبت یادداشت مشکلات
+                </span>
+              </button>
+            </div>
+
+            {/* Damage sub-section: the two rose options live together in one
+                bordered group instead of a full-width strip + a stray box. */}
+            <div className="rounded-2xl border border-rose-200/70 bg-rose-50/40 p-3 space-y-2">
+              <p className="text-[11px] font-bold text-rose-700 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">gavel</span>
+                در صورت مشاهدهٔ خسارت — یکی از دو گزینهٔ زیر
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {/* Option 3: declare damage AND still take delivery — the
+                    damage description page keeps the order in DELIVERED so the
+                    OTP flow continues; the claim shows up in all three panels. */}
+                <button
+                  type="button"
+                  onClick={goDeclareDamage}
+                  className="group min-h-[72px] py-2.5 px-3 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-1 bg-white text-rose-700 border border-rose-200 transition-all duration-200 hover:bg-rose-50 hover:border-rose-300 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 focus-visible:ring-offset-2"
+                >
+                  <span className="w-7 h-7 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center transition-transform group-hover:scale-110">
+                    <span className="material-symbols-outlined text-base">
+                      local_shipping
+                    </span>
+                  </span>
+                  اعلام خسارت و تحویل کالا
+                  <span className="text-[10px] font-medium text-rose-400">
+                    دریافت کالا همراه با ثبت توضیحات خسارت
+                  </span>
+                </button>
+                {/* Option 4: refuse + void the whole rental */}
+                <button
+                  type="button"
+                  onClick={() => setMode("refuse")}
+                  className="group min-h-[72px] py-2.5 px-3 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-1 bg-white text-rose-700 border border-rose-200 transition-all duration-200 hover:bg-rose-50 hover:border-rose-300 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 focus-visible:ring-offset-2"
+                >
+                  <span className="w-7 h-7 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center transition-transform group-hover:scale-110">
+                    <span className="material-symbols-outlined text-base">
+                      block
+                    </span>
+                  </span>
+                  اعلام خسارت و عدم تحویل کالا
+                  <span className="text-[10px] font-medium text-rose-400">
+                    باطل شدن کل اجاره و بازگشت مبالغ به کیف پول
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
