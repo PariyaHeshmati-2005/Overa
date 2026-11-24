@@ -27,6 +27,13 @@
 ### فایل‌های این به‌روزرسانی
 `prisma/schema.prisma` (+ مایگریشن) · `src/app/api/claims/route.ts` · `src/components/overa/DeliveryConfirmCard.tsx` · `src/app/(main)/declare-damage/[id]` · `src/app/(main)/damage-claims/DamageClaimsClient.tsx` · `src/app/(main)/rental-lifecycle/[id]/RentalLifecycleClient.tsx` · `src/app/(main)/arbitration-panel` · `src/app/(main)/admin-dashboard` · `src/app/(main)/account-settings/SettingsBody.tsx` · `src/components/home/HomeExplore.tsx` · `src/app/(main)/wallet/WalletClient.tsx` · `src/app/(main)/create-listing/CreateListingWizard.tsx` · `src/components/overa/MapView.tsx` · `src/components/overa/MapPicker.tsx` · `src/lib/input-guard.ts` · `tests/input-guard.test.ts`
 
+### ۴) ورود با شمارهٔ ثبت‌ننشده ممنوع شد (هدایت به صفحهٔ ثبت‌نام)
+- ایراد: در صفحهٔ ورود با کد یک‌بارمصرف، اگر شماره‌ای وارد می‌شد که قبلاً ثبت‌نام نکرده بود، سیستم بی‌صدا برایش **حساب می‌ساخت** (با نام عمومی «کاربر XXXX»)، اجازهٔ ورود می‌داد و حتی نام کاربر را نمایش می‌داد — یعنی ثبت‌نامِ بدون ثبت‌نام!
+- در `POST /api/auth/otp/request` حالا قبل از صدور کد بررسی می‌شود که حسابی با این شماره وجود داشته باشد؛ در غیر این صورت **هیچ کدی ارسال نمی‌شود** و پاسخ با پرچم `notRegistered` پیام فارسی «این شماره موبایل در اٌوِرا ثبت‌نام نشده است؛ لطفاً ابتدا از صفحهٔ ثبت‌نام حساب بسازید.» را برمی‌گرداند.
+- در `POST /api/auth/otp/verify` مسیر مخفیِ ساخت خودکار حساب حذف شد: کدِ تأیید فقط «اثبات شماره» است، نه ثبت‌نام؛ شمارهٔ ثبت‌ننشده حتی با کد معتبر هم وارد نمی‌شود و هیچ نشست (session) برایش ساخته نمی‌شود.
+- در فرم ورود، پیام خطای فارسی همراه با دکمهٔ **«رفتن به صفحهٔ ثبت‌نام»** نمایش داده می‌شود که کاربر را به‌همراه پارامتر `next` به صفحهٔ ثبت‌نام می‌برد؛ با تغییر شماره در فرم، پیام و دکمه پاک می‌شود.
+- ورود رمزی (`/api/auth/login`) و ثبت‌نام (`/api/auth/register`) دقیقاً مثل قبل کار می‌کنند؛ ورود با شمارهٔ ثبت‌شده از مسیر OTP هم تست شد و سالم است.
+
 ---
 
 ## ۱) ثبت آگهی (create-listing)
