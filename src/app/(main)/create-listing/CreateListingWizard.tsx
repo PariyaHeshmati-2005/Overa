@@ -1782,7 +1782,7 @@ export default function CreateListingWizard({
                     id="daily-rate-input"
                     type="text"
                     inputMode="numeric"
-                    data-numeric="true"
+                    data-numeric="money"
                     value={priceDisplay(form.dailyPrice)}
                     onChange={(e) =>
                       update({ dailyPrice: digitsOnly(e.target.value) })
@@ -1836,7 +1836,7 @@ export default function CreateListingWizard({
                     id="weekly-rate-input"
                     type="text"
                     inputMode="numeric"
-                    data-numeric="true"
+                    data-numeric="money"
                     value={priceDisplay(form.weeklyPrice)}
                     onChange={(e) =>
                       update({ weeklyPrice: digitsOnly(e.target.value) })
@@ -1861,7 +1861,7 @@ export default function CreateListingWizard({
                     id="deposit-amount"
                     type="text"
                     inputMode="numeric"
-                    data-numeric="true"
+                    data-numeric="money"
                     value={priceDisplay(form.deposit)}
                     onChange={(e) =>
                       update({ deposit: digitsOnly(e.target.value) })

@@ -38,6 +38,8 @@ export type AdminClaim = {
   title: string;
   description: string;
   status: string;
+  /** DELIVERY (declared at hand-over, item received anyway) | RETURN | GENERAL */
+  stage: string;
   decision: string | null;
   appealMessage: string | null;
   evidenceUrls: string[];
@@ -47,8 +49,21 @@ export type AdminClaim = {
     id: string;
     code: string;
     deposit: number;
+    status?: string | null;
+    deliveryStatus?: string | null;
     itemTitle: string | null;
   } | null;
+};
+
+const CLAIM_STAGE_LABELS: Record<string, string> = {
+  DELIVERY: "اعلام در مرحلهٔ تحویل",
+  RETURN: "اعلام در مرحلهٔ بازگشت",
+};
+
+const GOODS_DELIVERY_STATUS: Record<string, string> = {
+  ACCEPTED_CLEAN: "کالا سالم تحویل گرفته شد",
+  ACCEPTED_WITH_ISSUES: "کالا با یادداشت مشکلات تحویل گرفته شد",
+  REFUSED_DAMAGE: "تحویل رد شد",
 };
 
 export type AdminUser = {
@@ -1174,6 +1189,16 @@ export default function AdminDashboardClient({
                         <span className="text-[11px] font-mono text-on-surface-variant bg-surface-container px-2 py-0.5 rounded">
                           پرونده: #{c.id.slice(-6).toUpperCase()}
                         </span>
+                        {c.stage && CLAIM_STAGE_LABELS[c.stage] && (
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed">
+                            {CLAIM_STAGE_LABELS[c.stage]}
+                          </span>
+                        )}
+                        {GOODS_DELIVERY_STATUS[c.reservation?.deliveryStatus ?? ""] && (
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-accent-emerald/15 text-accent-emerald border border-accent-emerald/30">
+                            {GOODS_DELIVERY_STATUS[c.reservation?.deliveryStatus ?? ""]}
+                          </span>
+                        )}
                       </div>
                       <h4 className="text-sm font-extrabold text-on-surface">
                         {c.title}
@@ -1381,7 +1406,7 @@ export default function AdminDashboardClient({
                       </div>
                     </td>
                     <td className="px-5 py-3.5 font-mono" dir="ltr">
-                      {maskPhone(u.phone)}
+                      {toPersianDigits(maskPhone(u.phone))}
                     </td>
                     <td className="px-5 py-3.5">
                       <span

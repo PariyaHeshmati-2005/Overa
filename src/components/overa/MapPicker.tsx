@@ -256,9 +256,11 @@ export default function MapPicker({
       )}
       {geoMsg && <p className="text-[11px] font-semibold text-amber-600">{geoMsg}</p>}
 
-      {/* Map canvas */}
+      {/* Map canvas — `isolate z-0` keeps Leaflet's internal panes
+             (z-index 400–1000) inside this box so the map can never overlay
+             the site's sticky header (z-50) while the page scrolls. */}
       <div
-        className="relative overflow-hidden rounded-xl border border-slate-200/70"
+        className="relative isolate z-0 overflow-hidden rounded-xl border border-slate-200/70"
         style={{ height }}
       >
         <div ref={containerRef} className="h-full w-full bg-slate-100" />

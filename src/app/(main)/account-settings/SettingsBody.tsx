@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { faToman, toPersianDigits } from "@/lib/format";
+import { parseFaNumber } from "@/lib/input-guard";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
@@ -594,10 +595,14 @@ export default function SettingsBody({
                   className="w-full h-11 px-3 bg-surface-container-low border border-outline-variant/50 rounded-xl text-xs font-medium text-center"
                   max={90}
                   min={1}
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   value={prefs.minDays}
                   onChange={(e) =>
-                    setPref("minDays", Number(e.target.value) || 1)
+                    setPref(
+                      "minDays",
+                      Math.min(90, Math.max(1, parseFaNumber(e.target.value) || 1)),
+                    )
                   }
                 />
                 <span className="absolute left-2 top-3 text-[11px] text-on-surface-variant">
@@ -610,10 +615,14 @@ export default function SettingsBody({
                   className="w-full h-11 px-3 bg-surface-container-low border border-outline-variant/50 rounded-xl text-xs font-medium text-center"
                   max={365}
                   min={1}
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   value={prefs.maxDays}
                   onChange={(e) =>
-                    setPref("maxDays", Number(e.target.value) || 1)
+                    setPref(
+                      "maxDays",
+                      Math.min(365, Math.max(1, parseFaNumber(e.target.value) || 1)),
+                    )
                   }
                 />
                 <span className="absolute left-2 top-3 text-[11px] text-on-surface-variant">

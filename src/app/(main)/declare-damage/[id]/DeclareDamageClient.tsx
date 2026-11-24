@@ -24,6 +24,9 @@ export type DeclareDamageClientProps = {
   renterDeliveryNote: string | null;
   renterDeliveryStatus: string | null;
   renterName: string;
+  /** Renter at the hand-over stage: the declaration is recorded AND the
+      delivery flow (OTP receipt) keeps running afterwards. */
+  deliveryStage?: boolean;
 };
 
 const DELIVERY_STATUS_LABELS: Record<string, string> = {
@@ -44,6 +47,7 @@ export default function DeclareDamageClient({
   renterDeliveryNote,
   renterDeliveryStatus,
   renterName,
+  deliveryStage = false,
 }: DeclareDamageClientProps) {
   const router = useRouter();
   const [title, setTitle] = useState("");
@@ -73,6 +77,17 @@ export default function DeclareDamageClient({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         toast.error(data.error ?? "ثبت اعلام خسارت ممکن نشد.");
+        return;
+      }
+      if (data.deliveryStage) {
+        // «اعلام خسارت و تحویل کالا»: the claim is recorded and visible in the
+        // renter/host/admin panels; the delivery flow is NOT interrupted — the
+        // renter goes back to the lifecycle to receive the item with the OTP.
+        toast.success(
+          "اعلام خسارت در مرحله تحویل ثبت و به کارشناسان اٌوِرا ارجاع شد؛ می‌توانید کالا را تحویل بگیرید. برای ادامهٔ فرآیند تحویل با کد یک‌بارمصرف به روند اجاره بازمی‌گردید.",
+          { duration: 8000 },
+        );
+        router.push(`/rental-lifecycle/${reservationId}`);
         return;
       }
       toast.success(
@@ -144,6 +159,26 @@ export default function DeclareDamageClient({
           <p className="text-[11px] text-slate-500">
             این متن هنگام تحویل کالا توسط مستأجر ثبت شده و مبنای داوری قرار می‌گیرد؛
             شرح خسارت خود را با در نظر گرفتن آن بنویسید.
+          </p>
+        </section>
+      )}
+
+      {/* Delivery-stage notice: declare damage AND still take delivery */}
+      {deliveryStage && (
+        <section className="rounded-2xl border border-accent-emerald/40 bg-accent-emerald/10 p-4 space-y-2">
+          <div className="flex items-center gap-2 text-xs font-extrabold text-accent-emerald">
+            <span className="material-symbols-outlined text-base">
+              local_shipping
+            </span>
+            اعلام خسارت و تحویل کالا
+          </div>
+          <p className="text-xs text-slate-700 leading-6">
+            با ثبت این اعلام خسارت، سفارش در مرحلهٔ تحویل باقی می‌ماند و شما
+            می‌توانید کالا را تحویل بگیرید و فرآیند تحویل را با کد یک‌بارمصرف
+            ادامه دهید. توضیحات خسارت شما در پنل مستأجر، میزبان و مدیریت به‌همراه
+            وضعیت «کالا تحویل گرفته شد» نمایش داده می‌شود و در صورت اعلام خسارت
+            از سوی میزبان در مرحلهٔ بازگشت، مبنای رأی داوری کارشناسان اٌوِرا
+            قرار می‌گیرد.
           </p>
         </section>
       )}

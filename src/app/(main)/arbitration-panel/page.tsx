@@ -59,6 +59,9 @@ export default async function ArbitrationPanelPage() {
           code: true,
           deposit: true,
           paymentMethod: true,
+          status: true,
+          renterId: true,
+          hostId: true,
           deliveryStatus: true,
           deliveryNote: true,
           listing: {
@@ -71,14 +74,24 @@ export default async function ArbitrationPanelPage() {
       },
     },
     orderBy: { updatedAt: "desc" },
-    take: 12,
   });
+
+  /* All claims of the SAME reservation (the renter's delivery-stage
+     declaration + the host's return-stage declaration) — the arbitrator must
+     be able to read BOTH descriptions in one file before issuing the verdict. */
+  const byReservation = new Map<string, typeof claims>();
+  for (const c of claims) {
+    const list = byReservation.get(c.reservationId) ?? [];
+    list.push(c);
+    byReservation.set(c.reservationId, list);
+  }
 
   const dto: PanelClaim[] = claims.map((c) => ({
     id: c.id,
     title: c.title,
     description: c.description,
     status: c.status,
+    stage: c.stage,
     decision: c.decision,
     decidedAt: c.decidedAt ? c.decidedAt.toISOString() : null,
     appealMessage: c.appealMessage,
@@ -98,17 +111,40 @@ export default async function ArbitrationPanelPage() {
       name: c.claimant.name,
       kycStatus: c.claimant.kycStatus,
     },
+    // Whether the CLAIMANT of this file is the renter or the host — drives
+    // the «توضیح خسارت مستأجر / میزبان» reading block in the panel.
+    claimantRole: c.reservation
+      ? c.claimantId === c.reservation.renterId
+        ? "renter"
+        : "host"
+      : "renter",
     against: {
       id: c.against.id,
       name: c.against.name,
       kycStatus: c.against.kycStatus,
     },
+    counterparts: (byReservation.get(c.reservationId) ?? [])
+      .filter((x) => x.id !== c.id)
+      .map((x) => ({
+        id: x.id,
+        title: x.title,
+        description: x.description,
+        stage: x.stage,
+        status: x.status,
+        claimantName: x.claimant.name,
+        claimantRole:
+          c.reservation && x.claimantId === c.reservation.renterId
+            ? "renter"
+            : "host",
+        createdAt: x.createdAt.toISOString(),
+      })),
     reservation: c.reservation
       ? {
           id: c.reservation.id,
           code: c.reservation.code,
           deposit: c.reservation.deposit,
           paymentMethod: c.reservation.paymentMethod,
+          status: c.reservation.status,
           deliveryStatus: c.reservation.deliveryStatus,
           deliveryNote: c.reservation.deliveryNote,
           itemTitle: c.reservation.listing?.title ?? null,

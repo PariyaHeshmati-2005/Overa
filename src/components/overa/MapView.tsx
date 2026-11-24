@@ -108,7 +108,11 @@ export default function MapView({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-xl border border-slate-200/70 ${className}`}
+      /* `isolate z-0` boxes the map in its own stacking context: Leaflet's
+         internal panes use z-index 400–1000, which would otherwise float over
+         the site's sticky header (z-50) while scrolling. Contained here, they
+         can never leave the map box. */
+      className={`relative isolate z-0 overflow-hidden rounded-xl border border-slate-200/70 ${className}`}
       style={{ height }}
     >
       <div ref={containerRef} className="h-full w-full bg-slate-100" />

@@ -230,6 +230,7 @@ export default function HomeExplore({
               <input
                 type="text"
                 inputMode="numeric"
+                data-numeric="money"
                 value={filters.minPrice}
                 onChange={(e) => patch({ minPrice: e.target.value })}
                 placeholder="۵۰,۰۰۰"
@@ -243,6 +244,7 @@ export default function HomeExplore({
               <input
                 type="text"
                 inputMode="numeric"
+                data-numeric="money"
                 value={filters.maxPrice}
                 onChange={(e) => patch({ maxPrice: e.target.value })}
                 placeholder="۵,۰۰۰,۰۰۰"

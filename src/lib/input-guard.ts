@@ -2,9 +2,13 @@
  * Positive-integer input sanitization helpers.
  *
  * Product rule: every numeric field in the app accepts ONLY positive digits —
- * no letters, no signs, no separators, no negative values, not even a leading
- * zero soup. Persian (۰-۹) and Arabic (٠-٩) digits are folded to Latin so a
- * Persian keyboard works everywhere.
+ * no letters, no signs, no negative values, not even a leading zero soup.
+ * Persian (۰-۹) and Arabic (٠-٩) digits are folded to Latin for PARSING and
+ * every CALCULATION (digitsOnly / digitsToNumber / parseFaNumber), while the
+ * DISPLAY of every numeric field is Persian digits — money fields
+ * (data-numeric="money") additionally get a three-digit thousand grouping
+ * (۱۲۳,۴۵۶) inserted by the guard itself, so the stored value must always be
+ * parsed back through the helpers below before any arithmetic.
  *
  * Used directly by form onChange handlers and enforced globally (see
  * NumericInputGuard) for every input that declares numeric intent
@@ -31,6 +35,35 @@ export function foldDigits(value: string): string {
     out += ch;
   }
   return out;
+}
+
+/** Convert Latin digits of a string to Persian digits (display form). */
+export function toLatinDigitsToPersian(value: string): string {
+  let out = "";
+  for (const ch of String(value ?? "")) {
+    out += /[0-9]/.test(ch) ? PERSIAN[Number(ch)] : ch;
+  }
+  return out;
+}
+
+/** Insert a three-digit thousand grouping (۱۲۳,۴۵۶) into a digit string. */
+export function groupThousands(digits: string): string {
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+/**
+ * Parse ANY user-entered numeric string (Persian/Arabic digits, comma/space
+ * thousand separators) into the plain Latin digit string used for
+ * calculations and storage. "۱,۲۳۴" → "1234".
+ */
+export function parseFaDigits(value: string): string {
+  return foldDigits(String(value ?? "")).replace(/[^0-9]/g, "");
+}
+
+/** parseFaDigits → number (0 for empty/invalid). Use before every calculation. */
+export function parseFaNumber(value: string): number {
+  const n = Number(parseFaDigits(value));
+  return Number.isFinite(n) ? n : 0;
 }
 
 /**
@@ -96,6 +129,7 @@ export function isNumericIntent(el: Element | null): boolean {
   };
   if (typeof candidate.value !== "string") return false;
   if (candidate.dataset?.numeric === "true") return true;
+  if (candidate.dataset?.numeric === "money") return true;
   const get = (n: string) =>
     typeof candidate.getAttribute === "function"
       ? candidate.getAttribute(n)?.toLowerCase() ?? null
@@ -103,6 +137,87 @@ export function isNumericIntent(el: Element | null): boolean {
   if (get("type") === "number") return true;
   const im = get("inputmode");
   return im === "numeric" || im === "decimal";
+}
+
+/**
+ * Should this numeric field display a three-digit thousand grouping?
+ * Money/accounting fields opt in via data-numeric="money" (prices, deposits,
+ * top-up amounts, charge amounts…). Count fields (days, OTP codes, phones)
+ * stay un-grouped Persian digits.
+ */
+export function wantsGrouping(el: Element | null): boolean {
+  if (!el) return false;
+  const candidate = el as unknown as {
+    dataset?: Record<string, string | undefined>;
+    getAttribute?: (name: string) => string | null;
+  };
+  if (candidate.dataset?.numeric === "money") return true;
+  return typeof candidate.getAttribute === "function"
+    ? candidate.getAttribute("data-numeric")?.toLowerCase() === "money"
+    : false;
+}
+
+/** DISPLAY form of a numeric field's Latin digit string. */
+function displayForm(digits: string, grouped: boolean): string {
+  return toLatinDigitsToPersian(grouped ? groupThousands(digits) : digits);
+}
+
+function isDigitChar(ch: string): boolean {
+  return /[0-9۰-۹]/.test(ch);
+}
+
+/**
+ * Write a new value into an input BYPASSING React's value-tracker wrapper.
+ *
+ * React (react-dom) shadows `value` with an own property per input and records
+ * every JS write in `node._valueTracker`. If the guard wrote `input.value`
+ * through that wrapper, React would believe the value is unchanged and NEVER
+ * fire onChange — the field would DISPLAY the new digits while the app state
+ * (and every calculation) stayed stale. Setting the value through the NATIVE
+ * prototype setter keeps the tracker untouched, so React observes the change
+ * and the controlled state receives exactly the Persian display string.
+ */
+const NATIVE_VALUE_SETTER = (() => {
+  if (typeof HTMLInputElement === "undefined") return null;
+  return Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set ?? null;
+})();
+
+function setNativeValue(input: HTMLInputElement, value: string) {
+  if (NATIVE_VALUE_SETTER) {
+    NATIVE_VALUE_SETTER.call(input, value);
+  } else {
+    input.value = value;
+  }
+  // Deliberately NOT touching input._valueTracker — React must observe this
+  // change itself (updateValueIfChanged) and dispatch onChange.
+}
+
+/** Restore the caret after a reformat: keep it after the same digit it was. */
+function restoreCaret(
+  input: HTMLInputElement,
+  oldDigitsBefore: number,
+  oldDigitsTotal: number,
+) {
+  const value = input.value;
+  let pos = value.length; // caret was at the end (typing) → keep at end
+  if (oldDigitsBefore < oldDigitsTotal) {
+    // Caret sat before some digit → place it before the same digit again.
+    let seen = 0;
+    for (let i = 0; i < value.length; i++) {
+      if (isDigitChar(value[i])) {
+        if (seen === oldDigitsBefore) {
+          pos = i;
+          break;
+        }
+        seen++;
+      }
+    }
+  }
+  try {
+    input.setSelectionRange?.(pos, pos);
+  } catch {
+    /* some input types do not support selection — ignore */
+  }
 }
 
 /** Characters that must never reach a numeric field via the keyboard. */
@@ -167,47 +282,62 @@ export function attachNumericInputGuard(doc: Document): () => void {
     if (e.key.length === 1) e.preventDefault();
   }
 
+  /** Count the digits before the caret (used to restore it after reformat). */
+  function digitsBeforeCaret(input: HTMLInputElement): {
+    before: number;
+    total: number;
+  } {
+    let before = 0;
+    let total = 0;
+    const caret = input.selectionStart ?? input.value.length;
+    for (let i = 0; i < input.value.length; i++) {
+      if (isDigitChar(input.value[i])) {
+        total++;
+        if (i < caret) before++;
+      }
+    }
+    return { before, total };
+  }
+
   function sanitizeValue(input: HTMLInputElement) {
     const cleaned = keepsLeadingZeros(input)
       ? digitsKeepZeros(input.value)
       : digitsOnly(input.value);
-    if (cleaned !== input.value) {
-      const pos = input.selectionStart;
-      input.value = cleaned;
-      try {
-        input.setSelectionRange?.(Math.min(pos ?? cleaned.length, cleaned.length), Math.min(pos ?? cleaned.length, cleaned.length));
-      } catch {
-        /* some input types do not support selection — ignore */
-      }
+    // DISPLAY: Persian digits (+ thousand grouping on money fields). The
+    // React state receives this same string via the controlled onChange, so
+    // what the user sees and what is stored stay identical — calculations
+    // must parse it back through parseFaDigits/parseFaNumber.
+    const display = displayForm(cleaned, wantsGrouping(input));
+    if (display !== input.value) {
+      const { before, total } = digitsBeforeCaret(input);
+      setNativeValue(input, display);
+      restoreCaret(input, before, total);
     }
     if (
       !keepsLeadingZeros(input) &&
       typeof input.min === "string" &&
       input.min !== "" &&
-      Number(input.value) < Number(input.min)
+      Number(input.min) > 0 &&
+      parseFaDigits(input.value) !== "" &&
+      parseFaNumber(input.value) < Number(input.min)
     ) {
-      input.value = input.min;
+      setNativeValue(input, displayForm(input.min, wantsGrouping(input)));
     }
     input.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
+  /** type=number spinner clamp — spinner values are Latin-only by browser rule. */
   function clampPositive(input: HTMLInputElement) {
     const cleaned = digitsOnly(input.value);
-    if (cleaned !== input.value) {
-      const pos = input.selectionStart;
-      input.value = cleaned;
-      try {
-        input.setSelectionRange?.(Math.min(pos ?? cleaned.length, cleaned.length), Math.min(pos ?? cleaned.length, cleaned.length));
-      } catch {
-        /* some input types do not support selection — ignore */
-      }
-    }
+    if (cleaned !== input.value) setNativeValue(input, cleaned);
     if (
       typeof input.min === "string" &&
       input.min !== "" &&
-      Number(input.value) < Number(input.min)
+      Number(input.min) > 0 &&
+      cleaned !== "" &&
+      Number(cleaned) < Number(input.min)
     ) {
-      input.value = input.min;
+      setNativeValue(input, input.min);
     }
     input.dispatchEvent(new Event("change", { bubbles: true }));
   }
@@ -219,7 +349,7 @@ export function attachNumericInputGuard(doc: Document): () => void {
     if (input.getAttribute("type")?.toLowerCase() === "number") {
       // Chrome keeps type=number values as "" when invalid; clamp via digits.
       const cleaned = digitsOnly(input.value);
-      if (cleaned !== input.value) input.value = cleaned;
+      if (cleaned !== input.value) setNativeValue(input, cleaned);
       return;
     }
     // Phones / OTP codes / national IDs keep their leading zeros — a typed
@@ -245,7 +375,9 @@ export function attachNumericInputGuard(doc: Document): () => void {
       const start = input.selectionStart ?? input.value.length;
       const end = input.selectionEnd ?? input.value.length;
       const next = input.value.slice(0, start) + cleaned + input.value.slice(end);
-      input.value = keepsLeadingZeros(input) ? digitsKeepZeros(next) : digitsOnly(next);
+      const merged = keepsLeadingZeros(input) ? digitsKeepZeros(next) : digitsOnly(next);
+      // Pasted digits land in the same Persian display form (grouped for money).
+      setNativeValue(input, displayForm(merged, wantsGrouping(input)));
       input.dispatchEvent(new Event("input", { bubbles: true }));
       input.dispatchEvent(new Event("change", { bubbles: true }));
     }

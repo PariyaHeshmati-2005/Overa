@@ -90,6 +90,8 @@ export default async function AdminDashboardPage() {
             id: true,
             code: true,
             deposit: true,
+            status: true,
+            deliveryStatus: true,
             listing: { select: { title: true } },
           },
         },
@@ -175,6 +177,7 @@ export default async function AdminDashboardPage() {
     title: c.title,
     description: c.description,
     status: c.status,
+    stage: c.stage,
     decision: c.decision,
     appealMessage: c.appealMessage,
     evidenceUrls: (() => {
@@ -194,6 +197,8 @@ export default async function AdminDashboardPage() {
           id: c.reservation.id,
           code: c.reservation.code,
           deposit: c.reservation.deposit,
+          status: c.reservation.status,
+          deliveryStatus: c.reservation.deliveryStatus,
           itemTitle: c.reservation.listing?.title ?? null,
         }
       : null,

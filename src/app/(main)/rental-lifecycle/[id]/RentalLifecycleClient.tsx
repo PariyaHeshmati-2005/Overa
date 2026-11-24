@@ -1254,6 +1254,21 @@ export default function RentalLifecycleClient({
             hostName={r.host.name}
           />
         )}
+        {/* Goods-receipt status — visible to BOTH sides (renter, host and the
+            admin who opens this lifecycle) right in the delivery stage. */}
+        {(r.deliveryStatus === "ACCEPTED_CLEAN" ||
+          r.deliveryStatus === "ACCEPTED_WITH_ISSUES") && (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex items-start gap-2 text-xs text-emerald-800 font-bold leading-6">
+            <span className="material-symbols-outlined text-base shrink-0 mt-0.5">
+              package_2
+            </span>
+            کالا تحویل گرفته شد
+            {r.deliveryStatus === "ACCEPTED_WITH_ISSUES"
+              ? " (با یادداشت مشکلات مستأجر — متن یادداشت در ادامه آمده است)"
+              : " (سالم)"}{" "}
+            — تأیید دریافت با کد یک‌بارمصرف ثبت شد.
+          </div>
+        )}
         {/* The renter's delivery inspection note — visible to BOTH sides and
             used as arbitration evidence if a damage claim follows. */}
         {r.deliveryNote && (

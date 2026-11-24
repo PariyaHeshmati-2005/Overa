@@ -1101,7 +1101,7 @@ export default function WalletClient({
                 id="topup-amount"
                 type="text"
                 inputMode="numeric"
-                data-numeric="true"
+                data-numeric="money"
                 value={faToman(topupAmount || "0")}
                 onChange={(e) =>
                   setTopupAmount(digitsOnly(e.target.value))
@@ -1170,7 +1170,7 @@ export default function WalletClient({
                   id="payout-amount"
                   type="text"
                   inputMode="numeric"
-                  data-numeric="true"
+                  data-numeric="money"
                   value={faToman(payoutAmount || "0")}
                   onChange={(e) =>
                     setPayoutAmount(digitsOnly(e.target.value))

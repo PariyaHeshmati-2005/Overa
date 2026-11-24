@@ -380,6 +380,13 @@ model DamageClaim {
   description   String
   evidenceUrls  String   @default("[]") // JSON array of image paths
   status        String   @default("OPEN")
+  // Which lifecycle stage the damage was declared at:
+  // DELIVERY — the RENTER declared it at the hand-over stage and RECEIVED the
+  //            item anyway (the delivery/OTP flow kept running; the order did
+  //            NOT go to DISPUTED). RETURN — declared at the return-to-host
+  //            stage (order goes to DISPUTED and arbitration decides).
+  //            GENERAL — mid-rental or legacy rows.
+  stage         String   @default("GENERAL")
   decision      String?
   decidedAt     DateTime?
   appealMessage String?

@@ -6,6 +6,8 @@ import {
   digitsToNumber,
   foldDigits,
   keepsLeadingZeros,
+  parseFaDigits,
+  parseFaNumber,
 } from "../src/lib/input-guard";
 import { normalizeIranMobile } from "../src/lib/persian";
 
@@ -154,24 +156,47 @@ describe("attachNumericInputGuard (DOM guard)", () => {
     expect(prevented).toBe(false);
   });
 
-  test("input sanitizes values on numeric fields", () => {
+  test("input sanitizes values and DISPLAYS Persian digits", () => {
     const { doc, listeners } = makeDoc();
     attachNumericInputGuard(doc);
     const input = makeInput({ inputmode: "numeric" });
     input.value = "-۵۰۰abc";
     listeners["input"]({ target: input } as unknown as Event);
-    expect(input.value).toBe("500");
+    // Product rule: the FIELD SHOWS Persian digits; the stored/calculated
+    // value is folded back through parseFaDigits/parseFaNumber.
+    expect(input.value).toBe("۵۰۰");
   });
 
-  test("phone-style fields (type=tel) keep the leading zero", () => {
+  test("money fields (data-numeric=money) get the thousand grouping", () => {
+    const { doc, listeners } = makeDoc();
+    attachNumericInputGuard(doc);
+    const money = makeInput({ inputmode: "numeric", "data-numeric": "money" });
+    money.value = "1234567";
+    listeners["input"]({ target: money } as unknown as Event);
+    expect(money.value).toBe("۱,۲۳۴,۵۶۷");
+    // typing another digit keeps the grouping correct from the right
+    money.value = "۱,۲۳۴,۵۶۷۸";
+    listeners["input"]({ target: money } as unknown as Event);
+    expect(money.value).toBe("۱۲,۳۴۵,۶۷۸");
+  });
+
+  test("phone-style fields (type=tel) keep the leading zero in Persian display", () => {
     const { doc, listeners } = makeDoc();
     attachNumericInputGuard(doc);
     const phone = makeInput({ type: "tel", inputmode: "numeric" });
     phone.value = "۰۹۱۲۳۴۵۶۷۸۹";
     listeners["input"]({ target: phone } as unknown as Event);
-    expect(phone.value).toBe("09123456789");
+    expect(phone.value).toBe("۰۹۱۲۳۴۵۶۷۸۹");
+    // non-digit junk is stripped, zeros preserved, display stays Persian
     phone.value = "09123456789abc";
     listeners["input"]({ target: phone } as unknown as Event);
-    expect(phone.value).toBe("09123456789");
+    expect(phone.value).toBe("۰۹۱۲۳۴۵۶۷۸۹");
+  });
+
+  test("parseFaDigits/parseFaNumber fold the display form back for calculations", () => {
+    expect(parseFaDigits("۱,۲۳۴,۵۶۷")).toBe("1234567");
+    expect(parseFaNumber("۱,۲۳۴,۵۶۷")).toBe(1234567);
+    expect(parseFaNumber("۰۹۱۲۳۴۵۶۷۸۹")).toBe(9123456789);
+    expect(parseFaNumber("")).toBe(0);
   });
 });

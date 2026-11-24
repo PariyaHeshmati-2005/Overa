@@ -16,11 +16,16 @@ type ApiClaim = {
   description: string;
   evidenceUrls: string;
   status: string;
+  /** DELIVERY (declared at hand-over, item received anyway) | RETURN | GENERAL */
+  stage: string;
   decision: string | null;
   createdAt: string;
   reservation: {
     id: string;
     code: string;
+    status: string;
+    /** PENDING | ACCEPTED_CLEAN | ACCEPTED_WITH_ISSUES | REFUSED_DAMAGE */
+    deliveryStatus: string | null;
     listing: { title: string; images: { url: string; alt: string | null }[] };
   };
   claimant: { id: string; name: string };
@@ -59,6 +64,23 @@ const CLAIM_STATUS: Record<string, { label: string; cls: string }> = {
     label: "تسویه شد",
     cls: "bg-accent-emerald/15 text-accent-emerald",
   },
+};
+
+const CLAIM_STAGE: Record<string, { label: string; cls: string }> = {
+  DELIVERY: {
+    label: "اعلام خسارت در مرحلهٔ تحویل",
+    cls: "bg-secondary-fixed text-on-secondary-fixed",
+  },
+  RETURN: {
+    label: "اعلام خسارت در مرحلهٔ بازگشت",
+    cls: "bg-m3-error-container text-m3-on-error-container",
+  },
+};
+
+const GOODS_DELIVERY_STATUS: Record<string, string> = {
+  ACCEPTED_CLEAN: "کالا سالم تحویل گرفته شد",
+  ACCEPTED_WITH_ISSUES: "کالا با یادداشت مشکلات تحویل گرفته شد",
+  REFUSED_DAMAGE: "تحویل رد شد (اجاره باطل شد)",
 };
 
 const INCIDENT_TYPES = [
@@ -394,6 +416,29 @@ export default function DamageClaimsClient({
                               >
                                 {st.label}
                               </span>
+                              {c.stage && CLAIM_STAGE[c.stage] && (
+                                <span
+                                  className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${CLAIM_STAGE[c.stage].cls}`}
+                                >
+                                  {CLAIM_STAGE[c.stage].label}
+                                </span>
+                              )}
+                              {/* «کالا رو گرفته» — the received-goods status
+                                  of the order, visible to BOTH parties here. */}
+                              {GOODS_DELIVERY_STATUS[
+                                c.reservation.deliveryStatus ?? ""
+                              ] && (
+                                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-accent-emerald/15 text-accent-emerald border border-accent-emerald/30 flex items-center gap-1">
+                                  <span className="material-symbols-outlined text-sm">
+                                    package_2
+                                  </span>
+                                  {
+                                    GOODS_DELIVERY_STATUS[
+                                      c.reservation.deliveryStatus ?? ""
+                                    ]
+                                  }
+                                </span>
+                              )}
                             </div>
                             <h3 className="text-sm font-bold text-on-surface">
                               {c.title}
@@ -424,6 +469,20 @@ export default function DamageClaimsClient({
                         <p className="text-xs text-on-surface-variant leading-relaxed line-clamp-3">
                           {c.description}
                         </p>
+                        {/* Delivery-stage declaration: the renter can still
+                            take delivery — show the continuation hint until
+                            the receipt is confirmed. */}
+                        {c.stage === "DELIVERY" &&
+                          c.reservation.status === "DELIVERED" && (
+                            <div className="p-3 rounded-lg bg-accent-emerald/10 border border-accent-emerald/30 text-xs text-emerald-800 flex items-start gap-2 leading-6">
+                              <span className="material-symbols-outlined text-base shrink-0 mt-0.5">
+                                local_shipping
+                              </span>
+                              اعلام خسارت ثبت شد و سفارش همچنان در مرحلهٔ تحویل
+                              است؛ می‌توانید کالا را تحویل بگیرید — کارت
+                              «تأیید دریافت کالا» در روند اجاره باز است.
+                            </div>
+                          )}
                         {thumbs.length > 0 && (
                           <div className="flex items-center gap-2">
                             <span className="text-[11px] text-on-surface-variant">

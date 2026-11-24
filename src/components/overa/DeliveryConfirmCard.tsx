@@ -7,7 +7,7 @@ import OtpConfirmFlow from "./OtpConfirmFlow";
 
 /**
  * «تأیید دریافت کالا» card — shown ONLY to the renter while the host has
- * recorded the hand-over (status DELIVERED). THREE options, exactly like the
+ * recorded the hand-over (status DELIVERED). FOUR options, exactly like the
  * physical hand-over reality:
  *
  *  1. «کالا را سالم تحویل گرفتم» → OTP (DELIVERY_RECEIVED) → RENTAL_ACTIVE,
@@ -15,7 +15,12 @@ import OtpConfirmFlow from "./OtpConfirmFlow";
  *  2. «تحویل کالا با وجود برخی مشکلات» → the renter writes the issues down,
  *     then OTP-confirms; deliveryStatus = ACCEPTED_WITH_ISSUES and the note is
  *     stored as arbitration evidence (visible to host + admin panels).
- *  3. «اعلام خسارت و عدم تحویل کالا و باطل کردن اجاره» → refuse_delivery:
+ *  3. «اعلام خسارت و تحویل کالا» → the dedicated damage-description page
+ *     (/declare-damage). The declaration is recorded (DamageClaim stage
+ *     DELIVERY) AND the order stays in DELIVERED, so the renter can still
+ *     receive the item through the OTP flow; the declaration shows up in the
+ *     renter, host and admin panels with the goods-received status.
+ *  4. «اعلام خسارت و عدم تحویل کالا و باطل کردن اجاره» → refuse_delivery:
  *     the whole order is voided, every paid Toman flows back to the renter
  *     (sandbox) and the item never leaves the host's custody.
  */
@@ -42,6 +47,13 @@ export default function DeliveryConfirmCard({
   const [issuesNote, setIssuesNote] = useState("");
   const [refuseNote, setRefuseNote] = useState("");
   const [refusing, setRefusing] = useState(false);
+
+  /* «اعلام خسارت و تحویل کالا» is a NAVIGATION: the renter writes the damage
+     description on /declare-damage; the claim is recorded there and the order
+     STAYS in DELIVERED so the receipt (OTP) flow can continue afterwards. */
+  function goDeclareDamage() {
+    router.push(`/declare-damage/${reservationId}`);
+  }
 
   async function refuseDelivery() {
     if (
@@ -140,7 +152,18 @@ export default function DeliveryConfirmCard({
               </span>
               تحویل کالا با وجود برخی مشکلات
             </button>
-            {/* Option 3: refuse + void the whole rental */}
+            {/* Option 3: declare damage AND still take delivery — the damage
+                description page keeps the order in DELIVERED so the OTP flow
+                continues; the claim shows up in all three panels. */}
+            <button
+              type="button"
+              onClick={goDeclareDamage}
+              className="sm:col-span-3 py-3 px-2 rounded-xl text-xs sm:text-sm font-bold flex flex-row items-center justify-center gap-1.5 transition active:scale-[0.99] bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200"
+            >
+              <span className="material-symbols-outlined text-base">gavel</span>
+              اعلام خسارت و تحویل کالا (دریافت با ثبت توضیحات خسارت)
+            </button>
+            {/* Option 4: refuse + void the whole rental */}
             <button
               type="button"
               onClick={() => setMode("refuse")}

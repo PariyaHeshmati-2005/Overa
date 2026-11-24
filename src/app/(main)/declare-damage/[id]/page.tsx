@@ -15,7 +15,10 @@ type Props = { params: Promise<{ id: string }> };
  * /declare-damage/[id] — the dedicated damage-declaration page. The host's
  * «اعلام خسارت» button (and the renter's, from /damage-claims) lands here to
  * WRITE THE DAMAGE DESCRIPTION before anything is filed; submitting creates
- * the DamageClaim record and moves the order to DISPUTED.
+ * the DamageClaim record and moves the order to DISPUTED — EXCEPT the renter's
+ * delivery-stage declaration («اعلام خسارت و تحویل کالا»): there the claim is
+ * recorded with stage DELIVERY and the order stays in DELIVERED so the renter
+ * can still receive the item through the OTP flow.
  */
 export default async function DeclareDamagePage({ params }: Props) {
   const { id } = await params;
@@ -60,6 +63,12 @@ export default async function DeclareDamagePage({ params }: Props) {
         renterDeliveryNote={reservation.deliveryNote}
         renterDeliveryStatus={reservation.deliveryStatus}
         renterName={reservation.renter.name}
+        // Renter + hand-over stage: after submitting, the tenant can STILL
+        // receive the item (the delivery flow is not interrupted).
+        deliveryStage={
+          reservation.renterId === user.id &&
+          reservation.status === "DELIVERED"
+        }
       />
     </>
   );
