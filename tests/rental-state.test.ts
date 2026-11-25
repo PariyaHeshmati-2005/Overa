@@ -17,7 +17,10 @@ describe("rental state machine", () => {
   test("happy path: REQUESTED → … → COMPLETED (two-sided OTP flow)", () => {
     expect(assertTransition("REQUESTED", "approve")).toBe("APPROVED");
     expect(assertTransition("APPROVED", "confirm_agreement")).toBe("AGREEMENT");
-    expect(assertTransition("AGREEMENT", "pay")).toBe("PAYMENT");
+    // Single-press sandbox payment: the deposit is charged on the FIRST press
+    // (production would redirect to the payment gateway and come back).
+    expect(assertTransition("AGREEMENT", "pay")).toBe("PAID");
+    // Legacy rows from the old two-step payment still settle to PAID.
     expect(assertTransition("PAYMENT", "pay")).toBe("PAID");
     expect(assertTransition("PAID", "deliver")).toBe("DELIVERED");
     // Host recorded the hand-over → renter OTP-confirms receipt → active.

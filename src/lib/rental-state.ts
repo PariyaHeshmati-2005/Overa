@@ -158,12 +158,17 @@ const TRANSITIONS: Record<ReservationStatus, Partial<Record<ReservationAction, R
     cancel: "CANCELLED",
   },
   AGREEMENT: {
-    pay: "PAYMENT",
+    // Single-press sandbox payment: the deposit (ودیعه) is charged on the
+    // FIRST press and the order jumps straight to PAID (in a production
+    // deployment this is where the renter would be redirected to the payment
+    // gateway and return to the site after settling the deposit).
+    pay: "PAID",
     cancel: "CANCELLED",
   },
   PAYMENT: {
-    // Completing the payment now charges the DEPOSIT (ودیعه) only — the rent
-    // is charged after the renter's receipt confirmation (see DELIVERY stage).
+    // Legacy rows left over from the old two-step payment: completing the
+    // payment charges the DEPOSIT (ودیعه) only — the rent is charged after
+    // the renter's receipt confirmation (see DELIVERY stage).
     pay: "PAID",
     cancel: "CANCELLED",
   },

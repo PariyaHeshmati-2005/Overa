@@ -36,7 +36,7 @@ export type LifecycleReservation = {
   depositStatus?: string | null;
   /** Payment method of the pay stage (CASH — deposit escrowed). */
   paymentMethod?: string | null;
-  /** Delivery inspection outcome: PENDING | ACCEPTED_CLEAN | ACCEPTED_WITH_ISSUES | REFUSED_DAMAGE */
+  /** Delivery inspection outcome: PENDING | ACCEPTED_CLEAN | REFUSED_DAMAGE */
   deliveryStatus?: string | null;
   /** Renter's issue notes taken at delivery — arbitration evidence. */
   deliveryNote?: string | null;
@@ -1085,7 +1085,7 @@ export default function RentalLifecycleClient({
                   <span>
                     {busy === "pay"
                       ? "در حال ثبت پرداخت..."
-                      : "پرداخت ودیعه و انتقال به درگاه (Sandbox)"}
+                      : "پرداخت ودیعه (شبیه‌سازی درگاه پرداخت)"}
                   </span>
                 </button>
               </div>
@@ -1143,29 +1143,23 @@ export default function RentalLifecycleClient({
         )}
         {/* Goods-receipt status — visible to BOTH sides (renter, host and the
             admin who opens this lifecycle) right in the delivery stage. */}
-        {(r.deliveryStatus === "ACCEPTED_CLEAN" ||
-          r.deliveryStatus === "ACCEPTED_WITH_ISSUES") && (
+        {r.deliveryStatus === "ACCEPTED_CLEAN" && (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex items-start gap-2 text-xs text-emerald-800 font-bold leading-6">
             <span className="material-symbols-outlined text-base shrink-0 mt-0.5">
               package_2
             </span>
-            کالا تحویل گرفته شد
-            {r.deliveryStatus === "ACCEPTED_WITH_ISSUES"
-              ? " (با یادداشت مشکلات مستأجر — متن یادداشت در ادامه آمده است)"
-              : " (سالم)"}{" "}
-            — تأیید دریافت با کد یک‌بارمصرف ثبت شد.
+            کالا تحویل گرفته شد (سالم) — تأیید دریافت با کد یک‌بارمصرف ثبت شد.
           </div>
         )}
-        {/* The renter's delivery inspection note — visible to BOTH sides and
-            used as arbitration evidence if a damage claim follows. */}
-        {r.deliveryNote && (
+        {/* The renter's refusal note — visible to BOTH sides and used as
+            evidence in the admin «اعلام خسارت‌ها» panel. */}
+        {r.deliveryNote && r.deliveryStatus === "REFUSED_DAMAGE" && (
           <div className="rounded-2xl border border-accent-gold/40 bg-accent-gold/10 p-4 space-y-1.5">
             <div className="flex items-center gap-2 text-xs font-extrabold text-accent-gold">
               <span className="material-symbols-outlined text-base">
                 report_problem
               </span>
-              یادداشت بازرسی تحویل مستأجر
-              {r.deliveryStatus === "REFUSED_DAMAGE" && " — اجاره باطل شد"}
+              یادداشت بازرسی تحویل مستأجر — اجاره باطل شد
             </div>
             <p className="text-xs text-slate-700 leading-6 whitespace-pre-wrap">
               {r.deliveryNote}

@@ -219,10 +219,10 @@ model Reservation {
   // receipt confirmation (OTP flow). "CASH" is the only method for new orders.
   paymentMethod   String    @default("CASH")
   // Delivery inspection outcome recorded at the DELIVERED stage (renter side):
-  // PENDING | ACCEPTED_CLEAN | ACCEPTED_WITH_ISSUES | REFUSED_DAMAGE
+  // PENDING | ACCEPTED_CLEAN | REFUSED_DAMAGE
   deliveryStatus String @default("PENDING")
-  // Renter's issue notes taken at delivery — kept on the order as arbitration
-  // evidence (surfaced to the host's damage page and the admin arbitration).
+  // Renter's optional refusal note (عدم تحویل و اعلام خسارت) — kept on the
+  // order as evidence for the admin «اعلام خسارت‌ها» panel.
   deliveryNote   String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

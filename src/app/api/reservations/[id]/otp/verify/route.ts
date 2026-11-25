@@ -127,11 +127,6 @@ export async function POST(req: Request, ctx: Ctx) {
           // NOW — after the confirmation — from the renter's wallet to the
           // host, and the real start time is recorded. The deposit was
           // already escrowed BEFORE this confirmation (pay stage).
-          // Optional «تحویل کالا با وجود برخی مشکلات» note: when the renter
-          // typed issue notes, they are stored on the order (deliveryNote) and
-          // deliveryStatus flips to ACCEPTED_WITH_ISSUES — the note later
-          // serves as evidence in the admin «اعلام خسارت‌ها» panel.
-          const issuesNote = String(body.issuesNote ?? "").trim().slice(0, 2000);
           // Wallet guard: the rent (daily rate × days) must be covered by the
           // renter's balance — otherwise the whole verification (and the
           // consumed code) rolls back and the client is told to top up first.
@@ -151,8 +146,7 @@ export async function POST(req: Request, ctx: Ctx) {
             data: {
               status: "RENTAL_ACTIVE",
               actualStartAt: now,
-              deliveryStatus: issuesNote ? "ACCEPTED_WITH_ISSUES" : "ACCEPTED_CLEAN",
-              ...(issuesNote ? { deliveryNote: issuesNote } : {}),
+              deliveryStatus: "ACCEPTED_CLEAN",
             },
           });
           if (claimed.count !== 1) {
@@ -195,19 +189,15 @@ export async function POST(req: Request, ctx: Ctx) {
               reservationId: reservation.id,
               actor: "renter",
               type: "CONFIRM_DELIVERY",
-              message: issuesNote
-                ? `دریافت کالا با وجود برخی مشکلات تأیید شد؛ یادداشت مستأجر ثبت گردید: ${issuesNote} — دورهٔ اجاره فعال شد و هزینهٔ اجارهٔ روزانه (${reservation.subtotal.toLocaleString("fa-IR")} تومان) از کیف پول کسر گردید (شبیه‌سازی).`
-                : `دریافت کالا با کد یک‌بارمصرف توسط مستأجر تأیید شد؛ روند اجاره آغاز شد و هزینهٔ اجارهٔ روزانه (${reservation.days} روز — ${reservation.subtotal.toLocaleString("fa-IR")} تومان) از کیف پول کسر گردید (شبیه‌سازی).`,
+              message: `دریافت کالا با کد یک‌بارمصرف توسط مستأجر تأیید شد؛ روند اجاره آغاز شد و هزینهٔ اجارهٔ روزانه (${reservation.days} روز — ${reservation.subtotal.toLocaleString("fa-IR")} تومان) از کیف پول کسر گردید (شبیه‌سازی).`,
             },
           });
           await tx.notification.create({
             data: {
               userId: reservation.hostId,
               type: "RESERVATION",
-              title: issuesNote ? "کالا با یادداشت مشکلات تحویل گرفته شد" : "دریافت کالا تأیید شد",
-              body: issuesNote
-                ? `مستأجر کالای «${reservation.code}» را با وجود برخی مشکلات تحویل گرفت و یادداشت ثبت کرد؛ دورهٔ اجاره فعال شد.`
-                : `مستأجر دریافت «${reservation.code}» را تأیید کرد؛ روند اجاره فعال شد و هزینهٔ اجارهٔ روزانه کسر گردید.`,
+              title: "دریافت کالا تأیید شد",
+              body: `مستأجر دریافت «${reservation.code}» را تأیید کرد؛ روند اجاره فعال شد و هزینهٔ اجارهٔ روزانه کسر گردید.`,
               link: "/host-dashboard",
             },
           });

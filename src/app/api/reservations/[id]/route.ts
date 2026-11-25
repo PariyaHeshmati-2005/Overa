@@ -155,20 +155,18 @@ export async function PATCH(req: Request, ctx: Ctx) {
       addEvent("قرارداد و شرایط توسط مستأجر تایید شد.");
       break;
     case "pay": {
-      /* The payment is TWO-STEP (AGREEMENT --pay--> PAYMENT --pay--> PAID):
-         the first press starts the payment, the second completes it. Money
-         moves ONLY on the completing press — and it covers the DEPOSIT
-         (ودیعه) ONLY: the daily-rate rent is charged later, right after the
-         renter confirms receipt («سلامت تحویل گرفتم») when the rental
-         actually starts. */
-      if (reservation.status !== "PAYMENT") {
-        addEvent("فرآیند پرداخت ودیعه آغاز شد؛ برای نهایی‌شدن، پرداخت را تأیید کنید.");
-        break;
-      }
+      /* SINGLE-PRESS sandbox payment (AGREEMENT --pay--> PAID; PAYMENT rows
+         from the old two-step flow also settle here): the deposit (ودیعه) is
+         charged on the FIRST press and the order becomes PAID immediately —
+         in a production deployment this is where the renter would be
+         redirected to the payment gateway and return to the site after
+         settling the deposit. The charge covers the DEPOSIT ONLY: the
+         daily-rate rent is charged later, right after the renter confirms
+         receipt («سلامت تحویل گرفتم») when the rental actually starts. */
       // SANDBOX payment adapter — visibly labelled everywhere. Deposit escrow.
       dataExtra.paymentMethod = "CASH";
       addEvent(
-        `پرداخت ودیعه (${reservation.deposit.toLocaleString("fa-IR")} تومان) در حالت آزمایشی (Sandbox) انجام شد؛ هزینهٔ اجارهٔ روزانه پس از تأیید دریافت کالا محاسبه می‌شود.`,
+        `پرداخت ودیعه (${reservation.deposit.toLocaleString("fa-IR")} تومان) با شبیه‌سازی درگاه پرداخت انجام شد؛ هزینهٔ اجارهٔ روزانه پس از تأیید دریافت کالا محاسبه می‌شود (Sandbox).`,
       );
       dataExtra.depositStatus = "HELD";
       walletEntries.push(

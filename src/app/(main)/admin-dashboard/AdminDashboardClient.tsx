@@ -67,7 +67,6 @@ const CLAIM_STAGE_LABELS: Record<string, string> = {
 
 const GOODS_DELIVERY_STATUS: Record<string, string> = {
   ACCEPTED_CLEAN: "کالا سالم تحویل گرفته شد",
-  ACCEPTED_WITH_ISSUES: "کالا با یادداشت مشکلات تحویل گرفته شد",
   REFUSED_DAMAGE: "تحویل رد شد",
 };
 

@@ -8,15 +8,12 @@ import OtpConfirmFlow from "./OtpConfirmFlow";
 /**
  * «تأیید دریافت کالا» card — shown ONLY to the renter while the host has
  * recorded the hand-over (status DELIVERED). The deposit (ودیعه) has already
- * been paid BEFORE this card (pay stage). THREE options:
+ * been paid BEFORE this card (pay stage). TWO options:
  *
  *  1. «کالا را سالم تحویل گرفتم» → OTP (DELIVERY_RECEIVED) → RENTAL_ACTIVE;
  *     the rental process starts and the daily-rate rent is charged now.
  *     deliveryStatus = ACCEPTED_CLEAN.
- *  2. «تحویل کالا با وجود برخی مشکلات» → the renter writes the issues down,
- *     then OTP-confirms; deliveryStatus = ACCEPTED_WITH_ISSUES and the note is
- *     stored as evidence (visible to host + admin panels).
- *  3. «اعلام خسارت و عدم تحویل کالا» → refuse_delivery: the whole rental
+ *  2. «عدم تحویل و اعلام خسارت» → refuse_delivery: the whole rental
  *     process stops, the escrowed deposit flows back to the renter's WALLET
  *     and a failed-rental comment (cumulative counter) is recorded on the
  *     host's reviews.
@@ -30,7 +27,7 @@ export type DeliveryConfirmCardProps = {
   onSettled?: () => void;
 };
 
-type Mode = null | "clean" | "issues" | "refuse";
+type Mode = null | "clean" | "refuse";
 
 export default function DeliveryConfirmCard({
   reservationId,
@@ -41,7 +38,6 @@ export default function DeliveryConfirmCard({
 }: DeliveryConfirmCardProps) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(null);
-  const [issuesNote, setIssuesNote] = useState("");
   const [refuseNote, setRefuseNote] = useState("");
   const [refusing, setRefusing] = useState(false);
 
@@ -120,45 +116,26 @@ export default function DeliveryConfirmCard({
 
         {mode === null && (
           <div className="space-y-3">
-            {/* Primary row: clean hand-over / accept with issues */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Option 1: clean hand-over (OTP-gated) */}
-              <button
-                type="button"
-                onClick={() => setMode("clean")}
-                className="group min-h-[88px] py-3 px-3 rounded-2xl text-xs sm:text-sm font-bold flex flex-col items-center justify-center gap-1.5 bg-gradient-to-b from-m3-primary to-primary-container text-white shadow-lg shadow-m3-primary/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-m3-primary/30 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-m3-primary/50 focus-visible:ring-offset-2"
-              >
-                <span className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center transition-transform group-hover:scale-110">
-                  <span className="material-symbols-outlined text-lg">
-                    check_circle
-                  </span>
+            {/* Option 1: clean hand-over (OTP-gated) — full width, single
+                column, exactly like the damage option below. */}
+            <button
+              type="button"
+              onClick={() => setMode("clean")}
+              className="group w-full min-h-[88px] py-3 px-3 rounded-2xl text-xs sm:text-sm font-bold flex flex-col items-center justify-center gap-1.5 bg-gradient-to-b from-m3-primary to-primary-container text-white shadow-lg shadow-m3-primary/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-m3-primary/30 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-m3-primary/50 focus-visible:ring-offset-2"
+            >
+              <span className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center transition-transform group-hover:scale-110">
+                <span className="material-symbols-outlined text-lg">
+                  check_circle
                 </span>
-                کالا را سالم تحویل گرفتم
-                <span className="text-[10px] font-medium text-white/75">
-                  تأیید نهایی با کد پیامکی
-                </span>
-              </button>
-              {/* Option 2: accept WITH issues + written note */}
-              <button
-                type="button"
-                onClick={() => setMode("issues")}
-                className="group min-h-[88px] py-3 px-3 rounded-2xl text-xs sm:text-sm font-bold flex flex-col items-center justify-center gap-1.5 bg-accent-gold/10 text-accent-gold border border-accent-gold/40 transition-all duration-200 hover:bg-accent-gold/20 hover:border-accent-gold/60 hover:-translate-y-0.5 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold/40 focus-visible:ring-offset-2"
-              >
-                <span className="w-9 h-9 rounded-full bg-accent-gold/15 flex items-center justify-center transition-transform group-hover:scale-110">
-                  <span className="material-symbols-outlined text-lg">
-                    report_problem
-                  </span>
-                </span>
-                تحویل کالا با وجود برخی مشکلات
-                <span className="text-[10px] font-medium text-accent-gold/70">
-                  دریافت همراه با ثبت یادداشت مشکلات
-                </span>
-              </button>
-            </div>
+              </span>
+              کالا را سالم تحویل گرفتم
+              <span className="text-[10px] font-medium text-white/75">
+                تأیید نهایی با کد پیامکی
+              </span>
+            </button>
 
-            {/* Damage sub-section: «اعلام خسارت و عدم تحویل کالا» — the whole
-                rental process stops and the deposit returns to the renter's
-                wallet. */}
+            {/* Option 2: «اعلام خسارت و عدم تحویل کالا» — the whole rental
+                process stops and the deposit returns to the renter's wallet. */}
             <div className="rounded-2xl border border-rose-200/70 bg-rose-50/40 p-3 space-y-2">
               <p className="text-[11px] font-bold text-rose-700 flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-sm">gavel</span>
@@ -210,56 +187,6 @@ export default function DeliveryConfirmCard({
               successMessage="تحویل کالا با موفقیت تأیید شد و دوره اجاره شما آغاز گردید."
               onVerified={onSettled}
             />
-          </div>
-        )}
-
-        {mode === "issues" && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-600 bg-surface-container rounded-xl px-3 py-2">
-              <span className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-accent-gold text-base">
-                  report_problem
-                </span>
-                تحویل کالا با وجود برخی مشکلات
-              </span>
-              <button
-                type="button"
-                onClick={() => setMode(null)}
-                className="text-slate-400 hover:text-slate-600 font-bold"
-                title="بازگشت به گزینه‌ها"
-              >
-                <span className="material-symbols-outlined text-base">close</span>
-              </button>
-            </div>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              با این گزینه کالا را می‌گیرید و دورهٔ اجاره فعال می‌شود؛ مشکلات
-              مشاهده‌شده را دقیق بنویسید تا در پروندهٔ اجاره ثبت شود. اگر
-              بعداً خسارتی اعلام شود، این متن مبنای بررسی کارشناسان اٌوِرا در
-              بخش «اعلام خسارت‌ها» قرار می‌گیرد.
-            </p>
-            <textarea
-              value={issuesNote}
-              onChange={(e) => setIssuesNote(e.target.value)}
-              rows={3}
-              maxLength={2000}
-              placeholder="مثلاً: دو شارژر اضافه موجود نبود؛ بدنه در گوشهٔ سمت چپ خط و خش دارد و لنز واید همراه وسیله نبود…"
-              className="w-full text-xs rounded-xl border border-outline-variant/60 bg-surface-container-low px-3 py-2.5 text-on-surface focus:outline-none focus:ring-2 focus:ring-m3-primary/30 resize-none"
-            />
-            {issuesNote.trim().length >= 10 ? (
-              <OtpConfirmFlow
-                reservationId={reservationId}
-                stage="DELIVERY_RECEIVED"
-                requestLabel="ثبت توضیحات و تحویل گرفتن کالا"
-                successMessage="کالا با ثبت یادداشت مشکلات تحویل گرفته شد و دورهٔ اجاره فعال گردید."
-                extraBody={{ issuesNote: issuesNote.trim() }}
-                onVerified={onSettled}
-              />
-            ) : (
-              <p className="text-[11px] text-slate-400 font-semibold">
-                برای فعال شدن مرحلهٔ تأیید با کد یک‌بارمصرف، توضیحات را بنویسید
-                (حداقل ۱۰ کاراکتر).
-              </p>
-            )}
           </div>
         )}
 
