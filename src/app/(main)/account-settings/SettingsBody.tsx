@@ -1122,9 +1122,9 @@ export default function SettingsBody({
           </span>
           <Link
             className="font-bold underline hover:text-rose-950"
-            href="/damage-claims"
+            href="/tos-support-faq"
           >
-            ارسال تیکت به واحد حقوقی
+            ارتباط با پشتیبانی اٌوِرا
           </Link>
         </div>
       </section>

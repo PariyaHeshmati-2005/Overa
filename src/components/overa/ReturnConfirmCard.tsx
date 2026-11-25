@@ -2,16 +2,20 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import OtpConfirmFlow from "./OtpConfirmFlow";
 
 /**
  * Host «تأیید دریافت کالا» card — shown ONLY to the host of the reservation
- * and only while the renter has announced the return (status
- * RETURN_REQUESTED). Two options:
- *   1. «سالم تحویل گرفتم» → host OTP (RETURN_RECEIVED) → server completes the
- *      order and starts the deposit-refund pipeline (sandbox).
- *   2. «اعلام خسارت» → existing dispute action → DISPUTED (review stage);
- *      no auto-completion afterwards.
+ * and only while the renter has handed the item back (status
+ * RETURN_REQUESTED). TWO options, exactly like the physical hand-back:
+ *   1. «تحویل سالم گرفتم» → host OTP (RETURN_RECEIVED) → the rental process
+ *      ends, the deposit is released automatically to the renter's wallet and
+ *      a successful-rental comment is recorded on the host's reviews.
+ *   2. «تحویل و اعلام خسارت» → the damage-description form opens right here;
+ *      submitting flips the order to DISPUTED and the case lands DIRECTLY in
+ *      the admin dashboard's «اعلام خسارت‌ها» section where the admin chats
+ *      with the renter and issues the deposit-split ruling (max one week).
  */
 export type ReturnConfirmCardProps = {
   reservationId: string;
@@ -31,12 +35,48 @@ export default function ReturnConfirmCard({
 }: ReturnConfirmCardProps) {
   const router = useRouter();
   const [otpOpen, setOtpOpen] = useState(false);
+  const [damageOpen, setDamageOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  /* The damage button is a NAVIGATION, not an instant action: the host lands
-     on /declare-damage/[id] where the damage description MUST be written —
-     submitting there creates the DamageClaim + flips the order to DISPUTED. */
-  function goDeclareDamage() {
-    router.push(`/declare-damage/${reservationId}`);
+  /* «تحویل و اعلام خسارت»: the damage description MUST be written (min 20
+     chars); submitting creates the DamageClaim + flips the order to DISPUTED
+     so the case shows up in the admin dashboard's «اعلام خسارت‌ها» queue. */
+  async function submitDamage() {
+    const text = note.trim();
+    if (text.length < 20) {
+      toast.error("شرح خسارت باید حداقل ۲۰ کاراکتر باشد.");
+      return;
+    }
+    if (
+      !window.confirm(
+        `آیا برای سفارش «${code}» «تحویل و اعلام خسارت» ثبت شود؟ سفارش به مرحلهٔ بررسی خسارت می‌رود و پرونده مستقیماً به بخش «اعلام خسارت‌ها» پنل مدیریت ارجاع می‌شود.`,
+      )
+    )
+      return;
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "declare_damage", note: text }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error ?? "ثبت اعلام خسارت ممکن نشد.");
+        return;
+      }
+      toast.success(
+        "اعلام خسارت ثبت شد؛ پرونده به بخش «اعلام خسارت‌ها» پنل مدیریت ارجاع شد و رأی تا حداکثر یک هفته اعلام می‌شود.",
+        { duration: 6000 },
+      );
+      onSettled?.();
+      router.refresh();
+    } catch {
+      toast.error("خطا در ارتباط با سرور");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -68,8 +108,10 @@ export default function ReturnConfirmCard({
           <p className="text-sm font-bold text-slate-800">آیا کالا را سالم تحویل گرفته‌اید؟</p>
           <p className="text-xs text-slate-500 leading-relaxed">
             مستأجر ({renterName}) بازگشت این کالا را در سیستم ثبت کرده است. سلامت کالا را بررسی
-            کنید؛ در صورت سالم بودن، بازگشت را با کد یک‌بارمصرف تأیید کنید تا سفارش تکمیل و فرآیند
-            بازگشت ودیعه آغاز شود (شبیه‌سازی). در غیر این صورت خسارت را اعلام کنید.
+            کنید؛ در صورت سالم بودن، «تحویل سالم گرفتم» را تأیید کنید تا اجاره تکمیل شود، ودیعه
+            به‌صورت خودکار به کیف پول مستأجر آزاد گردد و اجارهٔ موفق در نظرات شما ثبت شود. در غیر
+            این صورت «تحویل و اعلام خسارت» را انتخاب و شرح خسارت را بنویسید تا پرونده مستقیماً به
+            کارشناسان اٌوِرا ارجاع شود.
           </p>
         </div>
 
@@ -94,9 +136,60 @@ export default function ReturnConfirmCard({
               reservationId={reservationId}
               stage="RETURN_RECEIVED"
               requestLabel="دریافت کد تأیید سالم بودن"
-              successMessage="بازگشت کالا با موفقیت تأیید شد. سفارش تکمیل شده و فرآیند بازگشت ودیعه آغاز گردید."
+              successMessage="بازگشت کالا با موفقیت تأیید شد. اجاره تکمیل و ودیعه به‌صورت خودکار به کیف پول مستأجر آزاد گردید."
               onVerified={onSettled}
             />
+          </div>
+        ) : damageOpen ? (
+          /* Damage-description form — opens in place; submitting files the
+             case directly to the admin dashboard's «اعلام خسارت‌ها» queue. */
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-xs font-semibold text-slate-600 bg-surface-container rounded-xl px-3 py-2">
+              <span className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-rose-600 text-base">gavel</span>
+                شرح خسارت کالا
+              </span>
+              <button
+                type="button"
+                onClick={() => setDamageOpen(false)}
+                className="text-slate-400 hover:text-slate-600 font-bold"
+                title="بازگشت به گزینه‌ها"
+              >
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              خسارت مشاهده‌شده را دقیق شرح دهید (بخش آسیب‌دیده، میزان خسارت و
+              هر توضیح مؤثر برای کارشناسی). پس از ثبت، پرونده مستقیماً به بخش
+              «اعلام خسارت‌ها» پنل مدیریت ارجاع می‌شود؛ کارشناسان از طریق
+              گفتگوی پرونده با مستأجر در ارتباط خواهند بود و رأی (درصد آزادسازی
+              ودیعه به مستأجر و مابقی به کیف پول شما) تا حداکثر یک هفته صادر و
+              اجرا می‌شود.
+            </p>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value.slice(0, 2000))}
+              rows={4}
+              maxLength={2000}
+              placeholder="مثلاً: لنز دوربین خط و خش عمیق دارد و فوکوس نمی‌کند؛ ضربهٔ گوشهٔ بدنه مشهود است…"
+              className="w-full text-xs rounded-xl border border-outline-variant/60 bg-surface-container-low px-3 py-2.5 text-on-surface focus:outline-none focus:ring-2 focus:ring-m3-primary/30 resize-none"
+            />
+            <p className="text-[11px] text-slate-400 font-semibold">
+              {note.trim().length < 20
+                ? "برای ثبت پرونده، شرح خسارت را بنویسید (حداقل ۲۰ کاراکتر)."
+                : "شرح خسارت کامل است؛ دکمهٔ ثبت را بزنید."}
+            </p>
+            <button
+              type="button"
+              onClick={() => void submitDamage()}
+              disabled={submitting || note.trim().length < 20}
+              className="w-full py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition active:scale-[0.99] bg-m3-error hover:bg-m3-error/90 text-on-primary shadow-md disabled:opacity-60"
+            >
+              <span className="material-symbols-outlined text-base">gavel</span>
+              {submitting
+                ? "در حال ثبت اعلام خسارت…"
+                : "ثبت شرح خسارت و ارجاع به پنل مدیریت"}
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -107,16 +200,16 @@ export default function ReturnConfirmCard({
               className="py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md transition active:scale-[0.99] bg-m3-primary hover:bg-primary-container text-white shadow-m3-primary/25"
             >
               <span className="material-symbols-outlined text-base">check_circle</span>
-              سالم تحویل گرفتم
+              تحویل سالم گرفتم
             </button>
-            {/* Option 2: declare damage → dedicated description page */}
+            {/* Option 2: declare damage → inline description form */}
             <button
               type="button"
-              onClick={goDeclareDamage}
+              onClick={() => setDamageOpen(true)}
               className="py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition active:scale-[0.99] bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200"
             >
               <span className="material-symbols-outlined text-base">gavel</span>
-              اعلام خسارت
+              تحویل و اعلام خسارت
             </button>
           </div>
         )}

@@ -82,7 +82,6 @@ type FormData = {
   /** Owner-blocked availability picked on the Jalali calendar (step 3). */
   blockedRanges: DateRange[];
   discountPercent: number;
-  acceptPromissoryNote: boolean;
   bufferHours: string;
   instantBook: boolean;
   cancellationPolicy: string;
@@ -118,7 +117,6 @@ const DEFAULT_FORM: FormData = {
   maxDays: "30",
   blockedRanges: [],
   discountPercent: 15,
-  acceptPromissoryNote: true,
   bufferHours: "24",
   instantBook: false,
   cancellationPolicy: "flexible",
@@ -2015,38 +2013,6 @@ export default function CreateListingWizard({
                   ودیعه نقدی در صورت بروز خسارت یا تاخیر، پس از ارائه صورت‌جلسه
                   دیجیتال تحویل به حساب شما بازگردانده می‌شود (شبیه‌سازی).
                 </p>
-              </div>
-            </div>
-
-            <div className="space-y-3 pt-2">
-              <span className="text-on-surface block font-bold">
-                روش‌های جایگزین ودیعه نقدی:
-              </span>
-              <div className="space-y-2.5">
-                <label className="flex items-center justify-between p-3.5 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={form.acceptPromissoryNote}
-                      onChange={(e) =>
-                        update({ acceptPromissoryNote: e.target.checked })
-                      }
-                      className="rounded text-m3-primary focus:ring-m3-primary"
-                    />
-                    <div>
-                      <span className="font-semibold text-on-surface block text-sm">
-                        پذیرش سفته الکترونیک بانکی
-                      </span>
-                      <span className="text-sm text-on-surface-variant">
-                        مستاجر بدون بلوکه کردن پول نقد، سفته رسمی با امضای
-                        دیجیتال ثبت می‌کند.
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-xs text-emerald-800 bg-emerald-500/15 px-2.5 py-1 rounded-full font-bold shrink-0 hidden sm:inline-block">
-                    محبوب‌ترین
-                  </span>
-                </label>
               </div>
             </div>
           </section>

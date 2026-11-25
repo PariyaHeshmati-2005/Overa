@@ -986,18 +986,19 @@ export default function RentalsClient({
               </div>
             </div>
             <p className="text-xs text-on-surface-variant leading-relaxed mb-4">
-              در صورت بروز مغایرت در کالا، تاخیر پیک، یا نیاز به داوری بین شما و
-              مالک، کارشناسان اٌوِرا همراه شما هستند.
+              در صورت بروز مغایرت در کالا، تاخیر پیک، یا اعلام خسارت از سوی
+              میزبان، کارشناسان اٌوِرا از طریق بخش «اعلام خسارت‌ها» پنل مدیریت
+              پرونده را بررسی و رأی صادر می‌کنند.
             </p>
             <div className="flex gap-2">
               <Link
-                href="/damage-claims"
+                href="/tos-support-faq"
                 className="flex-1 py-2 px-3 bg-m3-primary text-on-primary rounded-lg text-xs font-bold hover:bg-surface-tint transition-colors flex items-center justify-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-sm">
                   support_agent
                 </span>
-                ثبت تیکت داوری
+                راهنمای پشتیبانی
               </Link>
               <a
                 href="tel:02188223344"

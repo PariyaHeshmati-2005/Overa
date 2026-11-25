@@ -324,8 +324,8 @@ export default async function RentalLifecyclePage({
               <Link href="/tos-support-faq" className="hover:text-m3-primary">
                 حریم خصوصی
               </Link>
-              <Link href="/arbitration-panel" className="hover:text-m3-primary">
-                سامانه داوری
+              <Link href="/tos-support-faq" className="hover:text-m3-primary">
+                قوانین حل اختلاف
               </Link>
             </div>
           </div>

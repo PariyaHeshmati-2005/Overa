@@ -3,37 +3,34 @@ import { jsonError, jsonOk, requireAdmin } from "@/lib/api";
 
 type Ctx = { params: Promise<{ id: string }> };
 
+/**
+ * Status flow of the «اعلام خسارت‌ها» queue: the admin reviews the case
+ * (optionally via the case chat with the renter), then issues the ruling and
+ * closes the case in one step. Legacy rows (COUNTER_EVIDENCE / DECIDED /
+ * APPEALED) can still be settled. REJECTED / SETTLED are terminal.
+ */
 const CLAIM_STATUS_FLOWS: Record<string, string[]> = {
-  OPEN: ["COUNTER_EVIDENCE", "UNDER_REVIEW", "REJECTED"],
-  COUNTER_EVIDENCE: ["UNDER_REVIEW", "REJECTED"],
-  UNDER_REVIEW: ["DECIDED"],
-  DECIDED: ["APPEALED", "SETTLED"],
+  OPEN: ["UNDER_REVIEW", "SETTLED"],
+  COUNTER_EVIDENCE: ["UNDER_REVIEW", "SETTLED"],
+  UNDER_REVIEW: ["SETTLED"],
+  DECIDED: ["SETTLED"],
   APPEALED: ["UNDER_REVIEW", "SETTLED"],
   REJECTED: [],
   SETTLED: [],
 };
 
-/** Arbitration verdict on the DEPOSIT (all sandbox-labelled). */
-const VERDICTS = ["RELEASE_TO_RENTER", "PARTIAL_DEDUCTION", "PAY_TO_HOST"] as const;
-type Verdict = (typeof VERDICTS)[number];
-
-const VERDICT_LABELS: Record<Verdict, string> = {
-  RELEASE_TO_RENTER: "آزادسازی کامل ودیعه به نفع مستأجر",
-  PARTIAL_DEDUCTION: "کسر بخشی از ودیعه و آزادسازی مابقی",
-  PAY_TO_HOST: "پرداخت کامل ودیعه به میزبان",
-};
-
 /**
- * PATCH /api/admin/claims/[id] — arbitration decisions.
- * Body: { status, decision?, settlementNote?, appealMessage?,
- *         verdict?: RELEASE_TO_RENTER | PARTIAL_DEDUCTION | PAY_TO_HOST,
- *         chargeAmount?: number }
+ * PATCH /api/admin/claims/[id] — damage-claim handling (admin only).
+ * Body: { status, decision?, percentToRenter? }
  *
- * The SETTLED step is where the verdict EXECUTES: the deposit actually moves
- * between the wallet balances (sandbox ledger entries + balance updates in one
- * transaction). It runs at most once per claim (guarded by the claim's
- * settlementNote being empty and the reservation still being DISPUTED).
- * Admin-only, fully audited. The UI must never claim legally binding outcomes.
+ * The SETTLED step is where the RULING EXECUTES («صدور رأی و اختتامیه»): the
+ * admin rules what PERCENT of the deposit is released to the renter — the
+ * remainder goes to the host's wallet — and the wallet balances move in one
+ * transaction (sandbox ledger, guarded against negative balances). It runs at
+ * most once per claim (guarded by the reservation still being DISPUTED).
+ * The ruling is expected within ONE WEEK of the declaration — the deadline is
+ * surfaced in the admin UI; the API itself never blocks a late ruling so a
+ * deposit can never be stranded.
  */
 export async function PATCH(req: Request, ctx: Ctx) {
   const { id } = await ctx.params;
@@ -49,82 +46,78 @@ export async function PATCH(req: Request, ctx: Ctx) {
   if (!allowed.includes(status))
     return jsonError("تغییر وضعیت پرونده مجاز نیست.", 422);
 
-  const verdictRaw = String(body.verdict ?? "");
-  const verdict = VERDICTS.includes(verdictRaw as Verdict)
-    ? (verdictRaw as Verdict)
-    : null;
-  const chargeAmountRaw = Math.floor(Number(body.chargeAmount ?? 0));
-
-  /* ---------------------------------------------------- verdict execution */
-  if (status === "SETTLED" && verdict && !claim.settlementNote) {
+  /* ---------------------------------------------------- ruling execution */
+  if (status === "SETTLED") {
     const reservation = await db.reservation.findUnique({
       where: { id: claim.reservationId },
     });
     if (!reservation) return jsonError("رزرو مرتبط یافت نشد.", 404);
     if (reservation.status !== "DISPUTED")
       return jsonError(
-        "این سفارش دیگر در مرحله بررسی اختلاف نیست؛ تسویه دو بار انجام نمی‌شود.",
+        "این سفارش دیگر در مرحله بررسی خسارت نیست؛ اختتامیه دو بار انجام نمی‌شود.",
         409,
       );
 
-    const deposit = reservation.deposit;
-    const cashHeld =
-      reservation.paymentMethod === "CASH" &&
-      reservation.depositStatus === "HELD";
-    const promissory = reservation.paymentMethod === "PROMISSORY";
-    let charge = 0; // amount that ends up with the HOST (Toman)
-    if (verdict === "PAY_TO_HOST") charge = deposit;
-    if (verdict === "PARTIAL_DEDUCTION") {
-      if (chargeAmountRaw <= 0 || chargeAmountRaw > deposit)
-        return jsonError(
-          `مبلغ کسر باید بین ۱ و ${deposit.toLocaleString("fa-IR")} تومان (کل ودیعه) باشد.`,
-          422,
-        );
-      charge = chargeAmountRaw;
+    const percentRaw = Math.floor(Number(body.percentToRenter ?? NaN));
+    if (!Number.isFinite(percentRaw) || percentRaw < 0 || percentRaw > 100) {
+      return jsonError(
+        "درصد آزادسازی ودیعه برای مستأجر باید عددی بین ۰ تا ۱۰۰ باشد.",
+        422,
+      );
     }
-    const toRenter = deposit - charge;
-    const renterDebit = promissory ? charge : 0; // sakteh: renter pays from wallet
+    const deposit = reservation.deposit;
+    const toRenter = Math.floor((deposit * percentRaw) / 100);
+    const toHost = deposit - toRenter;
+    const depositWasHeld = reservation.depositStatus === "HELD";
 
-    // PROMISSORY with a deduction → the renter never escrowed cash; the note
-    // is executed against their wallet balance (never negative).
-    if (promissory && charge > 0) {
+    // When no deposit is escrowed (legacy orders whose deposit was never
+    // charged), the host's share is executed against the renter's wallet
+    // balance (never negative — the whole ruling rolls back otherwise).
+    if (!depositWasHeld && toHost > 0) {
       const renter = await db.user.findUnique({
         where: { id: reservation.renterId },
         select: { walletBalance: true },
       });
-      if (!renter || renter.walletBalance < charge)
+      if (!renter || renter.walletBalance < toHost)
         return jsonError(
-          "مستأجر با ضمانت سفته ودیعه‌ای نقدی نکرده است و موجودی کیف پولش برای اجرای مبلغ رأی کافی نیست؛ ابتدا شارژ کیف پول مستأجر را پیگیری کنید.",
+          "ودیعهٔ نقدی برای این سفارش بلوکه نشده است و موجودی کیف پول مستأجر برای اجرای سهم میزبان کافی نیست؛ ابتدا شارژ کیف پول مستأجر را پیگیری کنید.",
           402,
         );
     }
 
+    const note = String(body.decision ?? "").trim();
     const settlementNote =
-      String(body.settlementNote ?? "").trim() ||
-      `${VERDICT_LABELS[verdict]}${charge > 0 ? ` — کسر ${charge.toLocaleString("fa-IR")} تومان` : ""} (حالت شبیه‌سازی).`;
+      note ||
+      `رأی مدیریت: ${percentRaw.toLocaleString("fa-IR")}٪ ودیعه به مستأجر آزاد شد${toHost > 0 ? ` و مابقی (${toHost.toLocaleString("fa-IR")} تومان) به کیف پول میزبان واریز گردید` : ""} (حالت شبیه‌سازی).`;
 
     let settleError: Response | null = null;
     const updated = await db.$transaction(async (tx) => {
       const claimUpd = await tx.damageClaim.update({
         where: { id },
-        data: { status: "SETTLED", settlementNote, chargeAmount: charge },
+        data: {
+          status: "SETTLED",
+          decision: settlementNote,
+          decidedAt: new Date(),
+          settlementNote,
+          percentToRenter: percentRaw,
+          chargeAmount: toHost,
+        },
       });
 
       // Ledger + balances (sandbox).
       const entries: {
         userId: string; type: string; amount: number; reference: string; description: string;
       }[] = [];
-      if (cashHeld) {
-        // The escrowed deposit physically leaves the escrow ledger.
-        if (charge > 0)
-          entries.push({ userId: reservation.hostId, type: "DISPUTE_SETTLEMENT", amount: charge, reference: reservation.code, description: `دریافت سهم ودیعه طبق رأی داوری (${VERDICT_LABELS[verdict]}) — حالت شبیه‌سازی` });
+      if (depositWasHeld) {
+        // The escrowed deposit physically leaves the escrow ledger: the
+        // ruled percent goes to the renter, the remainder to the host.
         if (toRenter > 0)
-          entries.push({ userId: reservation.renterId, type: "DEPOSIT_RELEASE", amount: toRenter, reference: reservation.code, description: `آزادسازی ودیعه طبق رأی داوری (${VERDICT_LABELS[verdict]}) — حالت شبیه‌سازی` });
-      } else if (promissory && charge > 0) {
-        // Nothing was escrowed; the promissory note is executed against the
-        // renter's wallet balance (guarded above).
-        entries.push({ userId: reservation.renterId, type: "DISPUTE_CHARGE", amount: -charge, reference: reservation.code, description: `اجرای سفته الکترونیک طبق رأی داوری (${VERDICT_LABELS[verdict]}) — حالت شبیه‌سازی` });
-        entries.push({ userId: reservation.hostId, type: "DISPUTE_SETTLEMENT", amount: charge, reference: reservation.code, description: `دریافت خسارت طبق رأی داوری (اجرای سفته) — حالت شبیه‌سازی` });
+          entries.push({ userId: reservation.renterId, type: "DEPOSIT_RELEASE", amount: toRenter, reference: reservation.code, description: `آزادسازی ${percentRaw.toLocaleString("fa-IR")}٪ ودیعه به کیف پول مستأجر طبق رأی مدیریت — حالت شبیه‌سازی` });
+        if (toHost > 0)
+          entries.push({ userId: reservation.hostId, type: "DISPUTE_SETTLEMENT", amount: toHost, reference: reservation.code, description: `واریز سهم میزبان از ودیعه (${(100 - percentRaw).toLocaleString("fa-IR")}٪) طبق رأی مدیریت — حالت شبیه‌سازی` });
+      } else if (toHost > 0) {
+        entries.push({ userId: reservation.renterId, type: "DISPUTE_CHARGE", amount: -toHost, reference: reservation.code, description: `اجرای رأی مدیریت از کیف پول مستأجر (ودیعه نقدی نشده بود) — حالت شبیه‌سازی` });
+        entries.push({ userId: reservation.hostId, type: "DISPUTE_SETTLEMENT", amount: toHost, reference: reservation.code, description: `دریافت سهم میزبان طبق رأی مدیریت — حالت شبیه‌سازی` });
       }
 
       const balanceDelta: Record<string, number> = {};
@@ -153,28 +146,28 @@ export async function PATCH(req: Request, ctx: Ctx) {
         }
       }
 
-      // Close the reservation out: the dispute is decided, the deposit is
+      // Close the rental out: the damage case is decided, the deposit is
       // settled — the order completes with a verdict event on its timeline.
       await tx.reservation.update({
         where: { id: reservation.id },
         data: {
           status: "COMPLETED",
-          depositStatus: cashHeld ? "REFUNDED" : reservation.depositStatus,
+          depositStatus: depositWasHeld ? "REFUNDED" : reservation.depositStatus,
           events: {
             create: {
               actor: "admin",
               type: "RELEASE_DEPOSIT",
-              message: `رأی داوری اجرا شد: ${VERDICT_LABELS[verdict]}${charge > 0 ? ` (کسر ${charge.toLocaleString("fa-IR")} تومان از ودیعه)` : ""} — پرونده: ${claim.title}`,
+              message: `اختتامیهٔ پروندهٔ خسارت: رأی مدیریت اجرا شد — ${percentRaw.toLocaleString("fa-IR")}٪ ودیعه (${toRenter.toLocaleString("fa-IR")} تومان) به کیف پول مستأجر آزاد شد${toHost > 0 ? ` و مابقی (${toHost.toLocaleString("fa-IR")} تومان) به کیف پول میزبان واریز شد` : ""} — پرونده: ${claim.title}`,
             },
           },
         },
       });
 
       await tx.notification.create({
-        data: { userId: reservation.renterId, type: "DISPUTE", title: "رأی داوری صادر و اجرا شد", body: `پروندهٔ «${claim.title}»: ${VERDICT_LABELS[verdict]}. جزئیات در صفحهٔ پرونده و روند اجاره.`, link: "/damage-claims" },
+        data: { userId: reservation.renterId, type: "DISPUTE", title: "رأی مدیریت صادر و اجرا شد", body: `پروندهٔ «${claim.title}»: ${percentRaw.toLocaleString("fa-IR")}٪ ودیعه به کیف پول شما آزاد شد${toHost > 0 ? " و مابقی به کیف پول میزبان واریز گردید" : ""}. جزئیات در روند اجاره.`, link: `/rental-lifecycle/${reservation.id}` },
       });
       await tx.notification.create({
-        data: { userId: reservation.hostId, type: "DISPUTE", title: "رأی داوری صادر و اجرا شد", body: `پروندهٔ «${claim.title}»: ${VERDICT_LABELS[verdict]}. جزئیات در صفحهٔ پرونده و روند اجاره.`, link: "/damage-claims" },
+        data: { userId: reservation.hostId, type: "DISPUTE", title: "رأی مدیریت صادر و اجرا شد", body: `پروندهٔ «${claim.title}»: رأی مدیریت اجرا و ودیعه تسویه شد؛ جزئیات در روند اجاره.`, link: `/rental-lifecycle/${reservation.id}` },
       });
 
       return claimUpd;
@@ -186,19 +179,18 @@ export async function PATCH(req: Request, ctx: Ctx) {
     if (updated instanceof Response) return updated;
 
     await db.auditLog.create({
-      data: { actorId: auth.user.id, action: `CLAIM_${status}`, entityType: "DamageClaim", entityId: id, meta: JSON.stringify({ ...body, executedVerdict: verdict, charge }) },
+      data: { actorId: auth.user.id, action: "CLAIM_SETTLED", entityType: "DamageClaim", entityId: id, meta: JSON.stringify({ percentToRenter: percentRaw, toRenter, toHost }) },
     });
     return jsonOk({ claim: updated });
   }
 
+  // Non-settlement transitions (e.g. «ارسال به بررسی کارشناسی»).
   const updated = await db.damageClaim.update({
     where: { id },
     data: {
       status,
       decision: status === "DECIDED" ? String(body.decision ?? "تصمیم کارشناس ثبت شد.") : claim.decision,
       decidedAt: status === "DECIDED" ? new Date() : claim.decidedAt,
-      appealMessage: status === "APPEALED" ? String(body.appealMessage ?? null) || claim.appealMessage : claim.appealMessage,
-      settlementNote: status === "SETTLED" ? String(body.settlementNote ?? "توافق و تسویه ثبت شد (شبیه‌سازی).") : claim.settlementNote,
     },
   });
 
@@ -206,9 +198,8 @@ export async function PATCH(req: Request, ctx: Ctx) {
     data: { actorId: auth.user.id, action: `CLAIM_${status}`, entityType: "DamageClaim", entityId: id, meta: JSON.stringify(body) },
   });
 
-  const notifyUserId = claim.againstId;
   await db.notification.create({
-    data: { userId: notifyUserId, type: "DISPUTE", title: "به‌روزرسانی پرونده خسارت", body: `وضعیت پرونده «${claim.title}» به ${status} تغییر کرد.`, link: "/damage-claims" },
+    data: { userId: claim.againstId, type: "DISPUTE", title: "به‌روزرسانی پرونده خسارت", body: `وضعیت پروندهٔ «${claim.title}» به مرحله بررسی کارشناسی رفت؛ رأی تا حداکثر یک هفته از طریق گفتگوی پرونده اعلام می‌شود.`, link: `/rental-lifecycle/${claim.reservationId}` },
   });
 
   return jsonOk({ claim: updated });

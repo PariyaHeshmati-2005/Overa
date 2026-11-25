@@ -13,6 +13,16 @@
  * /api/reservations/[id]/otp/* routes) — never through the generic PATCH
  * endpoint. RETURNED → INSPECTION remains for legacy reservations created
  * before the OTP flow existed.
+ *
+ * Money flow (sandbox): the DEPOSIT (ودیعه) is charged at the pay stage
+ * (before the item is handed over and before the renter's «سلامت تحویل
+ * گرفتم» confirmation); the DAILY-RATE rent (days × dailyPrice) is charged
+ * only AFTER the renter confirms receipt (→ RENTAL_ACTIVE). On a healthy
+ * return the deposit is released automatically to the renter's wallet; on a
+ * declared damage the order goes to DISPUTED and ONLY the admin dashboard
+ * («اعلام خسارت‌ها») settles it with a percent ruling (chat + verdict within
+ * one week). `refuse_delivery` voids the order and releases the deposit back
+ * to the renter's wallet.
  */
 import crypto from "node:crypto";
 
@@ -47,7 +57,7 @@ export const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {
   COMPLETED: "اجاره تکمیل شد",
   REJECTED: "درخواست رد شد",
   CANCELLED: "لغو شده",
-  DISPUTED: "در حال بررسی اختلاف / اعلام خسارت",
+  DISPUTED: "در حال بررسی خسارت توسط کارشناسان اٌوِرا",
 };
 
 export const RESERVATION_STATUS_COLORS: Record<ReservationStatus, string> = {
@@ -87,7 +97,7 @@ export type ReservationAction =
   | "request_return"
   | "confirm_return"
   | "complete_inspection"
-  | "release_deposit"
+  | "declare_damage"
   | "dispute"
   | "refuse_delivery"
   | "cancel";
@@ -103,10 +113,14 @@ export const ACTION_ACTORS: Record<ReservationAction, ("renter" | "host" | "admi
   request_return: ["renter"],
   confirm_return: ["host"],
   complete_inspection: ["renter", "host"],
-  release_deposit: ["host"],
+  // Host declares damage at the RETURN stage: the order goes to DISPUTED and
+  // the case lands in the admin dashboard's «اعلام خسارت‌ها» queue where the
+  // admin chats with the renter and issues the deposit-split ruling.
+  declare_damage: ["host"],
   dispute: ["renter", "host"],
-  // Renter refuses the item AT DELIVERY (damage found on arrival) — the whole
-  // order is voided and every paid Toman flows back to the renter (sandbox).
+  // Renter refuses the item AT DELIVERY (damage found on arrival / non-delivery):
+  // the whole order is stopped, the deposit flows back to the renter's wallet
+  // and a failed-rental comment is recorded on the host's reviews.
   refuse_delivery: ["renter"],
   cancel: ["renter", "host"],
 };
@@ -148,6 +162,8 @@ const TRANSITIONS: Record<ReservationStatus, Partial<Record<ReservationAction, R
     cancel: "CANCELLED",
   },
   PAYMENT: {
+    // Completing the payment now charges the DEPOSIT (ودیعه) only — the rent
+    // is charged after the renter's receipt confirmation (see DELIVERY stage).
     pay: "PAID",
     cancel: "CANCELLED",
   },
@@ -156,23 +172,27 @@ const TRANSITIONS: Record<ReservationStatus, Partial<Record<ReservationAction, R
     cancel: "CANCELLED",
   },
   // Host recorded the hand-over; the rental only becomes active after the
-  // renter verifies receipt with a one-time code (OTP flow).
+  // renter verifies receipt with a one-time code (OTP flow). The deposit has
+  // already been escrowed at the pay stage (before this confirmation).
   DELIVERED: {
     confirm_delivery: "RENTAL_ACTIVE",
     // Renter found the item damaged on arrival and refuses the hand-over:
-    // the order is voided entirely (full sandbox refund, no active rental).
+    // the order is voided entirely, the deposit is released back to the
+    // renter's wallet and a failed-rental comment is recorded on the host.
     refuse_delivery: "CANCELLED",
-    dispute: "DISPUTED",
   },
   RENTAL_ACTIVE: {
     request_return: "RETURN_REQUESTED",
+    // Mid-rental damage/dispute (item broke during the rental): the order
+    // goes to the admin dashboard's «اعلام خسارت‌ها» queue.
     dispute: "DISPUTED",
   },
   // Renter announced the return; the host either OTP-confirms a healthy
-  // return (→ COMPLETED + refund process) or declares damage (→ DISPUTED).
+  // return (→ COMPLETED + automatic deposit release) or declares damage
+  // (declare_damage → DISPUTED, handled by the admin dashboard).
   RETURN_REQUESTED: {
     confirm_return: "COMPLETED",
-    dispute: "DISPUTED",
+    declare_damage: "DISPUTED",
   },
   // Legacy path kept for reservations created before the OTP flow existed.
   RETURNED: {
@@ -186,9 +206,9 @@ const TRANSITIONS: Record<ReservationStatus, Partial<Record<ReservationAction, R
   COMPLETED: {},
   REJECTED: {},
   CANCELLED: {},
-  DISPUTED: {
-    release_deposit: "COMPLETED",
-  },
+  // The dispute is settled ONLY from the admin dashboard's «اعلام خسارت‌ها»
+  // section (percent ruling on the deposit, executed by /api/admin/claims).
+  DISPUTED: {},
 };
 
 export class TransitionError extends Error {}

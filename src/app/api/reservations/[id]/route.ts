@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
 import { jsonError, jsonOk, requireUser } from "@/lib/api";
 import { notifyAdmins, type NotifyDb } from "@/lib/admin-notify";
+import { faCountWord } from "@/lib/format";
+import { createHostAutoComment } from "@/lib/host-comments";
 import {
   assertTransition,
   canAct,
@@ -94,17 +96,9 @@ export async function PATCH(req: Request, ctx: Ctx) {
   // Wallet rule: balances can never go negative. The renter's sandbox payment
   // is drawn from their wallet — when the balance is insufficient the client
   // is told to top up FIRST (extra.needTopup drives the «شارژ کیف پول»
-  // redirect in the UI). With the PROMISSORY (سفته) guarantee the gateway
-  // charge covers the RENTAL FEE ONLY — the deposit stays un-charged because
-  // it is guaranteed by the signed electronic promissory note.
-  const payMethod =
-    action === "pay" && String(body.method ?? "").toUpperCase() === "PROMISSORY"
-      ? "PROMISSORY"
-      : "CASH";
-  const payCost =
-    action === "pay" && payMethod === "PROMISSORY"
-      ? reservation.subtotal
-      : reservation.subtotal + reservation.deposit;
+  // redirect in the UI). The pay stage charges the DEPOSIT (ودیعه) ONLY — the
+  // daily-rate rent is charged after the renter confirms receipt (OTP flow).
+  const payCost = action === "pay" ? reservation.deposit : 0;
   if (action === "pay" && actor === "renter" && user.walletBalance < payCost) {
     return jsonError(
       `موجودی کیف پول شما (${user.walletBalance.toLocaleString("fa-IR")} تومان) برای پرداخت این سفارش (${payCost.toLocaleString("fa-IR")} تومان) کافی نیست؛ لطفاً ابتدا کیف پول را شارژ کنید.`,
@@ -142,8 +136,6 @@ export async function PATCH(req: Request, ctx: Ctx) {
     disputeOpenedAt?: Date;
     depositStatus?: string;
     paymentMethod?: string;
-    saktehSignature?: string;
-    saktehSignedAt?: Date;
     deliveryStatus?: string;
     deliveryNote?: string;
   } = {};
@@ -165,56 +157,27 @@ export async function PATCH(req: Request, ctx: Ctx) {
     case "pay": {
       /* The payment is TWO-STEP (AGREEMENT --pay--> PAYMENT --pay--> PAID):
          the first press starts the payment, the second completes it. Money
-         moves ONLY on the completing press — otherwise the rental fee (and
-         deposit) would be charged TWICE from the renter's wallet. */
+         moves ONLY on the completing press — and it covers the DEPOSIT
+         (ودیعه) ONLY: the daily-rate rent is charged later, right after the
+         renter confirms receipt («سلامت تحویل گرفتم») when the rental
+         actually starts. */
       if (reservation.status !== "PAYMENT") {
-        addEvent("فرآیند پرداخت آغاز شد؛ برای نهایی‌شدن پرداخت، پرداخت را تأیید کنید.");
+        addEvent("فرآیند پرداخت ودیعه آغاز شد؛ برای نهایی‌شدن، پرداخت را تأیید کنید.");
         break;
       }
-      // SANDBOX payment adapter — visibly labelled everywhere.
-      if (payMethod === "PROMISSORY") {
-        // سفته الکترونیک: the renter signed the electronic promissory note in
-        // the lifecycle payment card BEFORE reaching the gateway; the charge
-        // below covers the rental fee ONLY and the deposit stays un-charged
-        // (guaranteed by the note, settled through arbitration if needed).
-        const signature = String(body.signature ?? "");
-        if (!signature.startsWith("data:image/")) {
-          return jsonError(
-            "برای پرداخت با سفته الکترونیک، ابتدا متن سفته را در کادر امضا بنویسید و امضا را ثبت کنید.",
-            422,
-          );
-        }
-        dataExtra.paymentMethod = "PROMISSORY";
-        dataExtra.saktehSignature = signature;
-        dataExtra.saktehSignedAt = new Date();
-        // depositStatus stays NONE: no deposit money was taken — the note
-        // itself is the guarantee. The refund pipeline therefore skips the
-        // deposit step on completion (see the OTP verify route).
-        addEvent(
-          `پرداخت هزینه اجاره (${reservation.subtotal.toLocaleString("fa-IR")} تومان) با ضمانت سفته الکترونیک انجام شد؛ ودیعه نقدی نشده است (Sandbox).`,
-        );
-        walletEntries.push(
-          { userId: reservation.renterId, type: "RENTAL_PAYMENT", amount: -reservation.subtotal, reference: reservation.code, description: `پرداخت اجاره ${reservation.listing.title} با ضمانت سفته — حالت شبیه‌سازی` },
-          { userId: reservation.hostId, type: "RENTAL_PAYMENT", amount: reservation.subtotal, reference: reservation.code, description: `دریافت اجاره ${reservation.listing.title} — حالت شبیه‌سازی` },
-        );
-        balanceDelta[reservation.renterId] = (balanceDelta[reservation.renterId] ?? 0) - reservation.subtotal;
-        balanceDelta[reservation.hostId] = (balanceDelta[reservation.hostId] ?? 0) + reservation.subtotal;
-        await db.notification.create({ data: { userId: reservation.hostId, type: "RESERVATION", title: "پرداخت با سفته انجام شد", body: `پرداخت رزرو «${reservation.code}» با ضمانت سفته الکترونیک انجام شد؛ وسیله را تحویل دهید.`, link: "/host-dashboard" } });
-        break;
-      }
+      // SANDBOX payment adapter — visibly labelled everywhere. Deposit escrow.
       dataExtra.paymentMethod = "CASH";
-      addEvent("پرداخت در حالت آزمایشی (Sandbox) انجام شد. هیچ پول واقعی جابه‌جا نشده است.");
+      addEvent(
+        `پرداخت ودیعه (${reservation.deposit.toLocaleString("fa-IR")} تومان) در حالت آزمایشی (Sandbox) انجام شد؛ هزینهٔ اجارهٔ روزانه پس از تأیید دریافت کالا محاسبه می‌شود.`,
+      );
       dataExtra.depositStatus = "HELD";
       walletEntries.push(
-        { userId: reservation.renterId, type: "RENTAL_PAYMENT", amount: -reservation.subtotal, reference: reservation.code, description: `پرداخت اجاره ${reservation.listing.title} — حالت شبیه‌سازی` },
-        { userId: reservation.renterId, type: "DEPOSIT_HOLD", amount: -reservation.deposit, reference: reservation.code, description: `بلوکه شدن ودیعه — حالت شبیه‌سازی` },
-        { userId: reservation.hostId, type: "RENTAL_PAYMENT", amount: reservation.subtotal, reference: reservation.code, description: `دریافت اجاره ${reservation.listing.title} — حالت شبیه‌سازی` },
+        { userId: reservation.renterId, type: "DEPOSIT_HOLD", amount: -reservation.deposit, reference: reservation.code, description: `بلوکه شدن ودیعه ${reservation.listing.title} — حالت شبیه‌سازی` },
       );
-      balanceDelta[reservation.renterId] = (balanceDelta[reservation.renterId] ?? 0) - reservation.subtotal - reservation.deposit;
-      balanceDelta[reservation.hostId] = (balanceDelta[reservation.hostId] ?? 0) + reservation.subtotal;
+      balanceDelta[reservation.renterId] = (balanceDelta[reservation.renterId] ?? 0) - reservation.deposit;
       // Guarded inside the transaction below: the renter's balance must cover
       // the cost, otherwise the whole transition (and payment) rolls back.
-      await db.notification.create({ data: { userId: reservation.hostId, type: "RESERVATION", title: "پرداخت انجام شد", body: `پرداخت رزرو «${reservation.code}» انجام شد؛ وسیله را تحویل دهید.`, link: "/host-dashboard" } });
+      await db.notification.create({ data: { userId: reservation.hostId, type: "RESERVATION", title: "ودیعه پرداخت شد", body: `ودیعهٔ رزرو «${reservation.code}» پرداخت و بلوکه شد؛ وسیله را به مستأجر تحویل دهید.`, link: "/host-dashboard" } });
       break;
     }
     case "deliver":
@@ -251,25 +214,16 @@ export async function PATCH(req: Request, ctx: Ctx) {
       );
       break;
     }
-    case "release_deposit":
-      addEvent("ودیعه آزاد شد و اجاره تکمیل شد (شبیه‌سازی).");
-      dataExtra.depositStatus = "REFUNDED";
-      walletEntries.push(
-        { userId: reservation.renterId, type: "DEPOSIT_RELEASE", amount: reservation.deposit, reference: reservation.code, description: "آزادسازی ودیعه — حالت شبیه‌سازی" },
-      );
-      balanceDelta[reservation.renterId] = (balanceDelta[reservation.renterId] ?? 0) + reservation.deposit;
-      break;
     case "dispute": {
       dataExtra.disputeOpenedAt = new Date();
       const note = String(body.note ?? "").trim();
-      addEvent(note || "اعلام اختلاف/خسارت برای این اجاره؛ سفارش به مرحله بررسی اختلاف منتقل شد.");
-      // Unified claims pipeline: EVERY dispute — whether opened from the
-      // return card, the lifecycle action row or the claims page — materialises
-      // as a DamageClaim row so it appears in /damage-claims, the host/renter
-      // panels AND the admin arbitration panel (previously the dispute action
-      // only flipped the status and the claim never surfaced anywhere).
+      addEvent(note || "اعلام اختلاف/خسارت برای این اجاره؛ سفارش به مرحله بررسی خسارت منتقل شد.");
+      // Unified damage pipeline: EVERY dispute — whether opened mid-rental
+      // from the lifecycle action row or by the host at the return stage
+      // (declare_damage) — materialises as a DamageClaim row so it lands in
+      // the admin dashboard's «اعلام خسارت‌ها» queue where the ruling is made.
       const existingClaim = await db.damageClaim.findFirst({
-        where: { reservationId: id, claimantId: user.id, status: { in: ["OPEN", "COUNTER_EVIDENCE", "UNDER_REVIEW", "APPEALED"] } },
+        where: { reservationId: id, claimantId: user.id, status: { in: ["OPEN", "COUNTER_EVIDENCE", "UNDER_REVIEW", "APPEALED", "DECIDED"] } },
         select: { id: true },
       });
       if (!existingClaim) {
@@ -279,8 +233,8 @@ export async function PATCH(req: Request, ctx: Ctx) {
             reservationId: id,
             claimantId: user.id,
             againstId: otherSide,
-            title: `اعلام خسارت/اختلاف برای سفارش ${reservation.code}`,
-            description: note || "اعلام خسارت/اختلاف از صفحهٔ روند اجاره ثبت شد؛ شرح تکمیلی از طریق گفتگوی پرونده اعلام می‌شود.",
+            title: `اعلام خسارت برای سفارش ${reservation.code}`,
+            description: note || "اعلام خسارت از صفحهٔ روند اجاره ثبت شد؛ شرح تکمیلی از طریق گفتگوی پرونده اعلام می‌شود.",
             status: "OPEN",
           },
         });
@@ -290,9 +244,53 @@ export async function PATCH(req: Request, ctx: Ctx) {
         db as unknown as NotifyDb,
         {
           type: "DISPUTE",
-          title: "اعلام اختلاف/خسارت برای یک سفارش",
-          body: `برای سفارش «${reservation.code}» اختلاف/خسارت ثبت شد؛ جزئیات و مکاتبات طرفین در صفحهٔ «خسارت و داوری» قابل بررسی است.`,
-          link: "/damage-claims",
+          title: "اعلام خسارت برای یک سفارش",
+          body: `برای سفارش «${reservation.code}» خسارت ثبت شد؛ جزئیات، گفتگو با مستأجر و صدور رأی در بخش «اعلام خسارت‌ها» پنل مدیریت.`,
+          link: "/admin-dashboard",
+        },
+        [reservation.renterId, reservation.hostId],
+      );
+      break;
+    }
+    case "declare_damage": {
+      /* Host declares damage when the renter hands the item back: the order
+         goes to DISPUTED and the case lands DIRECTLY in the admin dashboard's
+         «اعلام خسارت‌ها» section. The admin chats with the renter there and
+         must issue the deposit-split ruling within one week. */
+      const note = String(body.note ?? "").trim();
+      if (note.length < 20) {
+        return jsonError("شرح خسارت باید حداقل ۲۰ کاراکتر باشد تا پرونده در پنل مدیریت ثبت شود.", 422);
+      }
+      dataExtra.disputeOpenedAt = new Date();
+      addEvent(`میزبان هنگام بازگشت کالا خسارت اعلام کرد: ${note}`);
+      const otherSide = reservation.renterId;
+      await db.damageClaim.create({
+        data: {
+          reservationId: id,
+          claimantId: user.id,
+          againstId: otherSide,
+          title: `اعلام خسارت میزبان برای سفارش ${reservation.code}`,
+          description: note,
+          status: "OPEN",
+          stage: "RETURN",
+        },
+      });
+      await db.notification.create({
+        data: {
+          userId: reservation.renterId,
+          type: "DISPUTE",
+          title: "اعلام خسارت از سوی میزبان",
+          body: `میزبان برای «${reservation.code}» هنگام بازگشت کالا خسارت اعلام کرد؛ پرونده به کارشناسان اٌوِرا ارجاع شد و رأی تا حداکثر یک هفته از طریق گفتگوی پرونده اعلام می‌شود.`,
+          link: `/rental-lifecycle/${reservation.id}`,
+        },
+      });
+      await notifyAdmins(
+        db as unknown as NotifyDb,
+        {
+          type: "DISPUTE",
+          title: "اعلام خسارت جدید در بخش «اعلام خسارت‌ها»",
+          body: `میزبان برای سفارش «${reservation.code}» خسارت اعلام کرد؛ شرح خسارت، گفتگو با مستأجر و صدور رأی (حداکثر یک هفته) در بخش «اعلام خسارت‌ها» پنل مدیریت.`,
+          link: "/admin-dashboard",
         },
         [reservation.renterId, reservation.hostId],
       );
@@ -300,36 +298,65 @@ export async function PATCH(req: Request, ctx: Ctx) {
     }
     case "refuse_delivery": {
       // Renter inspected the item at hand-over, found it damaged and refuses
-      // to take it: the WHOLE order is voided — every paid Toman (rent, and
-      // the escrowed deposit when paid in cash) flows back to the renter.
+      // to take it («عدم تحویل و اعلام خسارت»): the WHOLE rental process is
+      // stopped, the escrowed deposit flows back to the renter's WALLET and a
+      // failed-rental comment is recorded on the host's reviews — with a
+      // cumulative counter that grows with every failed rental.
       dataExtra.deliveryStatus = "REFUSED_DAMAGE";
       const refuseNote = String(body.note ?? "").trim();
       if (refuseNote) dataExtra.deliveryNote = refuseNote;
       const depositWasHeld = reservation.depositStatus === "HELD";
       if (depositWasHeld) dataExtra.depositStatus = "REFUNDED";
-      addEvent(
-        `مستأجر هنگام تحویل، خسارت کالا را اعلام و از تحویل صرف‌نظر کرد${refuseNote ? `: ${refuseNote}` : ""}؛ اجاره باطل و مبالغ پرداختی بازگردانده شد (شبیه‌سازی).`,
+      // Was the rent itself already charged? New-flow orders charge the rent
+      // only AFTER receipt confirmation (never reached here); legacy orders
+      // paid the rent upfront at the pay stage. The wallet ledger decides.
+      const rentWasCharged = Boolean(
+        await db.walletTransaction.findFirst({
+          where: { reference: reservation.code, userId: reservation.renterId, type: "RENTAL_PAYMENT", amount: { lt: 0 } },
+          select: { id: true },
+        }),
       );
-      const refundEntries: { userId: string; type: string; amount: number; reference: string; description: string }[] = [
-        { userId: reservation.renterId, type: "RENTAL_REFUND", amount: reservation.subtotal, reference: reservation.code, description: "بازگشت وجه اجاره — ابطال اجاره هنگام تحویل (شبیه‌سازی)" },
-      ];
+      addEvent(
+        `مستأجر هنگام تحویل، عدم تحویل و اعلام خسارت را ثبت کرد${refuseNote ? `: ${refuseNote}` : ""}؛ فرآیند اجاره به‌طور کامل متوقف و ودیعه به کیف پول مستأجر بازگشت (شبیه‌سازی).`,
+      );
+      const refundEntries: { userId: string; type: string; amount: number; reference: string; description: string }[] = [];
+      if (rentWasCharged) {
+        refundEntries.push(
+          { userId: reservation.renterId, type: "RENTAL_REFUND", amount: reservation.subtotal, reference: reservation.code, description: "بازگشت وجه اجاره — توقف اجاره هنگام تحویل (شبیه‌سازی)" },
+          { userId: reservation.hostId, type: "RENTAL_REFUND", amount: -reservation.subtotal, reference: reservation.code, description: "برگشت وجه اجاره به مستأجر — توقف اجاره هنگام تحویل (شبیه‌سازی)" },
+        );
+        balanceDelta[reservation.renterId] = (balanceDelta[reservation.renterId] ?? 0) + reservation.subtotal;
+        balanceDelta[reservation.hostId] = (balanceDelta[reservation.hostId] ?? 0) - reservation.subtotal;
+      }
       if (depositWasHeld) {
-        refundEntries.push({ userId: reservation.renterId, type: "DEPOSIT_RELEASE", amount: reservation.deposit, reference: reservation.code, description: "آزادسازی کامل ودیعه — ابطال اجاره هنگام تحویل (شبیه‌سازی)" });
+        refundEntries.push({ userId: reservation.renterId, type: "DEPOSIT_RELEASE", amount: reservation.deposit, reference: reservation.code, description: "آزادسازی کامل ودیعه و واریز به کیف پول مستأجر — توقف اجاره هنگام تحویل (شبیه‌سازی)" });
+        balanceDelta[reservation.renterId] = (balanceDelta[reservation.renterId] ?? 0) + reservation.deposit;
       }
       walletEntries.push(...refundEntries);
-      balanceDelta[reservation.renterId] = (balanceDelta[reservation.renterId] ?? 0) + reservation.subtotal + (depositWasHeld ? reservation.deposit : 0);
-      walletEntries.push(
-        { userId: reservation.hostId, type: "RENTAL_REFUND", amount: -reservation.subtotal, reference: reservation.code, description: "برگشت وجه اجاره به مستأجر — ابطال اجاره هنگام تحویل (شبیه‌سازی)" },
-      );
-      balanceDelta[reservation.hostId] = (balanceDelta[reservation.hostId] ?? 0) - reservation.subtotal;
-      await db.notification.create({ data: { userId: reservation.hostId, type: "DISPUTE", title: "مستأجر کالا را تحویل ن گرفت", body: `مستأجر هنگام تحویل «${reservation.code}» خسارت اعلام کرد و اجاره باطل شد؛ مبالغ به مستأجر بازگشت. جزئیات در صفحهٔ روند اجاره.`, link: `/rental-lifecycle/${reservation.id}` } });
+      // Failed-rental comment on the host's reviews (cumulative counter —
+      // +1 because this refusal itself is persisted in the transaction below).
+      const failedCount =
+        (await db.reservation.count({
+          where: { hostId: reservation.hostId, deliveryStatus: "REFUSED_DAMAGE" },
+        })) + 1;
+      await createHostAutoComment({
+        listingId: reservation.listingId,
+        authorId: reservation.renterId,
+        reservationId: reservation.id,
+        rating: 1,
+        comment: `${faCountWord(failedCount)} اجاره ناموفق به دلیل وجود خسارت و عدم سازگاری با توضیحات و قوانین`,
+        hostId: reservation.hostId,
+        reservationCode: reservation.code,
+        title: "یک اجاره ناموفق در نظرات شما ثبت شد",
+      });
+      await db.notification.create({ data: { userId: reservation.hostId, type: "DISPUTE", title: "مستأجر کالا را تحویل ن گرفت", body: `مستأجر هنگام تحویل «${reservation.code}» عدم تحویل و خسارت اعلام کرد؛ فرآیند اجاره متوقف و ودیعه به کیف پول مستأجر واریز شد. یک اجاره ناموفق در بخش نظرات شما ثبت گردید.`, link: `/rental-lifecycle/${reservation.id}` } });
       await notifyAdmins(
         db as unknown as NotifyDb,
         {
           type: "DISPUTE",
-          title: "ابطال اجاره هنگام تحویل (خسارت هنگام دریافت)",
-          body: `سفارش «${reservation.code}» به‌علت خسارت هنگام تحویل توسط مستأجر باطل شد؛ در صورت نیاز به داوری از پنل داوری اقدام کنید.`,
-          link: "/arbitration-panel",
+          title: "توقف اجاره هنگام تحویل (عدم تحویل و اعلام خسارت)",
+          body: `سفارش «${reservation.code}» به‌علت عدم تحویل و اعلام خسارت توسط مستأجر متوقف شد؛ ودیعه به کیف پول مستأجر بازگشت و اجارهٔ ناموفق در نظرات میزبان ثبت گردید.`,
+          link: "/admin-dashboard",
         },
         [reservation.renterId, reservation.hostId],
       );
@@ -338,28 +365,34 @@ export async function PATCH(req: Request, ctx: Ctx) {
     case "cancel": {
       addEvent("رزرو لغو شد.");
       if (["AGREEMENT", "PAYMENT", "PAID"].includes(reservation.status)) {
-        // refund whatever was paid (sandbox). With the PROMISSORY guarantee no
-        // deposit money was ever taken (depositStatus NONE) — refund the rent
-        // only; with the CASH guarantee the escrowed deposit is released too.
+        // Refund ONLY what was actually charged (sandbox): the deposit when
+        // escrowed, plus the rent for legacy orders that paid it upfront —
+        // new orders charge the rent only after the receipt confirmation.
         const depositWasHeld = reservation.depositStatus === "HELD";
-        walletEntries.push(
-          { userId: reservation.renterId, type: "RENTAL_REFUND", amount: reservation.subtotal, reference: reservation.code, description: "بازگشت وجه اجاره پس از لغو — حالت شبیه‌سازی" },
+        const rentWasCharged = Boolean(
+          await db.walletTransaction.findFirst({
+            where: { reference: reservation.code, userId: reservation.renterId, type: "RENTAL_PAYMENT", amount: { lt: 0 } },
+            select: { id: true },
+          }),
         );
-        balanceDelta[reservation.renterId] = (balanceDelta[reservation.renterId] ?? 0) + reservation.subtotal;
+        if (rentWasCharged) {
+          walletEntries.push(
+            { userId: reservation.renterId, type: "RENTAL_REFUND", amount: reservation.subtotal, reference: reservation.code, description: "بازگشت وجه اجاره پس از لغو — حالت شبیه‌سازی" },
+            { userId: reservation.hostId, type: "RENTAL_REFUND", amount: -reservation.subtotal, reference: reservation.code, description: "برگشت وجه اجاره به مستأجر — حالت شبیه‌سازی" },
+          );
+          balanceDelta[reservation.renterId] = (balanceDelta[reservation.renterId] ?? 0) + reservation.subtotal;
+          balanceDelta[reservation.hostId] = (balanceDelta[reservation.hostId] ?? 0) - reservation.subtotal;
+        }
         if (depositWasHeld) {
           walletEntries.push(
             { userId: reservation.renterId, type: "DEPOSIT_RELEASE", amount: reservation.deposit, reference: reservation.code, description: "آزادسازی ودیعه پس از لغو — حالت شبیه‌سازی" },
           );
           balanceDelta[reservation.renterId] = (balanceDelta[reservation.renterId] ?? 0) + reservation.deposit;
         }
-        walletEntries.push(
-          { userId: reservation.hostId, type: "RENTAL_REFUND", amount: -reservation.subtotal, reference: reservation.code, description: "برگشت وجه اجاره به مستأجر — حالت شبیه‌سازی" },
-        );
-        balanceDelta[reservation.hostId] = (balanceDelta[reservation.hostId] ?? 0) - reservation.subtotal;
         addEvent(
           depositWasHeld
-            ? "رزرو لغو شد؛ وجه اجاره و ودیعه به‌صورت شبیه‌سازی‌شده بازگردانده شد."
-            : "رزرو لغو شد؛ وجه اجاره به‌صورت شبیه‌سازی‌شده بازگردانده شد (ودیعه با سفته تضمین شده بود و نقدی نشده بود).",
+            ? "رزرو لغو شد؛ ودیعهٔ بلوکه‌شده و (در صورت پرداخت) وجه اجاره به‌صورت شبیه‌سازی‌شده بازگردانده شد."
+            : "رزرو لغو شد؛ هیچ مبلغی پرداخت نشده بود.",
         );
       }
       break;

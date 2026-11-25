@@ -132,7 +132,7 @@ describe("rental-reminders (date-aware reminders)", () => {
       "درخواست بازگشت",
     );
     expect(notifications.find((n) => n.userId === "user_host")!.body).toContain(
-      "خسارت و داوری",
+      "پشتیبانی اٌوِرا",
     );
     // Next day → the counter moves, so the new day's reminder is written too.
     const nextDay = await runRentalReminderSweep(

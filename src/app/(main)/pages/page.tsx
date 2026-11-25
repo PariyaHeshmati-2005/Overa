@@ -110,18 +110,6 @@ export default async function PagesIndex() {
       route: "(/wallet)",
       desc: "تراکنش‌ها، صندوق امانی (Escrow) و حساب‌های شبا — با برچسب شبیه‌سازی.",
     },
-    {
-      href: "/damage-claims",
-      title: "ثبت مغایرت و خسارت",
-      route: "(/damage-claims)",
-      desc: "فرم ادعای خسارت؛ ثبت نهایی پرونده به پنل داوری منتقل می‌شود.",
-    },
-    {
-      href: "/arbitration-panel",
-      title: "پنل داوری و ودیعه",
-      route: "(/arbitration-panel)",
-      desc: "بررسی ادله، رأی داوری و تسویه از ودیعه (مدیران).",
-    },
   ];
 
   const section3: Card[] = [
@@ -159,19 +147,7 @@ export default async function PagesIndex() {
       href: "/admin-dashboard",
       title: "داشبورد ادمین (Super-Admin)",
       route: "(/admin-dashboard)",
-      desc: "مرکز نظارت ۳۶۰ درجه: قراردادها، صف تایید، صندوق ودیعه و پرونده‌های داوری.",
-    },
-    {
-      href: "/promissory-notes",
-      title: "سفته الکترونیک (راهنمای فرآیند)",
-      route: "(/promissory-notes)",
-      desc: "فرآیند صدور سفته دیجیتال؛ در این نسخه شبیه‌سازی نشده و صرفاً راهنماست.",
-    },
-    {
-      href: "/promissory-notes/registration",
-      title: "ثبت سفته در خزانه‌داری",
-      route: "(/promissory-notes/registration)",
-      desc: "نمونه خروجی فرآیند ثبت سند در خزانه‌داری کل کشور (نمایشی).",
+      desc: "مرکز نظارت ۳۶۰ درجه: قراردادها، صف تایید، صندوق ودیعه و بخش اعلام خسارت‌ها.",
     },
   ];
 
@@ -440,23 +416,16 @@ export default async function PagesIndex() {
                 <b className="text-primary">۵.</b> جریان اعتماد:{" "}
                 <Link
                   className="underline decoration-primary/30 hover:decoration-primary"
-                  href="/damage-claims"
+                  href="/rentals"
                 >
-                  ثبت خسارت
-                </Link>{" "}
-                ←{" "}
-                <Link
-                  className="underline decoration-primary/30 hover:decoration-primary"
-                  href="/arbitration-panel"
-                >
-                  پنل داوری
+                  روند اجاره و تحویل
                 </Link>{" "}
                 ←{" "}
                 <Link
                   className="underline decoration-primary/30 hover:decoration-primary"
                   href="/admin-dashboard"
                 >
-                  داشبورد ادمین
+                  اعلام خسارت‌ها در پنل مدیریت
                 </Link>
               </li>
               <li>

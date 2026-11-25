@@ -15,7 +15,6 @@ import type { ReservationAction } from "@/lib/rental-state";
 import DeliveryConfirmCard from "@/components/overa/DeliveryConfirmCard";
 import ReturnConfirmCard from "@/components/overa/ReturnConfirmCard";
 import SignatureCard from "@/components/overa/SignatureCard";
-import SaktehSignaturePad from "@/components/overa/SaktehSignaturePad";
 import MapView from "@/components/overa/MapView";
 
 /* ------------------------------------------------------------------ types */
@@ -35,7 +34,7 @@ export type LifecycleReservation = {
   renterProtocol: string | null;
   hostProtocol: string | null;
   depositStatus?: string | null;
-  /** CASH (deposit escrowed) | PROMISSORY (deposit guaranteed by sakteh). */
+  /** Payment method of the pay stage (CASH — deposit escrowed). */
   paymentMethod?: string | null;
   /** Delivery inspection outcome: PENDING | ACCEPTED_CLEAN | ACCEPTED_WITH_ISSUES | REFUSED_DAMAGE */
   deliveryStatus?: string | null;
@@ -188,10 +187,11 @@ const ACTION_META: Record<
     className:
       "bg-m3-primary text-white hover:bg-primary-container shadow-md shadow-m3-primary/25",
   },
-  release_deposit: {
-    label: "آزادسازی ودیعه",
-    icon: "payments",
-    className: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md",
+  declare_damage: {
+    label: "تحویل و اعلام خسارت",
+    icon: "gavel",
+    className:
+      "bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200",
   },
   dispute: {
     label: "اعلام خسارت",
@@ -219,10 +219,11 @@ const EVENT_META: Record<string, { title: string; icon: string }> = {
   REQUEST_RETURN: { title: "ثبت بازگشت کالا", icon: "replay" },
   CONFIRM_RETURN: { title: "تایید بازگشت کالا", icon: "fact_check" },
   COMPLETE_INSPECTION: { title: "ثبت صورت‌جلسه تحویل", icon: "task_alt" },
-  RELEASE_DEPOSIT: { title: "آزادسازی ودیعه", icon: "payments" },
-  DISPUTE: { title: "اعلام خسارت / اختلاف", icon: "gavel" },
+  RELEASE_DEPOSIT: { title: "اختتامیهٔ پروندهٔ خسارت و تسویه ودیعه", icon: "payments" },
+  DECLARE_DAMAGE: { title: "اعلام خسارت میزبان هنگام بازگشت کالا", icon: "gavel" },
+  DISPUTE: { title: "اعلام خسارت", icon: "gavel" },
   REFUSE_DELIVERY: {
-    title: "اعلام خسارت و ابطال اجاره هنگام تحویل",
+    title: "عدم تحویل و اعلام خسارت هنگام تحویل",
     icon: "block",
   },
   CANCEL: { title: "لغو رزرو", icon: "block" },
@@ -238,7 +239,7 @@ const ACTION_ORDER: ReservationAction[] = [
   "request_return",
   "confirm_return",
   "complete_inspection",
-  "release_deposit",
+  "declare_damage",
   "dispute",
   "cancel",
 ];
@@ -256,13 +257,6 @@ export default function RentalLifecycleClient({
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [contractTab, setContractTab] = useState(0);
-  const [depositMode, setDepositModeState] = useState("cash");
-  const [saktehSignature, setSaktehSignature] = useState<string | null>(null);
-  /** Switching the guarantee mode invalidates a previous sakteh signature. */
-  function setDepositMode(mode: string) {
-    setDepositModeState(mode);
-    setSaktehSignature(null);
-  }
   const [agreed, setAgreed] = useState(false);
   const [protocol, setProtocol] = useState("");
   const [disputeNote, setDisputeNote] = useState("");
@@ -278,11 +272,9 @@ export default function RentalLifecycleClient({
   const signatureAvailable =
     role === "renter" && ["REQUESTED", "APPROVED"].includes(status);
   const renterSigned = Boolean(r.signedByRenterAt);
-  const totalDue = r.subtotal + r.deposit;
-  /* سفته الکترونیک: the promissory note guarantees the deposit, so the
-     gateway charge covers the RENTAL FEE ONLY. */
-  const payableNow = depositMode === "promissory" ? r.subtotal : totalDue;
-  const saktehReady = depositMode !== "promissory" || Boolean(saktehSignature);
+  /* The pay stage charges the DEPOSIT (ودیعه) only — the daily-rate rent is
+     charged after the renter confirms receipt («سلامت تحویل گرفتم»). */
+  const payableNow = r.deposit;
   const insufficientBalance =
     role === "renter" && can("pay") && viewerWalletBalance < payableNow;
 
@@ -331,46 +323,35 @@ export default function RentalLifecycleClient({
     }
   } else if (status === "AGREEMENT" || status === "PAYMENT") {
     if (role === "renter") {
-      nextStep = depositMode === "promissory"
-        ? {
-            title: saktehSignature
-              ? "امضای سفته ثبت شده است؛ پرداخت هزینه اجاره را نهایی کنید"
-              : "سفته الکترونیک را امضا کنید تا پرداخت فعال شود",
-            body: saktehSignature
-              ? `مبلغ قابل پرداخت در درگاه فقط هزینهٔ اجاره است: ${faToman(payableNow)} تومان (ودیعه با سفته تضمین شده است).`
-              : "متن سفته را بخوانید، در کادر سفید امضا کنید و سپس فقط هزینهٔ اجاره را در درگاه پرداخت کنید.",
-            icon: insufficientBalance ? "account_balance_wallet" : "draw",
-            anchor: "#payment",
-          }
-        : {
-            title: insufficientBalance
-              ? "ابتدا کیف پول را شارژ کنید، سپس پرداخت آزمایشی را انجام دهید"
-              : "پرداخت آزمایشی (اجاره + ودیعه) را انجام دهید",
-            body: insufficientBalance
-              ? `موجودی کیف پول شما ${faToman(viewerWalletBalance)} تومان است؛ برای این سفارش ${faToman(payableNow)} تومان لازم است.`
-              : `مجموع قابل پرداخت ${faToman(payableNow)} تومان است (اجاره + ودیعه بازگشت‌پذیر).`,
-            icon: insufficientBalance ? "account_balance_wallet" : "lock_open",
-            anchor: "#payment",
-          };
+      nextStep = {
+        title: insufficientBalance
+          ? "ابتدا کیف پول را شارژ کنید، سپس ودیعه را پرداخت کنید"
+          : "ودیعه (بدون هزینهٔ اجاره) را پرداخت کنید",
+        body: insufficientBalance
+          ? `موجودی کیف پول شما ${faToman(viewerWalletBalance)} تومان است؛ ودیعهٔ این سفارش ${faToman(payableNow)} تومان است.`
+          : `ودیعهٔ قابل پرداخت ${faToman(payableNow)} تومان است (بازگشت‌پذیر)؛ هزینهٔ اجارهٔ روزانه پس از تأیید دریافت کالا محاسبه می‌شود.`,
+        icon: insufficientBalance ? "account_balance_wallet" : "lock_open",
+        anchor: "#payment",
+      };
     } else {
-      waitingOnOther = "در انتظار انجام پرداخت آزمایشی توسط مستأجر هستید.";
+      waitingOnOther = "در انتظار پرداخت ودیعه توسط مستأجر هستید.";
     }
   } else if (status === "PAID") {
     if (role === "host") {
       nextStep = {
         title: "کالا را به مستأجر تحویل دهید و «تحویل شد» را ثبت کنید",
-        body: "پرداخت انجام شده است؛ پس از ثبت تحویل، کد تأیید دریافت برای مستأجر صادر می‌شود.",
+        body: "ودیعه پرداخت و بلوکه شده است؛ پس از ثبت تحویل، کد تأیید دریافت برای مستأجر صادر می‌شود.",
         icon: "local_shipping",
         anchor: "#delivery",
       };
     } else {
-      waitingOnOther = "پرداخت شما ثبت شده است؛ در انتظار تحویل کالا از سوی میزبان هستید.";
+      waitingOnOther = "ودیعهٔ شما ثبت شده است؛ در انتظار تحویل کالا از سوی میزبان هستید.";
     }
   } else if (status === "DELIVERED") {
     if (role === "renter") {
       nextStep = {
         title: "دریافت کالا را با کد یک‌بارمصرف تأیید کنید",
-        body: "کالا را بازرسی کنید؛ در صورت سلامت، کارت «تأیید دریافت کالا» را با کد صادرشده تکمیل کنید.",
+        body: "کالا را بازرسی کنید؛ در صورت سلامت، کارت «تأیید دریافت کالا» را با کد صادرشده تکمیل کنید؛ با تأیید شما روند اجاره آغاز و هزینهٔ اجارهٔ روزانه کسر می‌شود.",
         icon: "package_2",
         anchor: "#delivery",
       };
@@ -393,9 +374,9 @@ export default function RentalLifecycleClient({
     if (role === "host") {
       nextStep = {
         title: "سلامت کالا را بررسی و بازگشت را تأیید کنید",
-        // No anchor jump: the host decision card (OTP / damage) renders
-        // directly below this guidance card.
-        body: "کارت «تأیید دریافت کالا» در همین‌جا باز است؛ در صورت سلامت با کد یک‌بارمصرف تأیید کنید یا خسارت را اعلام کنید.",
+        // No anchor jump: the host decision card (تحویل سالم گرفتم /
+        // تحویل و اعلام خسارت) renders directly below this guidance card.
+        body: "کارت «تأیید دریافت کالا» در همین‌جا باز است؛ در صورت سلامت «تحویل سالم گرفتم» را تأیید کنید تا ودیعه خودکار آزاد شود یا «تحویل و اعلام خسارت» را ثبت کنید.",
         icon: "fact_check",
       };
     } else {
@@ -410,8 +391,8 @@ export default function RentalLifecycleClient({
     };
   } else if (status === "DISPUTED") {
     nextStep = {
-      title: "پرونده در حال بررسی توسط کارشناسان اٌوِرا است",
-      body: "مستندات و پاسخ خود را از صفحه «خسارت و داوری» تکمیل کنید؛ رأی کارشناس در همین صفحه اعلام می‌شود.",
+      title: "پرونده در بخش «اعلام خسارت‌ها» پنل مدیریت در حال بررسی است",
+      body: "کارشناسان اٌوِرا از طریق گفتگوی پرونده با شما در ارتباط هستند؛ رأی (درصد آزادسازی ودیعه) حداکثر تا یک هفته صادر و در همین صفحه اعلام می‌شود.",
       icon: "gavel",
       anchor: "#protocol",
     };
@@ -435,10 +416,11 @@ export default function RentalLifecycleClient({
       can(a) &&
       a !== "confirm_delivery" &&
       /* «اعلام خسارت» is contextual: at DELIVERED it lives in the renter's
-         three-option delivery card; at RETURN_REQUESTED the host's damage
-         button opens /declare-damage. Only the mid-rental stage keeps ONE
-         plain row button (item broke during the rental period). */
+         delivery card (عدم تحویل و اعلام خسارت); at RETURN_REQUESTED the
+         host's «تحویل و اعلام خسارت» form (declare_damage) lives in the
+         return card. Only the mid-rental stage keeps ONE plain row button. */
       !(a === "dispute" && status !== "RENTAL_ACTIVE") &&
+      !(a === "declare_damage") &&
       !(a === "confirm_return" && status === "RETURN_REQUESTED") &&
       // While the signature card is active, «تایید قرارداد» happens through
       // the renter's one-time-code signature — not a plain button.
@@ -678,7 +660,7 @@ export default function RentalLifecycleClient({
           <span className="material-symbols-outlined">task_alt</span>
           {depositPendingRefund
             ? "اجاره تکمیل شد؛ فرآیند بازگشت ودیعه در حالت شبیه‌سازی آغاز گردید."
-            : "اجاره تکمیل شد؛ ودیعه در حالت شبیه‌سازی آزاد شد."}
+            : "اجاره تکمیل شد؛ ودیعه به‌صورت خودکار به کیف پول مستأجر واریز شد."}
         </div>
       )}
 
@@ -842,9 +824,11 @@ export default function RentalLifecycleClient({
               {contractTab === 1 && (
                 <p className="text-xs text-slate-500 leading-relaxed text-justify">
                   ضمانت‌نامه اٌوِرا سلامت کالا در زمان تحویل و عودت را پوشش
-                  می‌دهد. در صورت اعلام خسارت، پرونده توسط کارشناسان اٌوِرا
-                  بررسی می‌شود؛ این فرآیند جایگزین مراجع قانونی نیست. ودیعه فقط
-                  پس از تایید صورت‌جلسه دوطرفه آزاد می‌شود.
+                  می‌دهد. در صورت اعلام خسارت، پرونده در بخش «اعلام خسارت‌ها»
+                  پنل مدیریت توسط کارشناسان اٌوِرا بررسی و رأی حداکثر ظرف یک
+                  هفته اجرا می‌شود؛ این فرآیند جایگزین مراجع قانونی نیست. ودیعه
+                  در صورت بازگشت سالم به‌صورت خودکار به کیف پول مستأجر آزاد
+                  می‌شود.
                 </p>
               )}
               {contractTab === 2 && (
@@ -918,7 +902,7 @@ export default function RentalLifecycleClient({
         )}
         {contractDone && !terminal && (
           <CompactDone
-            text={`قرارداد و ضمانت‌نامه تایید شد؛ ودیعه ${faToman(r.deposit)} تومان به‌صورت شبیه‌سازی بلوکه شد.`}
+            text={`قرارداد و ضمانت‌نامه تایید شد؛ ودیعه ${faToman(r.deposit)} تومان در مرحلهٔ پرداخت بلوکه می‌شود و هزینهٔ اجارهٔ روزانه پس از تأیید دریافت کالا محاسبه می‌گردد.`}
           />
         )}
         {terminal && (
@@ -934,7 +918,7 @@ export default function RentalLifecycleClient({
         />
         {paymentDone && (
           <CompactDone
-            text={`پرداخت ${faToman(r.subtotal)} تومان اجاره + ${faToman(r.deposit)} تومان ودیعه در حالت آزمایشی (Sandbox) انجام شد؛ هیچ پول واقعی جابه‌جا نمی‌شود.`}
+            text={`وديعهٔ ${faToman(r.deposit)} تومان در حالت آزمایشی (Sandbox) پرداخت و بلوکه شد؛ هزینهٔ اجارهٔ روزانه (${faToman(r.subtotal)} تومان) پس از تأیید دریافت کالا محاسبه می‌شود؛ هیچ پول واقعی جابه‌جا نمی‌شود.`}
           />
         )}
         {!paymentDone && paymentActive && (
@@ -980,57 +964,15 @@ export default function RentalLifecycleClient({
               </div>
             </div>
 
-            {/* Deposit option + breakdown (source screen-2 composition) */}
+            {/* Deposit payment + breakdown (source screen-2 composition) */}
             <section className="bg-white rounded-xl p-5 shadow-sm border border-purple-100/60">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-bold text-on-surface">
-                  ۱. انتخاب نوع ضمانت و ودیعه
+                  ۱. پرداخت ودیعه امانی
                 </h2>
                 <span className="text-xs text-m3-secondary font-semibold">
                   بدون کارمزد
                 </span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                {[
-                  {
-                    id: "cash",
-                    icon: "account_balance_wallet",
-                    title: "ودیعه نقدی امانی",
-                    sub: "بازگشت آنی پس از تحویل",
-                  },
-                  {
-                    id: "promissory",
-                    icon: "description",
-                    title: "سفته الکترونیک",
-                    sub: "سامانه بانک مرکزی (بدون نقد)",
-                  },
-                ].map((d) => (
-                  <button
-                    key={d.id}
-                    type="button"
-                    onClick={() => setDepositMode(d.id)}
-                    className={`flex flex-col text-right p-3.5 rounded-xl transition-all border ${
-                      depositMode === d.id
-                        ? "bg-surface-container-high border-m3-primary shadow-sm"
-                        : "bg-surface-container-low border-transparent"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full mb-1">
-                      <span className="material-symbols-outlined text-m3-primary text-xl">
-                        {d.icon}
-                      </span>
-                      <span
-                        className={`w-3.5 h-3.5 rounded-full ${depositMode === d.id ? "bg-m3-primary" : "border border-slate-300"}`}
-                      ></span>
-                    </div>
-                    <span className="text-xs font-bold text-on-surface">
-                      {d.title}
-                    </span>
-                    <span className="text-[10px] text-on-surface-variant mt-0.5">
-                      {d.sub}
-                    </span>
-                  </button>
-                ))}
               </div>
 
               <div className="bg-surface-container p-3 rounded-lg flex items-start gap-2.5 text-xs text-on-surface">
@@ -1038,21 +980,14 @@ export default function RentalLifecycleClient({
                   info
                 </span>
                 <span>
-                  {depositMode === "cash" ? (
-                    <span>
-                      <strong>ضمانت امانی نقدی:</strong> مبلغ{" "}
-                      {faToman(r.deposit)} تومان همزمان با هزینه اجاره از طریق
-                      درگاه پرداخت می‌شود و بلافاصله پس از ثبت تأیید سلامت در
-                      عودت، مسترد خواهد شد (شبیه‌سازی).
-                    </span>
-                  ) : (
-                    <span>
-                      <strong>سفته الکترونیک:</strong> پس از پرداخت هزینه اجاره
-                      ({faToman(r.subtotal)} تومان)، به سامانه سفته الکترونیک
-                      منتقل می‌شوید تا سفته بدون نیاز به مسدودی وجه ثبت گردد
-                      (شبیه‌سازی).
-                    </span>
-                  )}
+                  <span>
+                    <strong>ضمانت امانی نقدی:</strong> مبلغ{" "}
+                    {faToman(r.deposit)} تومان از طریق درگاه پرداخت و بلوکه
+                    می‌شود و بلافاصله پس از ثبت تأیید سلامت در عودت، به‌صورت
+                    خودکار به کیف پول شما مسترد خواهد شد (شبیه‌سازی). هزینهٔ
+                    اجارهٔ روزانه جداگانه و پس از تأیید دریافت کالا محاسبه
+                    می‌شود.
+                  </span>
                 </span>
               </div>
 
@@ -1062,7 +997,8 @@ export default function RentalLifecycleClient({
                 </h2>
                 <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-100">
                   <span className="text-slate-600">
-                    کرایه اجاره {faNumber(r.days)} روزه {r.listing.title}:
+                    کرایه اجاره {faNumber(r.days)} روزه {r.listing.title}{" "}
+                    (پس از تأیید دریافت کالا):
                   </span>
                   <span className="font-bold text-slate-800">
                     {faToman(r.subtotal)} تومان
@@ -1070,9 +1006,7 @@ export default function RentalLifecycleClient({
                 </div>
                 <div className="flex justify-between items-center p-3 rounded-xl bg-surface-container-high text-xs">
                   <span className="font-bold text-m3-primary">
-                    {depositMode === "promissory"
-                      ? "ودیعه — تضمین با سفته الکترونیک (بدون مسدودی وجه):"
-                      : "ودیعه امانی مسدودشونده (قابل استرداد):"}
+                    ودیعه امانی مسدودشونده (قابل استرداد) — پرداخت همین حالا:
                   </span>
                   <span className="font-extrabold text-m3-primary text-sm">
                     {faToman(r.deposit)} تومان
@@ -1084,9 +1018,8 @@ export default function RentalLifecycleClient({
                       مجموع پرداختی در درگاه:
                     </span>
                     <div className="text-[11px] text-slate-400">
-                      {depositMode === "promissory"
-                        ? "فقط هزینه اجاره — ودیعه با سفته الکترونیک تضمین شده است"
-                        : "شامل هزینه اجاره + ودیعه بازگشت‌پذیر امانی"}
+                      فقط ودیعه — هزینهٔ اجارهٔ روزانه پس از تأیید دریافت کالا
+                      از کیف پول کسر می‌شود
                     </div>
                   </div>
                   <div className="text-base font-extrabold text-m3-primary">
@@ -1104,45 +1037,6 @@ export default function RentalLifecycleClient({
                   </span>
                 </div>
 
-                {/* سفته الکترونیک flow: the legal note + a white canvas the
-                    renter signs with mouse/touch. The pay button stays
-                    disabled until the signature is confirmed — the server
-                    re-validates the signature server-side. */}
-                {depositMode === "promissory" && role === "renter" && can("pay") && (
-                  <div className="space-y-3 rounded-xl border border-m3-primary/30 bg-surface-container-low p-4">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-m3-primary text-lg">
-                        description
-                      </span>
-                      <h3 className="text-xs font-extrabold text-on-surface">
-                        سند سفته الکترونیک — متن سفته
-                      </h3>
-                    </div>
-                    <div className="rounded-xl bg-white border border-outline-variant/60 p-4 text-[11px] leading-6 text-slate-700">
-                      <p className="font-bold text-slate-800 mb-2 text-center">
-                        سفته الکترونیک اجارهٔ اٌوِرا
-                      </p>
-                      <p>
-                        من، مستأجر سفارش <b>{r.code}</b>، متعهد می‌شوم مبلغ
-                        ودیعهٔ <b>{faToman(r.deposit)} تومان</b> مربوط به اجارهٔ
-                        «<b>{r.listing.title}</b>» به مدت{" "}
-                        {faNumber(r.days)} روز را در صورت اعلام خسارت میزبان و
-                        تأیید کارشناسان اٌوِرا، طبق قوانین و مقررات سایت و
-                        بدون هیچ‌گونه اعتراضی بپردازم. در صورت بازگشت سالم
-                        کالا، این سفته بدون هیچ اقدامی از طرف من لغو و آزاد
-                        می‌شود. مبلغ فوق از وجوه نقدی پرداخت‌شده کسر نمی‌گردد.
-                      </p>
-                    </div>
-                    <SaktehSignaturePad
-                      signed={Boolean(saktehSignature)}
-                      onConfirmed={(dataUrl) => {
-                        setSaktehSignature(dataUrl);
-                        toast.success("امضای سفته ثبت شد؛ حالا فقط هزینهٔ اجاره را در درگاه پرداخت کنید.");
-                      }}
-                    />
-                  </div>
-                )}
-
                 {/* Wallet balance guard: no negative balances — the renter must
                     top up first (server enforces the same rule). */}
                 {insufficientBalance && (
@@ -1154,9 +1048,9 @@ export default function RentalLifecycleClient({
                       موجودی کیف پول شما کافی نیست
                     </p>
                     <p className="text-[11px] text-on-surface-variant leading-relaxed">
-                      موجودی فعلی: {faToman(viewerWalletBalance)} تومان — مجموع
-                      لازم برای این سفارش: {faToman(payableNow)} تومان. ابتدا کیف
-                      پول را شارژ کنید، سپس پرداخت را انجام دهید.
+                      موجودی فعلی: {faToman(viewerWalletBalance)} تومان — ودیعهٔ
+                      این سفارش: {faToman(payableNow)} تومان. ابتدا کیف پول را
+                      شارژ کنید، سپس پرداخت را انجام دهید.
                     </p>
                     <Link
                       href="/wallet"
@@ -1172,22 +1066,15 @@ export default function RentalLifecycleClient({
 
                 <button
                   type="button"
-                  onClick={() =>
-                    can("pay") &&
-                    (depositMode === "promissory"
-                      ? act("pay", { method: "PROMISSORY", signature: saktehSignature ?? "" })
-                      : act("pay"))
-                  }
-                  disabled={!can("pay") || busy === "pay" || !saktehReady}
+                  onClick={() => can("pay") && act("pay")}
+                  disabled={!can("pay") || busy === "pay"}
                   title={
                     insufficientBalance
                       ? "ابتدا کیف پول را شارژ کنید"
-                      : depositMode === "promissory" && !saktehReady
-                        ? "برای پرداخت با سفته، ابتدا متن سفته را امضا کنید"
-                        : undefined
+                      : undefined
                   }
                   className={`w-full mt-2 py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md transition active:scale-[0.99] ${
-                    can("pay") && !insufficientBalance && saktehReady
+                    can("pay") && !insufficientBalance
                       ? "bg-m3-primary hover:bg-primary-container text-white shadow-m3-primary/25"
                       : "bg-surface-container-high text-on-surface-variant cursor-not-allowed"
                   }`}
@@ -1198,7 +1085,7 @@ export default function RentalLifecycleClient({
                   <span>
                     {busy === "pay"
                       ? "در حال ثبت پرداخت..."
-                      : "پرداخت آزمایشی و انتقال به درگاه (Sandbox)"}
+                      : "پرداخت ودیعه و انتقال به درگاه (Sandbox)"}
                   </span>
                 </button>
               </div>
@@ -1284,8 +1171,8 @@ export default function RentalLifecycleClient({
               {r.deliveryNote}
             </p>
             <p className="text-[11px] text-slate-500">
-              این یادداشت در پرونده‌های خسارت و داوری کارشناسان اٌوِرا مبنای
-              رسیدگی قرار می‌گیرد.
+              این یادداشت در بخش «اعلام خسارت‌ها» پنل مدیریت مبنای رسیدگی قرار
+              می‌گیرد.
             </p>
           </div>
         )}
@@ -1366,9 +1253,9 @@ export default function RentalLifecycleClient({
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 leading-relaxed">
-                در صورت مشاهده مغایرت، پیش از ادامه از دکمه «اعلام خسارت»
-                استفاده کنید تا پرونده به کارشناسان اٌوِرا ارجاع شود؛ این فرآیند
-                جایگزین مراجع قانونی نیست.
+                در صورت مشاهده مغایرت، پیش از ادامه از گزینهٔ «عدم تحویل و اعلام
+                خسارت» در کارت تأیید دریافت استفاده کنید تا پرونده به کارشناسان
+                اٌوِرا ارجاع شود؛ این فرآیند جایگزین مراجع قانونی نیست.
               </p>
             </div>
           </>
@@ -1393,7 +1280,7 @@ export default function RentalLifecycleClient({
               text={
                 depositPendingRefund
                   ? "بازگشت کالا با کد یک‌بارمصرف تأیید و سفارش تکمیل شد؛ فرآیند بازگشت ودیعه در حالت شبیه‌سازی آغاز گردید."
-                  : "صورت‌جلسه تحویل ثبت و ودیعه در حالت شبیه‌سازی آزاد شد؛ اجاره تکمیل شد."
+                  : "بازگشت کالا تأیید و ودیعه به‌صورت خودکار به کیف پول مستأجر واریز شد؛ اجاره تکمیل شد."
               }
             />
             {(r.renterProtocol || r.hostProtocol) && (

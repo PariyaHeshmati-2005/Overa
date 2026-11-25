@@ -217,7 +217,7 @@ export async function runRentalReminderSweep(
             r,
             "host",
             title,
-            `مستأجر «${r.listing.title}» را در روز مقرر (${deadline}) بازگشت نداده است؛ در صورت عدم هماهنگی، از صفحهٔ «خسارت و داوری» اعلام خسارت کنید.`,
+            `مستأجر «${r.listing.title}» را در روز مقرر (${deadline}) بازگشت نداده است؛ در صورت عدم هماهنگی، موضوع از طریق پشتیبانی اٌوِرا پیگیری می‌شود.`,
           )
         )
           created++;

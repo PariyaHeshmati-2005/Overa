@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ClaimChat from "@/components/overa/ClaimChat";
 import { faToman, faNumber, faDateTime, toPersianDigits } from "@/lib/format";
 /* ---------------------------------- types --------------------------------- */
 
@@ -38,10 +39,14 @@ export type AdminClaim = {
   title: string;
   description: string;
   status: string;
-  /** DELIVERY (declared at hand-over, item received anyway) | RETURN | GENERAL */
+  /** RETURN (declared at the hand-back stage by the host) | GENERAL (legacy) */
   stage: string;
   decision: string | null;
   appealMessage: string | null;
+  /** Admin ruling: percent of the deposit released to the renter (0–100). */
+  percentToRenter: number | null;
+  /** Declaration time — the ruling deadline is createdAt + 7 days. */
+  createdAt: string;
   evidenceUrls: string[];
   claimant: { id: string; name: string };
   against: { id: string; name: string };
@@ -56,8 +61,8 @@ export type AdminClaim = {
 };
 
 const CLAIM_STAGE_LABELS: Record<string, string> = {
+  RETURN: "اعلام در مرحلهٔ بازگشت کالا",
   DELIVERY: "اعلام در مرحلهٔ تحویل",
-  RETURN: "اعلام در مرحلهٔ بازگشت",
 };
 
 const GOODS_DELIVERY_STATUS: Record<string, string> = {
@@ -99,13 +104,13 @@ type Stats = {
 };
 
 const CLAIM_STATUS_LABELS: Record<string, string> = {
-  OPEN: "پرونده باز",
+  OPEN: "اعلام خسارت جدید",
   COUNTER_EVIDENCE: "مستندات متقابل",
   UNDER_REVIEW: "در حال بررسی کارشناس",
   DECIDED: "رأی صادر شد",
   APPEALED: "تجدیدنظرخواهی",
   REJECTED: "رد شده",
-  SETTLED: "تسویه شده",
+  SETTLED: "اختتامیه شد",
 };
 
 const CLAIM_STATUS_CLASSES: Record<string, string> = {
@@ -170,12 +175,15 @@ export default function AdminDashboardClient({
   claims: initialClaims,
   users: initialUsers,
   auditLog,
+  viewer,
 }: {
   listings: AdminListing[];
   catalog: AdminCatalogListing[];
   claims: AdminClaim[];
   users: AdminUser[];
   auditLog: AuditEntry[];
+  /** Signed-in admin (drives the case chat identity). */
+  viewer: { id: string; name: string };
 }) {
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
@@ -189,7 +197,11 @@ export default function AdminDashboardClient({
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [decisionTarget, setDecisionTarget] = useState<string | null>(null);
+  /** Ruling (رأی مدیریت): percent of the deposit released to the renter. */
+  const [rulingPercent, setRulingPercent] = useState(100);
   const [decisionText, setDecisionText] = useState("");
+  /** Claim card with the opened case chat (admin ↔ renter/host). */
+  const [chatTarget, setChatTarget] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     text: string;
@@ -285,6 +297,7 @@ export default function AdminDashboardClient({
     } finally {
       setBusyId(null);
       setDecisionTarget(null);
+      setRulingPercent(100);
       setDecisionText("");
     }
   }
@@ -518,12 +531,12 @@ export default function AdminDashboardClient({
             </Link>
             <Link
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-on-surface-variant hover:text-m3-primary hover:bg-surface-container transition-colors"
-              href="/arbitration-panel"
+              href="#damage-claims"
             >
               <span className="material-symbols-outlined text-base">gavel</span>
-              <span>پرونده‌های داوری و خسارت</span>
+              <span>اعلام خسارت‌ها</span>
               <span className="bg-m3-error-container text-m3-on-error-container text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                {faNumber(claims.length)} مناقشه
+                {faNumber(claims.length)} پرونده
               </span>
             </Link>
           </div>
@@ -1132,8 +1145,9 @@ export default function AdminDashboardClient({
           )}
         </section>
 
-        {/* 4. DISPUTES QUEUE */}
-        <section>
+        {/* 4. DAMAGE CLAIMS QUEUE («اعلام خسارت‌ها») — chat with the renter
+            and issue the deposit-split ruling within one week. */}
+        <section id="damage-claims" className="scroll-mt-24">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
             <div>
               <div className="flex items-center gap-2">
@@ -1141,34 +1155,36 @@ export default function AdminDashboardClient({
                   gavel
                 </span>
                 <h3 className="text-base font-extrabold text-on-surface">
-                  صف پرونده‌های داوری و خسارت
+                  اعلام خسارت‌ها
                 </h3>
                 <span className="bg-m3-error-container text-m3-on-error-container text-xs font-bold px-2 py-0.5 rounded-full">
                   {faNumber(claims.length)} پرونده فعال
                 </span>
               </div>
               <p className="text-xs text-on-surface-variant">
-                تصمیم‌های داوری از طریق /api/admin/claims ثبت می‌شوند؛ تسویه
-                واقعی وابسته به تایید حقوقی است (شبیه‌سازی).
+                شرح خسارت میزبان مستقیماً به همین بخش ارجاع می‌شود؛ از طریق
+                گفتگوی پرونده با مستأجر در ارتباط باشید و رأی (درصد آزادسازی
+                ودیعه به مستأجر، مابقی به کیف پول میزبان) را حداکثر ظرف یک هفته
+                صادر کنید (شبیه‌سازی).
               </p>
             </div>
-            <Link
-              className="text-xs font-bold text-m3-primary hover:underline flex items-center gap-1"
-              href="/arbitration-panel"
-            >
-              <span>ورود به پنل داوری</span>
-              <span className="material-symbols-outlined text-sm rtl:rotate-180">
-                arrow_left
-              </span>
-            </Link>
           </div>
           {claims.length === 0 ? (
             <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/50 p-8 text-center text-xs text-on-surface-variant">
-              در حال حاضر مناقشه بازی وجود ندارد.
+              در حال حاضر اعلام خسارت بازی وجود ندارد.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {claims.map((c) => (
+              {claims.map((c) => {
+                const deadlineMs = new Date(c.createdAt).getTime() + 7 * 86400000;
+                const daysLeft = Math.ceil((deadlineMs - Date.now()) / 86400000);
+                const deadlineCls =
+                  daysLeft < 0
+                    ? "bg-m3-error-container text-m3-on-error-container"
+                    : daysLeft <= 2
+                      ? "bg-amber-50 text-amber-800 border-amber-200"
+                      : "bg-emerald-50 text-emerald-800 border-emerald-200";
+                return (
                 <div
                   key={c.id}
                   className="bg-surface-container-lowest rounded-2xl border border-outline-variant/50 p-4 shadow-sm flex flex-col gap-3"
@@ -1199,6 +1215,22 @@ export default function AdminDashboardClient({
                             {GOODS_DELIVERY_STATUS[c.reservation?.deliveryStatus ?? ""]}
                           </span>
                         )}
+                        <span
+                          className={
+                            "text-[11px] font-bold px-2 py-0.5 rounded-full border " +
+                            deadlineCls
+                          }
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            <span className="material-symbols-outlined text-xs">
+                              schedule
+                            </span>
+                            مهلت رأی:{" "}
+                            {daysLeft < 0
+                              ? "گذشته"
+                              : `${toPersianDigits(daysLeft)} روز`}
+                          </span>
+                        </span>
                       </div>
                       <h4 className="text-sm font-extrabold text-on-surface">
                         {c.title}
@@ -1217,7 +1249,7 @@ export default function AdminDashboardClient({
                   </p>
                   <div className="bg-surface-container rounded-xl p-2.5 text-[11px] space-y-1 text-on-surface-variant">
                     <div className="flex justify-between">
-                      <span>شاکی / متقابل:</span>
+                      <span>اعلام‌کننده / طرف خسارت:</span>
                       <span className="font-bold text-on-surface">
                         {c.claimant.name} ↔ {c.against.name}
                       </span>
@@ -1232,13 +1264,30 @@ export default function AdminDashboardClient({
                       </div>
                     )}
                   </div>
-                  {/* Decision flow actions */}
+                  {/* Ruling flow («صدور رأی و اختتامیه»): percent of the
+                      deposit released to the renter, remainder to the host. */}
                   {decisionTarget === c.id ? (
                     <div className="space-y-2 pt-1">
+                      <label className="block text-[11px] font-bold text-on-surface">
+                        درصد آزادسازی ودیعه به نفع مستأجر:{" "}
+                        <span className="text-m3-primary font-extrabold">
+                          {toPersianDigits(rulingPercent)}٪
+                        </span>{" "}
+                        — مابقی ({faToman(Math.max(0, (c.reservation?.deposit ?? 0) * (100 - rulingPercent) / 100))} تومان) به کیف پول میزبان واریز می‌شود.
+                      </label>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        step={5}
+                        value={rulingPercent}
+                        onChange={(e) => setRulingPercent(Number(e.target.value))}
+                        className="w-full accent-m3-primary cursor-pointer"
+                      />
                       <textarea
                         className="w-full text-xs rounded-lg bg-surface-container-low border border-outline-variant/60 px-3 py-2 text-on-surface focus:outline-none focus:ring-2 focus:ring-m3-primary/30 resize-none"
                         rows={2}
-                        placeholder="متن رأی داوری (به طرفین اعلام می‌شود؛ ثبت تصمیم نیازمند بررسی حقوقی است)..."
+                        placeholder="متن رأی مدیریت (به طرفین اعلام می‌شود؛ اختیاری)..."
                         value={decisionText}
                         onChange={(e) => setDecisionText(e.target.value)}
                       />
@@ -1250,19 +1299,21 @@ export default function AdminDashboardClient({
                             decideClaim(
                               c.id,
                               {
-                                status: "DECIDED",
+                                status: "SETTLED",
+                                percentToRenter: rulingPercent,
                                 decision: decisionText || undefined,
                               },
-                              "رأی داوری ثبت شد (شبیه‌سازی).",
+                              "رأی مدیریت صادر و اجرا شد؛ ودیعه تسویه و اجاره تکمیل شد (شبیه‌سازی).",
                             )
                           }
                         >
-                          ثبت رأی نهایی
+                          صدور رأی و اختتامیهٔ پرونده
                         </button>
                         <button
                           className="py-1.5 px-2 bg-surface-container hover:bg-surface-container-highest text-on-surface rounded-xl text-xs font-bold transition-colors"
                           onClick={() => {
                             setDecisionTarget(null);
+                            setRulingPercent(100);
                             setDecisionText("");
                           }}
                         >
@@ -1291,72 +1342,67 @@ export default function AdminDashboardClient({
                           ارسال به بررسی کارشناسی
                         </button>
                       )}
-                      {(c.status === "OPEN" ||
-                        c.status === "COUNTER_EVIDENCE") && (
-                        <button
-                          className="flex items-center gap-1 py-1.5 px-2.5 bg-m3-error/10 hover:bg-m3-error/20 text-m3-error rounded-xl text-xs font-bold transition-colors disabled:opacity-60"
-                          disabled={busyId === c.id}
-                          onClick={() =>
-                            decideClaim(
-                              c.id,
-                              { status: "REJECTED" },
-                              "پرونده رد شد.",
-                            )
-                          }
-                        >
-                          <span className="material-symbols-outlined text-xs">
-                            close
-                          </span>
-                          رد پرونده
-                        </button>
-                      )}
-                      {c.status === "UNDER_REVIEW" && (
-                        <button
-                          className="flex items-center gap-1 py-1.5 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors disabled:opacity-60"
-                          disabled={busyId === c.id}
-                          onClick={() => setDecisionTarget(c.id)}
-                        >
-                          <span className="material-symbols-outlined text-xs">
-                            gavel
-                          </span>
-                          صدور رأی داوری
-                        </button>
-                      )}
-                      {c.status === "APPEALED" && (
-                        <button
-                          className="flex items-center gap-1 py-1.5 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors disabled:opacity-60"
-                          disabled={busyId === c.id}
-                          onClick={() =>
-                            decideClaim(
-                              c.id,
-                              {
-                                status: "SETTLED",
-                                settlementNote:
-                                  "تسویه پس از تجدیدنظرخواهی ثبت شد (شبیه‌سازی).",
-                              },
-                              "پرونده تسویه شد (شبیه‌سازی).",
-                            )
-                          }
-                        >
-                          <span className="material-symbols-outlined text-xs">
-                            handshake
-                          </span>
-                          تسویه پرونده
-                        </button>
-                      )}
-                      <Link
-                        className="flex items-center gap-1 py-1.5 px-2.5 bg-surface-container hover:bg-surface-container-highest text-on-surface rounded-xl text-xs font-bold transition-colors"
-                        href={`/arbitration-panel?case=${c.id}`}
+                      <button
+                        className="flex items-center gap-1 py-1.5 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors disabled:opacity-60"
+                        disabled={busyId === c.id}
+                        onClick={() => setDecisionTarget(c.id)}
                       >
                         <span className="material-symbols-outlined text-xs">
-                          visibility
+                          gavel
                         </span>
-                        جزئیات و ادله
-                      </Link>
+                        صدور رأی و اختتامیه
+                      </button>
+                      <button
+                        className={
+                          "flex items-center gap-1 py-1.5 px-2.5 rounded-xl text-xs font-bold transition-colors " +
+                          (chatTarget === c.id
+                            ? "bg-m3-primary text-on-primary"
+                            : "bg-surface-container hover:bg-surface-container-highest text-on-surface")
+                        }
+                        onClick={() =>
+                          setChatTarget(chatTarget === c.id ? null : c.id)
+                        }
+                      >
+                        <span className="material-symbols-outlined text-xs">
+                          chat
+                        </span>
+                        {chatTarget === c.id ? "بستن گفتگو" : "گفتگو با مستأجر"}
+                      </button>
+                      {c.reservation && (
+                        <Link
+                          className="flex items-center gap-1 py-1.5 px-2.5 bg-surface-container hover:bg-surface-container-highest text-on-surface rounded-xl text-xs font-bold transition-colors"
+                          href={`/rental-lifecycle/${c.reservation.id}`}
+                        >
+                          <span className="material-symbols-outlined text-xs">
+                            visibility
+                          </span>
+                          مشاهده سفارش
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                  {/* Case chat — the admin joins the reservation conversation
+                      and talks with the renter (text only, polled live). */}
+                  {chatTarget === c.id && c.reservation && (
+                    <div className="rounded-xl border border-outline-variant/40 bg-surface-container p-3">
+                      <p className="text-[11px] font-bold text-on-surface mb-2 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm text-m3-primary">
+                          forum
+                        </span>
+                        گفتگوی پرونده — پیام شما برای مستأجر ({c.against.name}) و
+                        میزبان ({c.claimant.name}) نمایش داده می‌شود.
+                      </p>
+                      <ClaimChat
+                        reservationId={c.reservation.id}
+                        viewerId={viewer.id}
+                        viewerName={viewer.name}
+                        otherName={c.against.name}
+                      />
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
@@ -1543,9 +1589,9 @@ export default function AdminDashboardClient({
           <div className="flex items-center gap-4 text-[11px]">
             <Link
               className="hover:text-m3-primary transition-colors"
-              href="/arbitration-panel"
+              href="#damage-claims"
             >
-              مقررات داوری و حل اختلاف
+              اعلام خسارت‌ها
             </Link>
             <Link
               className="hover:text-m3-primary transition-colors"

@@ -214,14 +214,10 @@ model Reservation {
   // (one-time code, AGREEMENT_SIGNATURE stage). Only the renter signs the
   // contract; the host's approval is the plain state-machine action.
   signedByRenterAt DateTime?
-  // Payment guarantee chosen by the renter at the PAYMENT stage (lifecycle
-  // payment card): CASH — the deposit is escrowed together with the rent
-  // (sandbox); PROMISSORY — «سفته الکترونیک»: the deposit is guaranteed by a
-  // signed electronic promissory note, NO deposit money is charged and the
-  // gateway charge covers the RENTAL FEE ONLY.
-  paymentMethod   String    @default("CASH") // CASH | PROMISSORY
-  saktehSignature String?   // data-URL PNG of the renter's promissory-note signature
-  saktehSignedAt  DateTime?
+  // Payment method recorded at the pay stage. The pay stage now escrows the
+  // DEPOSIT (ودیعه) only; the daily-rate rent is charged after the renter's
+  // receipt confirmation (OTP flow). "CASH" is the only method for new orders.
+  paymentMethod   String    @default("CASH")
   // Delivery inspection outcome recorded at the DELIVERED stage (renter side):
   // PENDING | ACCEPTED_CLEAN | ACCEPTED_WITH_ISSUES | REFUSED_DAMAGE
   deliveryStatus String @default("PENDING")
@@ -370,7 +366,8 @@ model Review {
 // Trust & safety
 // ---------------------------------------------------------------------------
 
-// OPEN -> COUNTER_EVIDENCE -> UNDER_REVIEW -> DECIDED -> (APPEALED) -> SETTLED
+// OPEN -> UNDER_REVIEW -> SETTLED (the percent ruling executes at SETTLED).
+// Legacy rows may still carry COUNTER_EVIDENCE / DECIDED / APPEALED / REJECTED.
 model DamageClaim {
   id            String   @id @default(cuid())
   reservationId String
@@ -381,19 +378,20 @@ model DamageClaim {
   evidenceUrls  String   @default("[]") // JSON array of image paths
   status        String   @default("OPEN")
   // Which lifecycle stage the damage was declared at:
-  // DELIVERY — the RENTER declared it at the hand-over stage and RECEIVED the
-  //            item anyway (the delivery/OTP flow kept running; the order did
-  //            NOT go to DISPUTED). RETURN — declared at the return-to-host
-  //            stage (order goes to DISPUTED and arbitration decides).
-  //            GENERAL — mid-rental or legacy rows.
+  // RETURN — declared at the return-to-host stage by the host (order goes to
+  //          DISPUTED and the admin «اعلام خسارت‌ها» queue decides).
+  //          GENERAL — mid-rental or legacy rows (DELIVERY rows are legacy
+  //          renter declarations at the hand-over stage).
   stage         String   @default("GENERAL")
   decision      String?
   decidedAt     DateTime?
   appealMessage String?
   settlementNote String?
-  // Deduction (Toman) decided by the arbitration verdict: 0 = deposit fully
-  // released to the renter, deposit = paid to the host, in-between = partial
-  // deduction (settlement moves the wallet balances accordingly — sandbox).
+  // Admin ruling (صدور رأی): percent of the deposit released to the RENTER
+  // (0–100); the remainder goes to the host's wallet. chargeAmount stores the
+  // Toman share paid to the host; settlement moves the wallet balances
+  // accordingly (sandbox).
+  percentToRenter Int?
   chargeAmount  Int?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

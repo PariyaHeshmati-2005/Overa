@@ -1,13 +1,9 @@
 import { db } from "@/lib/db";
 import { jsonError, jsonOk, requireUser } from "@/lib/api";
 import { notifyAdmins, type NotifyDb } from "@/lib/admin-notify";
-import {
-  assertOtpStageAllowed,
-  consumeReservationOtp,
-  isReservationOtpStage,
-  normalizeOtpCode,
-  OtpError,
-} from "@/lib/reservation-otp";
+import { faCountWord } from "@/lib/format";
+import { createHostAutoComment } from "@/lib/host-comments";
+import { assertOtpStageAllowed, consumeReservationOtp, isReservationOtpStage, normalizeOtpCode, OtpError } from "@/lib/reservation-otp";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -15,7 +11,11 @@ type Ctx = { params: Promise<{ id: string }> };
  * POST /api/reservations/[id]/otp/verify — verify a one-time code and apply
  * the guarded reservation state change in ONE transaction:
  *   - DELIVERY_RECEIVED (renter, DELIVERED): → RENTAL_ACTIVE + actualStartAt
- *   - RETURN_RECEIVED   (host, RETURN_REQUESTED): → COMPLETED + refund process
+ *     + the daily-rate rent is charged from the renter's wallet (the rental
+ *     process starts AFTER the «سلامت تحویل گرفتم» confirmation).
+ *   - RETURN_RECEIVED   (host, RETURN_REQUESTED): → COMPLETED + the deposit is
+ *     released automatically to the renter's wallet + a successful-rental
+ *     comment is recorded on the host's reviews.
  * The status guard (`updateMany` on the expected status) is re-evaluated
  * inside the transaction, so concurrent clicks / stale tabs can never apply
  * the same transition twice, and a code consumed by a failed transition is
@@ -42,9 +42,12 @@ export async function POST(req: Request, ctx: Ctx) {
     select: {
       id: true,
       code: true,
+      listingId: true,
       renterId: true,
       hostId: true,
       status: true,
+      subtotal: true,
+      days: true,
       deposit: true,
       depositStatus: true,
     },
@@ -119,12 +122,30 @@ export async function POST(req: Request, ctx: Ctx) {
         }
 
         if (stage === "DELIVERY_RECEIVED") {
-          // Renter confirms receipt → rental becomes active, real start time.
+          // Renter confirms receipt («سلامت تحویل گرفتم») → the rental process
+          // STARTS here: the daily-rate rent (days × dailyPrice) is charged
+          // NOW — after the confirmation — from the renter's wallet to the
+          // host, and the real start time is recorded. The deposit was
+          // already escrowed BEFORE this confirmation (pay stage).
           // Optional «تحویل کالا با وجود برخی مشکلات» note: when the renter
           // typed issue notes, they are stored on the order (deliveryNote) and
           // deliveryStatus flips to ACCEPTED_WITH_ISSUES — the note later
-          // serves as arbitration evidence in the admin panels.
+          // serves as evidence in the admin «اعلام خسارت‌ها» panel.
           const issuesNote = String(body.issuesNote ?? "").trim().slice(0, 2000);
+          // Wallet guard: the rent (daily rate × days) must be covered by the
+          // renter's balance — otherwise the whole verification (and the
+          // consumed code) rolls back and the client is told to top up first.
+          const renter = await tx.user.findUnique({
+            where: { id: reservation.renterId },
+            select: { walletBalance: true },
+          });
+          if (!renter || renter.walletBalance < reservation.subtotal) {
+            throw new OtpError(
+              `برای شروع دورهٔ اجاره، هزینهٔ اجارهٔ ${reservation.days} روزه (${reservation.subtotal.toLocaleString("fa-IR")} تومان) باید از کیف پول پرداخت شود؛ موجودی کیف پول شما کافی نیست؛ لطفاً ابتدا کیف پول را شارژ کنید.`,
+              402,
+              { needTopup: true, needed: reservation.subtotal, currentBalance: renter?.walletBalance ?? 0 },
+            );
+          }
           const claimed = await tx.reservation.updateMany({
             where: { id: reservation.id, status: "DELIVERED", renterId: user.id },
             data: {
@@ -140,14 +161,43 @@ export async function POST(req: Request, ctx: Ctx) {
               409,
             );
           }
+          // Daily-rate rent ledger (sandbox): renter debited, host credited.
+          await tx.walletTransaction.create({
+            data: {
+              userId: reservation.renterId,
+              type: "RENTAL_PAYMENT",
+              amount: -reservation.subtotal,
+              reference: reservation.code,
+              description: `هزینهٔ اجارهٔ روزانه (${reservation.days} روز × نرخ روزانه) ${reservation.code} — پس از تأیید دریافت کالا — حالت شبیه‌سازی`,
+              status: "COMPLETED",
+            },
+          });
+          await tx.walletTransaction.create({
+            data: {
+              userId: reservation.hostId,
+              type: "RENTAL_PAYMENT",
+              amount: reservation.subtotal,
+              reference: reservation.code,
+              description: `دریافت هزینهٔ اجارهٔ روزانه (${reservation.days} روز) ${reservation.code} — حالت شبیه‌سازی`,
+              status: "COMPLETED",
+            },
+          });
+          await tx.user.update({
+            where: { id: reservation.renterId },
+            data: { walletBalance: { decrement: reservation.subtotal } },
+          });
+          await tx.user.update({
+            where: { id: reservation.hostId },
+            data: { walletBalance: { increment: reservation.subtotal } },
+          });
           await tx.reservationEvent.create({
             data: {
               reservationId: reservation.id,
               actor: "renter",
               type: "CONFIRM_DELIVERY",
               message: issuesNote
-                ? `دریافت کالا با وجود برخی مشکلات تأیید شد؛ یادداشت مستأجر ثبت گردید: ${issuesNote}`
-                : "دریافت کالا با کد یک‌بارمصرف توسط مستأجر تأیید شد؛ دوره اجاره فعال و زمان شروع واقعی ثبت گردید.",
+                ? `دریافت کالا با وجود برخی مشکلات تأیید شد؛ یادداشت مستأجر ثبت گردید: ${issuesNote} — دورهٔ اجاره فعال شد و هزینهٔ اجارهٔ روزانه (${reservation.subtotal.toLocaleString("fa-IR")} تومان) از کیف پول کسر گردید (شبیه‌سازی).`
+                : `دریافت کالا با کد یک‌بارمصرف توسط مستأجر تأیید شد؛ روند اجاره آغاز شد و هزینهٔ اجارهٔ روزانه (${reservation.days} روز — ${reservation.subtotal.toLocaleString("fa-IR")} تومان) از کیف پول کسر گردید (شبیه‌سازی).`,
             },
           });
           await tx.notification.create({
@@ -156,30 +206,29 @@ export async function POST(req: Request, ctx: Ctx) {
               type: "RESERVATION",
               title: issuesNote ? "کالا با یادداشت مشکلات تحویل گرفته شد" : "دریافت کالا تأیید شد",
               body: issuesNote
-                ? `مستأجر کالای «${reservation.code}» را با وجود برخی مشکلات تحویل گرفت و یادداشت ثبت کرد؛ متن یادداشت در صفحهٔ روند اجاره و پرونده‌های خسارت قابل مشاهده است.`
-                : `مستأجر دریافت «${reservation.code}» را تأیید کرد؛ دوره اجاره فعال شد.`,
+                ? `مستأجر کالای «${reservation.code}» را با وجود برخی مشکلات تحویل گرفت و یادداشت ثبت کرد؛ دورهٔ اجاره فعال شد.`
+                : `مستأجر دریافت «${reservation.code}» را تأیید کرد؛ روند اجاره فعال شد و هزینهٔ اجارهٔ روزانه کسر گردید.`,
               link: "/host-dashboard",
             },
           });
           return { status: "RENTAL_ACTIVE" };
         }
 
-        // RETURN_RECEIVED — host confirms a healthy return.
-        // Optional free-text protocol reuses the existing hostProtocol field.
+        // RETURN_RECEIVED — host confirms a healthy return («تحویل سالم
+        // گرفتم»). The rental process ENDS here: the order completes, the
+        // escrowed deposit is released AUTOMATICALLY to the renter's wallet
+        // and a successful-rental comment (cumulative counter) is recorded on
+        // the host's reviews. Optional free-text protocol reuses hostProtocol.
         const protocol =
           String(body.note ?? "").trim() ||
           "کالا سالم بازگشت داده شد؛ تأیید دریافت با کد یک‌بارمصرف انجام شد.";
-        // Refund pipeline only applies when the deposit was actually escrowed
-        // (CASH guarantee). PROMISSORY orders keep depositStatus NONE: the
-        // deposit was never charged — on a healthy return the promissory note
-        // is simply released.
         const depositWasHeld = reservation.depositStatus === "HELD";
         const claimed = await tx.reservation.updateMany({
           where: { id: reservation.id, status: "RETURN_REQUESTED", hostId: user.id },
           data: {
             status: "COMPLETED",
             returnConfirmedAt: now,
-            ...(depositWasHeld ? { depositStatus: "REFUND_PENDING" } : {}),
+            ...(depositWasHeld ? { depositStatus: "REFUNDED" } : {}),
             hostProtocol: protocol,
           },
         });
@@ -189,50 +238,73 @@ export async function POST(req: Request, ctx: Ctx) {
             409,
           );
         }
-        await tx.reservationEvent.create({
-          data: {
-            reservationId: reservation.id,
-            actor: "host",
-            type: "CONFIRM_RETURN",
-            message: depositWasHeld
-              ? "بازگشت کالا با کد یک‌بارمصرف توسط میزبان تأیید شد؛ سفارش تکمیل و فرآیند بازگشت ودیعه آغاز گردید (شبیه‌سازی)."
-              : "بازگشت کالا با کد یک‌بارمصرف توسط میزبان تأیید شد؛ سفارش تکمیل و سفتهٔ الکترونیک آزاد گردید (ودیعه نقدی نشده بود).",
-          },
-        });
-        // Deposit refund pipeline is sandbox-only: record the pending refund
-        // entry without any balance movement (settlement is operator-side).
+        // Automatic deposit release (sandbox): the deposit flows straight back
+        // into the renter's wallet — no operator step in between.
         if (depositWasHeld) {
           await tx.walletTransaction.create({
             data: {
               userId: reservation.renterId,
               type: "DEPOSIT_RELEASE",
               amount: reservation.deposit,
-              status: "PENDING",
+              status: "COMPLETED",
               reference: reservation.code,
               description:
-                "آغاز فرآیند بازگشت ودیعه — حالت شبیه‌سازی؛ تسویه نهایی توسط اپراتور انجام می‌شود.",
+                "آزادسازی خودکار ودیعه و واریز به کیف پول مستأجر — بازگشت سالم کالا (حالت شبیه‌سازی)",
             },
           });
+          await tx.user.update({
+            where: { id: reservation.renterId },
+            data: { walletBalance: { increment: reservation.deposit } },
+          });
         }
+        await tx.reservationEvent.create({
+          data: {
+            reservationId: reservation.id,
+            actor: "host",
+            type: "CONFIRM_RETURN",
+            message: depositWasHeld
+              ? `بازگشت کالا با کد یک‌بارمصرف توسط میزبان تأیید شد؛ اجاره تکمیل و ودیعه به‌صورت خودکار (${reservation.deposit.toLocaleString("fa-IR")} تومان) به کیف پول مستأجر واریز گردید (شبیه‌سازی).`
+              : "بازگشت کالا با کد یک‌بارمصرف توسط میزبان تأیید شد؛ اجاره تکمیل شد.",
+          },
+        });
+        // Successful-rental comment on the host's reviews — the text carries
+        // the host's cumulative successful-rental counter (incl. this one).
+        const successCount =
+          (await tx.reservation.count({
+            where: {
+              hostId: reservation.hostId,
+              status: "COMPLETED",
+              claims: { none: {} },
+            },
+          })) ?? 0;
+        await createHostAutoComment({
+          listingId: reservation.listingId,
+          authorId: reservation.renterId,
+          reservationId: reservation.id,
+          rating: 5,
+          comment: `${faCountWord(successCount)} اجاره موفق — کالا سالم تحویل داده شد و ودیعه به‌صورت خودکار به کیف پول مستأجر آزاد شد`,
+          hostId: reservation.hostId,
+          reservationCode: reservation.code,
+          title: "یک اجاره موفق در نظرات شما ثبت شد",
+        });
         await tx.notification.create({
           data: {
             userId: reservation.renterId,
             type: "RESERVATION",
             title: "بازگشت کالا تأیید شد",
             body: depositWasHeld
-              ? `میزبان بازگشت «${reservation.code}» را تأیید کرد؛ سفارش تکمیل شد و فرآیند بازگشت ودیعه آغاز گردید.`
-              : `میزبان بازگشت «${reservation.code}» را تأیید کرد؛ سفارش تکمیل شد و سفتهٔ الکترونیک آزاد گردید.`,
+              ? `میزبان بازگشت «${reservation.code}» را تأیید کرد؛ اجاره تکمیل و ودیعه به‌صورت خودکار به کیف پول شما واریز شد.`
+              : `میزبان بازگشت «${reservation.code}» را تأیید کرد؛ اجاره تکمیل شد.`,
             link: "/rentals",
           },
         });
-        // Oversight: the admin must know this item came back safe and sound
-        // (and that the deposit refund pipeline is waiting to be settled).
+        // Oversight: the admin must know this rental closed successfully.
         await notifyAdmins(
           tx as unknown as NotifyDb,
           {
             type: "RESERVATION",
             title: "بازگشت سالم کالا تأیید شد",
-            body: `سفارش «${reservation.code}» تکمیل شد: کالا با تأیید میزبان سالم به مالک بازگشته و فرآیند بازگشت ودیعه آغاز شده است (تسویه نهایی در پنل مدیریت).`,
+            body: `سفارش «${reservation.code}» تکمیل شد: کالا با تأیید میزبان سالم به مالک بازگشته و ودیعه به‌صورت خودکار به کیف پول مستأجر واریز شده است.`,
             link: "/admin-dashboard",
           },
           [reservation.renterId, reservation.hostId],

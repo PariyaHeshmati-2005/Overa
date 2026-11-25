@@ -11,7 +11,7 @@
 - **One header everywhere**: the shared `SiteHeader` (homepage header with the
   right slide-out menu, live DB search, session-aware user area) now renders
   on ALL pages — wallet, rentals, my-items, host/admin dashboard, account
-  settings, reviews, live-chat, damage claims, rental lifecycle, promissory
+  settings, reviews, live-chat, rental lifecycle, wallet
   notes, submit-review, static pages, auth pages (signin/signup/OTP), 404/500.
   Page-local brand headers were removed; dashboard pages keep their own
   context strip (admin controls, wizard draft actions) under the shared header.

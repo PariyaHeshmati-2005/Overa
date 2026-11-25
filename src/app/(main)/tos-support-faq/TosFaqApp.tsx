@@ -338,14 +338,14 @@ export default function TosFaqApp() {
       num: "۰۵",
       question:
         "مدارک هویتی و اعتبارسنجی مورد نیاز برای اجاره تجهیزات گران‌قیمت چیست؟",
-      search: "احراز هویت مدارک لایونس شبا صیاد سفته کدملی اعتبارسنجی",
+      search: "احراز هویت مدارک لایونس شبا ودیعه کدملی اعتبارسنجی",
       body: (
         <p>
           برای کالاهای رده Pro (دوربین‌های سینمایی، لنزهای پرچمدار، کوادکوپترها
           و لپ‌تاپ‌های تخصصی) علاوه بر احراز هویت پیامکی، تایید تصویری زنده
           (Liveness Detection) و تطبیق کدملی با شماره شبا الزامی است. در تجهیزات
-          بسیار حساس، ممکن است سفته الکترونیک دارای کد یکتا از طریق سامانه صیاد
-          نیز درخواست گردد که پس از عودت کالا ابطال می‌گردد.
+          بسیار حساس، ودیعه امانی (Escrow) با مبلغ بیشتر بلوکه می‌شود که پس از
+          بازگشت سالم کالا به‌صورت خودکار آزاد می‌گردد.
         </p>
       ),
     },
@@ -701,13 +701,13 @@ export default function TosFaqApp() {
                 <span>گفتگوی آنلاین با پشتیبانی ۲۴/۷</span>
               </button>
               <Link
-                href="/damage-claims"
+                href="/account-settings"
                 className="px-5 py-2.5 rounded-xl bg-surface-container-lowest border border-outline-variant text-on-surface font-bold text-xs flex items-center gap-2 hover:bg-surface-container transition-colors"
               >
                 <span className="material-symbols-outlined text-base">
                   balance
                 </span>
-                <span>ثبت تیکت داوری و امور حقوقی</span>
+                <span>پیگیری درخواست‌های حقوقی</span>
               </Link>
               <div className="flex items-center gap-1.5 text-xs font-bold text-m3-primary mr-auto">
                 <span className="material-symbols-outlined text-base">

@@ -35,7 +35,7 @@ identity**. Persian RTL (`lang="fa"`, `dir="rtl"`) is already set in
    `import { getCurrentUser } from "@/lib/auth"`. Interactive parts are
    `"'use client'"` children receiving serializable props.
 4. **Never claim real money/escrow/legal effects.** Payment, deposits,
-   payouts, promissory notes are SANDBOX/SIMULATION; keep the visible
+   payouts are SANDBOX/SIMULATION; keep the visible
    "شبیه‌سازی / Sandbox" labels the source uses, and add them where the
    source implies real money.
 5. **Every control must do something.** Buttons/links navigate, submit, or
@@ -67,7 +67,7 @@ tos-support-faq/host-dashboard/arbitration-panel/pages): `bg-primary`,
 
 Material-3 family (signin*, signup, account-settings, wallet, live-chat,
 rentals, rental-lifecycle, my-items, create-listing, reviews, damage-claims,
-admin-dashboard, arbitration-panel, 404/500/loading, promissory pages):
+admin-dashboard, 404/500/loading pages):
 available unchanged for unique names — `on-surface`, `on-surface-variant`,
 `surface-container-lowest|low|high|highest`, `surface-container`,
 `surface-variant`, `surface-dim`, `surface-bright`, `outline-variant`,
@@ -118,8 +118,6 @@ utilities. Keep them page-local; do not edit `globals.css`.
 | submit-review.html                  | `/submit-review`                          | protected; `?reservation=<id>`; POST `/api/reviews`                                                                         |
 | live-chat.html                      | `/live-chat`                              | protected; GET/POST `/api/conversations[...]` polling every 4s                                                              |
 | wallet.html                         | `/wallet`                                 | protected; GET/POST `/api/wallet`                                                                                           |
-| Electronic-Promissory-Notes.html    | `/promissory-notes`                       | info page; label as legal/process pending                                                                                   |
-| Registration-in-the-Treasury...html | `/promissory-notes/registration`          | info page                                                                                                                   |
 | host-dashboard.html                 | `/host-dashboard`                         | protected host; DB queries + PATCH actions                                                                                  |
 | my-items.html                       | `/my-items`                               | protected host; listing CRUD → `/api/listings`                                                                              |
 | create-listing.html                 | `/create-listing`                         | wizard; POST `/api/listings` (draft or submit)                                                                              |

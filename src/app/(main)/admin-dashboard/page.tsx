@@ -79,7 +79,7 @@ export default async function AdminDashboardPage() {
     db.damageClaim.findMany({
       where: {
         status: {
-          in: ["OPEN", "COUNTER_EVIDENCE", "UNDER_REVIEW", "APPEALED"],
+          in: ["OPEN", "COUNTER_EVIDENCE", "UNDER_REVIEW", "APPEALED", "DECIDED"],
         },
       },
       include: {
@@ -180,6 +180,8 @@ export default async function AdminDashboardPage() {
     stage: c.stage,
     decision: c.decision,
     appealMessage: c.appealMessage,
+    percentToRenter: c.percentToRenter ?? null,
+    createdAt: c.createdAt.toISOString(),
     evidenceUrls: (() => {
       try {
         const arr = JSON.parse(c.evidenceUrls || "[]");
@@ -232,6 +234,7 @@ export default async function AdminDashboardPage() {
         claims={claimDtos}
         users={userDtos}
         auditLog={auditDtos}
+        viewer={{ id: user.id, name: user.name }}
       />
     </>
   );

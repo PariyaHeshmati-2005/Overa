@@ -7,22 +7,19 @@ import OtpConfirmFlow from "./OtpConfirmFlow";
 
 /**
  * «تأیید دریافت کالا» card — shown ONLY to the renter while the host has
- * recorded the hand-over (status DELIVERED). FOUR options, exactly like the
- * physical hand-over reality:
+ * recorded the hand-over (status DELIVERED). The deposit (ودیعه) has already
+ * been paid BEFORE this card (pay stage). THREE options:
  *
- *  1. «کالا را سالم تحویل گرفتم» → OTP (DELIVERY_RECEIVED) → RENTAL_ACTIVE,
+ *  1. «کالا را سالم تحویل گرفتم» → OTP (DELIVERY_RECEIVED) → RENTAL_ACTIVE;
+ *     the rental process starts and the daily-rate rent is charged now.
  *     deliveryStatus = ACCEPTED_CLEAN.
  *  2. «تحویل کالا با وجود برخی مشکلات» → the renter writes the issues down,
  *     then OTP-confirms; deliveryStatus = ACCEPTED_WITH_ISSUES and the note is
- *     stored as arbitration evidence (visible to host + admin panels).
- *  3. «اعلام خسارت و تحویل کالا» → the dedicated damage-description page
- *     (/declare-damage). The declaration is recorded (DamageClaim stage
- *     DELIVERY) AND the order stays in DELIVERED, so the renter can still
- *     receive the item through the OTP flow; the declaration shows up in the
- *     renter, host and admin panels with the goods-received status.
- *  4. «اعلام خسارت و عدم تحویل کالا و باطل کردن اجاره» → refuse_delivery:
- *     the whole order is voided, every paid Toman flows back to the renter
- *     (sandbox) and the item never leaves the host's custody.
+ *     stored as evidence (visible to host + admin panels).
+ *  3. «اعلام خسارت و عدم تحویل کالا» → refuse_delivery: the whole rental
+ *     process stops, the escrowed deposit flows back to the renter's WALLET
+ *     and a failed-rental comment (cumulative counter) is recorded on the
+ *     host's reviews.
  */
 export type DeliveryConfirmCardProps = {
   reservationId: string;
@@ -48,17 +45,10 @@ export default function DeliveryConfirmCard({
   const [refuseNote, setRefuseNote] = useState("");
   const [refusing, setRefusing] = useState(false);
 
-  /* «اعلام خسارت و تحویل کالا» is a NAVIGATION: the renter writes the damage
-     description on /declare-damage; the claim is recorded there and the order
-     STAYS in DELIVERED so the receipt (OTP) flow can continue afterwards. */
-  function goDeclareDamage() {
-    router.push(`/declare-damage/${reservationId}`);
-  }
-
   async function refuseDelivery() {
     if (
       !window.confirm(
-        `آیا برای سفارش «${code}» «اعلام خسارت و عدم تحویل کالا» ثبت شود؟ کل اجاره باطل می‌شود، کالا نزد میزبان می‌ماند و همهٔ مبالغ پرداختی به کیف پول شما بازگردانده می‌شود (شبیه‌سازی).`,
+        `آیا برای سفارش «${code}» «اعلام خسارت و عدم تحویل کالا» ثبت شود؟ فرآیند اجاره به‌طور کامل متوقف می‌شود، کالا نزد میزبان می‌ماند و ودیعه به کیف پول شما واریز می‌شود (شبیه‌سازی).`,
       )
     )
       return;
@@ -78,7 +68,7 @@ export default function DeliveryConfirmCard({
         return;
       }
       toast.success(
-        "اجاره باطل شد؛ همهٔ مبالغ پرداختی به کیف پول شما بازگشت و کالا نزد میزبان باقی ماند.",
+        "فرآیند اجاره متوقف شد؛ ودیعه به کیف پول شما واریز و یک اجاره ناموفق در نظرات میزبان ثبت شد.",
         { duration: 6000 },
       );
       onSettled?.();
@@ -166,33 +156,15 @@ export default function DeliveryConfirmCard({
               </button>
             </div>
 
-            {/* Damage sub-section: the two rose options live together in one
-                bordered group instead of a full-width strip + a stray box. */}
+            {/* Damage sub-section: «اعلام خسارت و عدم تحویل کالا» — the whole
+                rental process stops and the deposit returns to the renter's
+                wallet. */}
             <div className="rounded-2xl border border-rose-200/70 bg-rose-50/40 p-3 space-y-2">
               <p className="text-[11px] font-bold text-rose-700 flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-sm">gavel</span>
-                در صورت مشاهدهٔ خسارت — یکی از دو گزینهٔ زیر
+                در صورت مشاهدهٔ خسارت و عدم تحویل
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {/* Option 3: declare damage AND still take delivery — the
-                    damage description page keeps the order in DELIVERED so the
-                    OTP flow continues; the claim shows up in all three panels. */}
-                <button
-                  type="button"
-                  onClick={goDeclareDamage}
-                  className="group min-h-[72px] py-2.5 px-3 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-1 bg-white text-rose-700 border border-rose-200 transition-all duration-200 hover:bg-rose-50 hover:border-rose-300 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 focus-visible:ring-offset-2"
-                >
-                  <span className="w-7 h-7 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center transition-transform group-hover:scale-110">
-                    <span className="material-symbols-outlined text-base">
-                      local_shipping
-                    </span>
-                  </span>
-                  اعلام خسارت و تحویل کالا
-                  <span className="text-[10px] font-medium text-rose-400">
-                    دریافت کالا همراه با ثبت توضیحات خسارت
-                  </span>
-                </button>
-                {/* Option 4: refuse + void the whole rental */}
+              <div className="grid grid-cols-1 gap-2.5">
                 <button
                   type="button"
                   onClick={() => setMode("refuse")}
@@ -203,9 +175,9 @@ export default function DeliveryConfirmCard({
                       block
                     </span>
                   </span>
-                  اعلام خسارت و عدم تحویل کالا
+                  عدم تحویل و اعلام خسارت
                   <span className="text-[10px] font-medium text-rose-400">
-                    باطل شدن کل اجاره و بازگشت مبالغ به کیف پول
+                    توقف کامل اجاره و واریز ودیعه به کیف پول
                   </span>
                 </button>
               </div>
@@ -262,8 +234,8 @@ export default function DeliveryConfirmCard({
             <p className="text-xs text-slate-600 leading-relaxed">
               با این گزینه کالا را می‌گیرید و دورهٔ اجاره فعال می‌شود؛ مشکلات
               مشاهده‌شده را دقیق بنویسید تا در پروندهٔ اجاره ثبت شود. اگر
-              بعداً خسارتی اعلام شود، این متن مبنای داوری کارشناسان اٌوِرا
-              قرار می‌گیرد.
+              بعداً خسارتی اعلام شود، این متن مبنای بررسی کارشناسان اٌوِرا در
+              بخش «اعلام خسارت‌ها» قرار می‌گیرد.
             </p>
             <textarea
               value={issuesNote}
@@ -298,7 +270,7 @@ export default function DeliveryConfirmCard({
                 <span className="material-symbols-outlined text-rose-600 text-base">
                   block
                 </span>
-                اعلام خسارت و عدم تحویل کالا و باطل کردن اجاره
+                اعلام خسارت و عدم تحویل کالا — توقف اجاره
               </span>
               <button
                 type="button"
@@ -310,12 +282,13 @@ export default function DeliveryConfirmCard({
               </button>
             </div>
             <ul className="text-[11px] text-slate-600 leading-6 list-disc pr-4 space-y-1">
-              <li>کل اجاره باطل می‌شود و امکان بازگشت آن وجود ندارد.</li>
+              <li>فرآیند اجاره به‌طور کامل متوقف می‌شود و امکان بازگشت آن وجود ندارد.</li>
               <li>
-                همهٔ مبالغ پرداختی (اجاره و در صورت وديعهٔ نقدی، ودیعه) به کیف
-                پول شما بازگردانده می‌شود (شبیه‌سازی).
+                ودیعهٔ بلوکه‌شده به کیف پول شما واریز می‌شود و (در صورت پرداخت)
+                وجه اجاره نیز بازگردانده می‌شود (شبیه‌سازی).
               </li>
               <li>میزبان و کارشناسان اٌوِرا بلافاصله مطلع می‌شوند.</li>
+              <li>یک اجارهٔ ناموفق در بخش نظرات میزبان ثبت می‌شود.</li>
             </ul>
             <textarea
               value={refuseNote}
@@ -333,8 +306,8 @@ export default function DeliveryConfirmCard({
             >
               <span className="material-symbols-outlined text-base">gavel</span>
               {refusing
-                ? "در حال ثبت و ابطال اجاره…"
-                : "ثبت اعلام خسارت و ابطال اجاره"}
+                ? "در حال ثبت عدم تحویل…"
+                : "ثبت عدم تحویل و اعلام خسارت"}
             </button>
           </div>
         )}

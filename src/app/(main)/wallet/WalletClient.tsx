@@ -483,7 +483,7 @@ export default function WalletClient({
                 <span className="text-label-sm text-m3-outline">/ ۱۰۰</span>
               </div>
               <span className="inline-block text-label-sm text-[11px] text-[#065F46] font-semibold">
-                ضمانت بدون سفته تا ۳۰ م.ت (شبیه‌سازی)
+                ضمانت ودیعه امانی تا ۳۰ م.ت (شبیه‌سازی)
               </span>
             </div>
             <div className="relative w-14 h-14 shrink-0 flex items-center justify-center">

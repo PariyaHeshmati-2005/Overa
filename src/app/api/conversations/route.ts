@@ -63,6 +63,27 @@ export async function POST(req: Request) {
     if (!reservation) return jsonError("رزرو یافت نشد.", 404);
     if (reservation.renterId !== user.id && reservation.hostId !== user.id && !auth.user.isAdmin)
       return jsonError("دسترسی مجاز نیست.", 403);
+    // Admin joins the reservation conversation so they can talk with the
+    // renter (and host) straight from the «اعلام خسارت‌ها» case card.
+    if (auth.user.isAdmin && reservation.renterId !== user.id && reservation.hostId !== user.id) {
+      const existing = await db.conversation.findUnique({ where: { reservationId } });
+      if (existing) {
+        await db.conversationParticipant.upsert({
+          where: { conversationId_userId: { conversationId: existing.id, userId: user.id } },
+          create: { conversationId: existing.id, userId: user.id },
+          update: {},
+        });
+        return jsonOk({ conversationId: existing.id, existing: true });
+      }
+      const conversation = await db.conversation.create({
+        data: {
+          listingId: reservation.listingId,
+          reservationId,
+          participants: { create: [{ userId: reservation.renterId }, { userId: user.id }] },
+        },
+      });
+      return jsonOk({ conversationId: conversation.id }, 201);
+    }
     otherId = reservation.renterId === user.id ? reservation.hostId : reservation.renterId;
     listingId = reservation.listingId;
     const existing = await db.conversation.findUnique({ where: { reservationId } });

@@ -80,3 +80,18 @@ export function parseIntSafe(v: string | null, fallback: number): number {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
 }
+
+const FA_COUNT_WORDS = [
+  "صفر", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه",
+  "ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده",
+  "هفده", "هجده", "نوزده", "بیست",
+];
+
+/** Spell a counter as a Persian word (یک، دو، سه … بیست) and fall back to
+ *  Persian digits beyond twenty — used by the automatic rental comments
+ *  (e.g. «دو اجاره ناموفق …»). */
+export function faCountWord(n: number): string {
+  if (!Number.isFinite(n) || n < 0) return toPersianDigits(0);
+  if (n < FA_COUNT_WORDS.length) return FA_COUNT_WORDS[n];
+  return toPersianDigits(n);
+}

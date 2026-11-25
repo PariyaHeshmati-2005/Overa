@@ -138,6 +138,18 @@ export default function OtpConfirmFlow({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        // Starting the rental charges the daily-rate rent from the wallet —
+        // when the balance is short, the server answers with needTopup and
+        // the renter is sent to the wallet top-up first.
+        if (data?.extra?.needTopup) {
+          setError("");
+          toast.error(
+            "موجودی کیف پول شما برای پرداخت هزینهٔ اجاره کافی نیست؛ لطفاً ابتدا کیف پول را شارژ کنید.",
+            { duration: 6000 },
+          );
+          router.push("/wallet");
+          return;
+        }
         setError(data.error ?? "کد وارد‌شده صحیح نیست؛ دوباره تلاش کنید.");
         setPhase("awaiting");
         return;

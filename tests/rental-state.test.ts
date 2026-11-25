@@ -9,7 +9,7 @@ import {
   OTP_STAGE_BY_STATUS,
   TransitionError,
 } from "../src/lib/rental-state";
-import { toPersianDigits, faNumber, daysBetween } from "../src/lib/format";
+import { toPersianDigits, faNumber, daysBetween, faCountWord } from "../src/lib/format";
 
 /* ----------------------- rental state machine tests ----------------------- */
 
@@ -77,11 +77,20 @@ describe("rental state machine", () => {
     expect(OTP_STAGE_BY_STATUS["RENTAL_ACTIVE"]).toBeUndefined();
   });
 
-  test("dispute stops auto-completion from the return stage", () => {
-    expect(assertTransition("RETURN_REQUESTED", "dispute")).toBe("DISPUTED");
+  test("host declares damage at the return stage; disputes are admin-settled", () => {
+    // RETURN_REQUESTED --declare_damage--> DISPUTED (host-only action).
+    expect(assertTransition("RETURN_REQUESTED", "declare_damage")).toBe("DISPUTED");
+    expect(canAct("RETURN_REQUESTED", "declare_damage", "host")).toBe(true);
+    expect(canAct("RETURN_REQUESTED", "declare_damage", "renter")).toBe(false);
+    // Mid-rental dispute stays available to both sides…
     expect(assertTransition("RENTAL_ACTIVE", "dispute")).toBe("DISPUTED");
-    expect(() => assertTransition("DISPUTED", "confirm_return")).toThrow(TransitionError);
-    expect(() => assertTransition("DISPUTED", "complete_inspection")).toThrow(TransitionError);
+    // …but DISPUTED is a hold state: the settlement runs ONLY through the
+    // admin «اعلام خسارت‌ها» pipeline (/api/admin/claims), not the machine.
+    expect(canAct("DISPUTED", "release_deposit", "host")).toBe(false);
+    expect(canAct("DISPUTED", "release_deposit", "renter")).toBe(false);
+    expect(canAct("DISPUTED", "confirm_return", "host")).toBe(false);
+    expect(canAct("DISPUTED", "complete_inspection", "host")).toBe(false);
+    expect(allowedActions("DISPUTED")).toHaveLength(0);
   });
 
   test("cancellation allowed until payment/delivery stages", () => {
@@ -96,8 +105,6 @@ describe("rental state machine", () => {
     expect(canAct("REQUESTED", "approve", "host")).toBe(true);
     expect(canAct("AGREEMENT", "pay", "renter")).toBe(true);
     expect(canAct("AGREEMENT", "pay", "host")).toBe(false);
-    expect(canAct("DISPUTED", "release_deposit", "host")).toBe(true);
-    expect(canAct("DISPUTED", "release_deposit", "renter")).toBe(false);
   });
 
   test("allowedActions lists the actions of the current state", () => {
@@ -161,6 +168,13 @@ describe("format helpers", () => {
     const e = new Date("2026-01-04T00:00:00Z");
     expect(daysBetween(s, e)).toBe(3);
     expect(daysBetween(e, s)).toBe(1); // reversed inputs clamp to 1
+  });
+
+  test("faCountWord spells counters in Persian words, then digits", () => {
+    expect(faCountWord(1)).toBe("یک");
+    expect(faCountWord(2)).toBe("دو");
+    expect(faCountWord(20)).toBe("بیست");
+    expect(faCountWord(21)).toBe("۲۱");
   });
 });
 
