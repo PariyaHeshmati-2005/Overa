@@ -17,16 +17,20 @@
 
 <br><br>
 
-<a href="#about">معرفی</a> &nbsp;·&nbsp;
-<a href="#features">ویژگی‌ها</a> &nbsp;·&nbsp;
-<a href="#screens">تصاویر</a> &nbsp;·&nbsp;
-<a href="#lifecycle">چرخهٔ اجاره</a> &nbsp;·&nbsp;
-<a href="#stack">استک فنی</a> &nbsp;·&nbsp;
-<a href="#langs">زبان‌ها</a> &nbsp;·&nbsp;
-<a href="#arch">معماری</a> &nbsp;·&nbsp;
-<a href="#run">اجرا</a> &nbsp;·&nbsp;
-<a href="#quality">تست</a> &nbsp;·&nbsp;
-<a href="#docs">مستندات</a>
+<div align="center" dir="rtl">
+<a href="#about"><img src="docs/assets/nav/about.svg" alt="معرفی" width="136" height="44"></a>
+<a href="#features"><img src="docs/assets/nav/features.svg" alt="ویژگی‌ها" width="136" height="44"></a>
+<a href="#screens"><img src="docs/assets/nav/screens.svg" alt="تصاویر" width="136" height="44"></a>
+<a href="#lifecycle"><img src="docs/assets/nav/lifecycle.svg" alt="چرخهٔ اجاره" width="136" height="44"></a>
+<a href="#design"><img src="docs/assets/nav/design.svg" alt="هویت بصری" width="136" height="44"></a>
+<a href="#stack"><img src="docs/assets/nav/stack.svg" alt="استک فنی" width="136" height="44"></a>
+<br>
+<a href="#langs"><img src="docs/assets/nav/langs.svg" alt="زبان‌ها" width="136" height="44"></a>
+<a href="#arch"><img src="docs/assets/nav/arch.svg" alt="معماری" width="136" height="44"></a>
+<a href="#run"><img src="docs/assets/nav/run.svg" alt="اجرا" width="136" height="44"></a>
+<a href="#quality"><img src="docs/assets/nav/quality.svg" alt="تست" width="136" height="44"></a>
+<a href="#docs"><img src="docs/assets/nav/docs.svg" alt="مستندات" width="136" height="44"></a>
+</div>
 
 <br>
 
