@@ -25,6 +25,10 @@ model User {
   // so a user can be both renter and host (per playbook 3.1).
   isHost        Boolean  @default(false)
   isAdmin       Boolean  @default(false)
+  // Marks accounts created by scripts/seed.ts as demo/sample content. Demo
+  // accounts stay visually labelled in the app and are never mixed with real
+  // user data (real users created via signup/OTP always have isDemo = false).
+  isDemo        Boolean  @default(false)
   kycStatus     String   @default("UNVERIFIED") // UNVERIFIED | PENDING | VERIFIED | REJECTED
   walletBalance Int      @default(0) // Toman, application ledger only (sandbox)
   createdAt     DateTime @default(now())
@@ -97,6 +101,10 @@ model Listing {
   // Location
   city        String
   area        String?
+  // Exact map coordinates (WGS84). Optional: seeded/legacy listings fall back
+  // to the city centroid rendered by the shared map components.
+  lat         Float?
+  lng         Float?
   // Delivery options
   pickupInPerson Boolean @default(true)
   deliveryCourier Boolean @default(false)
@@ -109,12 +117,20 @@ model Listing {
   // calendar in the create-listing wizard. Renters cannot reserve these days.
   blockedRanges String @default("[]")
   instantBook Boolean @default(false)
+  // Marks listings created by scripts/seed.ts as demo/sample content so real
+  // (user-verified) listings can always be told apart from showcase items.
+  isDemo      Boolean @default(false)
   // Moderation lifecycle: DRAFT | PENDING | ACTIVE | PAUSED | REJECTED | ARCHIVED
   status      String  @default("PENDING")
   rejectionReason String?
   rating      Float   @default(0)
   reviewsCount Int    @default(0)
   viewsCount  Int     @default(0)
+  // Normalized (Arabic→Persian, ZWNJ/diacritic-stripped, digit-folded) copy
+  // of title + brand + specs + description + city + category name, used by
+  // /api/search and /search. Maintained on every write path; rebuildable with
+  // scripts/backfill-search-keys.ts.
+  searchKey   String  @default("")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -155,7 +171,9 @@ model Favorite {
 // ---------------------------------------------------------------------------
 
 // REQUESTED -> APPROVED -> AGREEMENT -> PAYMENT -> PAID -> DELIVERED ->
-// RETURNED -> INSPECTION -> COMPLETED ; plus REJECTED / CANCELLED / DISPUTED
+// RENTAL_ACTIVE -> RETURN_REQUESTED -> COMPLETED ; legacy path
+// RETURNED -> INSPECTION -> COMPLETED (old data) ; plus
+// REJECTED / CANCELLED / DISPUTED
 // (see src/lib/rental-state.ts for the exact transition table)
 model Reservation {
   id         String @id @default(cuid())
@@ -177,6 +195,35 @@ model Reservation {
   // Two-sided condition/inspection protocol
   renterProtocol   String? // free text taken at return/inspection
   hostProtocol     String?
+  // Two-sided OTP confirmation timeline (see src/lib/reservation-otp.ts):
+  // deliveredAt       — host recorded the hand-over (PAID → DELIVERED)
+  // actualStartAt     — renter OTP-confirmed receipt; the REAL rental start
+  // returnRequestedAt — renter announced the return (RENTAL_ACTIVE → RETURN_REQUESTED)
+  // returnConfirmedAt — host OTP-confirmed the healthy return (→ COMPLETED)
+  // disputeOpenedAt   — damage/dispute declared by either side
+  deliveredAt       DateTime?
+  actualStartAt     DateTime?
+  returnRequestedAt DateTime?
+  returnConfirmedAt DateTime?
+  disputeOpenedAt   DateTime?
+  // Deposit refund pipeline (application ledger only, sandbox):
+  // NONE (nothing paid) | HELD (paid & held) | REFUND_PENDING
+  // (order completed — refund process started) | REFUNDED (released)
+  depositStatus String @default("NONE")
+  // Digital contract signature: timestamp of the RENTER's verified signature
+  // (one-time code, AGREEMENT_SIGNATURE stage). Only the renter signs the
+  // contract; the host's approval is the plain state-machine action.
+  signedByRenterAt DateTime?
+  // Payment method recorded at the pay stage. The pay stage now escrows the
+  // DEPOSIT (ودیعه) only; the daily-rate rent is charged after the renter's
+  // receipt confirmation (OTP flow). "CASH" is the only method for new orders.
+  paymentMethod   String    @default("CASH")
+  // Delivery inspection outcome recorded at the DELIVERED stage (renter side):
+  // PENDING | ACCEPTED_CLEAN | REFUSED_DAMAGE
+  deliveryStatus String @default("PENDING")
+  // Renter's optional refusal note (عدم تحویل و اعلام خسارت) — kept on the
+  // order as evidence for the admin «اعلام خسارت‌ها» panel.
+  deliveryNote   String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -184,12 +231,36 @@ model Reservation {
   renter   User    @relation("RenterReservations", fields: [renterId], references: [id])
   host     User    @relation("HostReservations", fields: [hostId], references: [id])
   events   ReservationEvent[]
+  otps     ReservationOtp[]
   conversation Conversation?
   claims   DamageClaim[]
   reviews  Review[]
 
   @@index([renterId, status])
   @@index([hostId, status])
+}
+
+// One-time codes for the two-sided delivery/return confirmation. Codes are
+// stored HASHED (scrypt, never plain text), bound to exactly one reservation +
+// user + stage (DELIVERY_RECEIVED | RETURN_RECEIVED), expire after 5 minutes,
+// allow 5 wrong attempts, and are single-use (consumed). Verification and the
+// resulting reservation status change always run inside one transaction.
+model ReservationOtp {
+  id            String    @id @default(cuid())
+  reservationId String
+  userId        String
+  stage         String    // DELIVERY_RECEIVED | RETURN_RECEIVED
+  phone         String    // phone of the authenticated user, read server-side at issue time
+  codeHash      String    // scrypt "salt:hash" — the plain code is never stored
+  attempts      Int       @default(0)
+  consumed      Boolean   @default(false)
+  consumedAt    DateTime?
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+  @@index([reservationId, userId, stage, createdAt])
 }
 
 model ReservationEvent {
@@ -295,7 +366,8 @@ model Review {
 // Trust & safety
 // ---------------------------------------------------------------------------
 
-// OPEN -> COUNTER_EVIDENCE -> UNDER_REVIEW -> DECIDED -> (APPEALED) -> SETTLED
+// OPEN -> UNDER_REVIEW -> SETTLED (the percent ruling executes at SETTLED).
+// Legacy rows may still carry COUNTER_EVIDENCE / DECIDED / APPEALED / REJECTED.
 model DamageClaim {
   id            String   @id @default(cuid())
   reservationId String
@@ -305,10 +377,22 @@ model DamageClaim {
   description   String
   evidenceUrls  String   @default("[]") // JSON array of image paths
   status        String   @default("OPEN")
+  // Which lifecycle stage the damage was declared at:
+  // RETURN — declared at the return-to-host stage by the host (order goes to
+  //          DISPUTED and the admin «اعلام خسارت‌ها» queue decides).
+  //          GENERAL — mid-rental or legacy rows (DELIVERY rows are legacy
+  //          renter declarations at the hand-over stage).
+  stage         String   @default("GENERAL")
   decision      String?
   decidedAt     DateTime?
   appealMessage String?
   settlementNote String?
+  // Admin ruling (صدور رأی): percent of the deposit released to the RENTER
+  // (0–100); the remainder goes to the host's wallet. chargeAmount stores the
+  // Toman share paid to the host; settlement moves the wallet balances
+  // accordingly (sandbox).
+  percentToRenter Int?
+  chargeAmount  Int?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

@@ -1,3 +1,4 @@
+import SiteHeader from "@/components/layout/SiteHeader";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
@@ -5,7 +6,7 @@ import UserMenu from "@/components/layout/UserMenu";
 import M3Styles from "@/components/overa/M3Styles";
 import LoadingProgress from "./LoadingProgress";
 
-export const metadata: Metadata = { title: "بارگذاری | اورا" };
+export const metadata: Metadata = { title: "بارگذاری | اٌوِرا" };
 export const dynamic = "force-dynamic";
 
 const NAV_LINKS = [
@@ -23,101 +24,7 @@ export default async function LoadingPage() {
     <div className="bg-[#f9f8fc] text-[#130e1b] min-h-screen antialiased selection:bg-primary-container selection:text-white flex flex-col">
       <M3Styles />
       {/* TopNavBar — preserved from loading.html */}
-      <header className="w-full bg-white border-b border-outline-variant/30 shadow-sm">
-        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-3.5 gap-4">
-            <Link className="flex items-center gap-3 group shrink-0" href="/">
-              <div className="w-11 h-11 rounded-2xl from-m3-primary to-primary-light flex items-center justify-center text-white shadow-md shadow-m3-primary/20 group-hover:scale-105 transition-transform duration-200 bg-gradient-to-br">
-                { }
-                <img src="/assets/img/overa_logo_transparent.png" alt="لوگوی اورا" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-black tracking-tight text-[#801E76] mt-3 mb-1">اٌوِرا</span>
-                <span className="text-[11px] font-medium text-neutral-muted -mt-1">وسایل بهتر، زندگی سبک‌تر</span>
-              </div>
-            </Link>
-            <div className="flex-1 max-w-[520px] mx-2 hidden md:block">
-              <div className="relative flex items-center">
-                <input
-                  className="w-full bg-[#f6f2fc] border border-outline-variant/40 rounded-full py-2.5 pr-5 pl-14 text-xs font-medium text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-m3-primary focus:bg-white transition-all text-right"
-                  placeholder="جستجو در بین هزاران وسیله..."
-                  type="text"
-                />
-                <button
-                  className="absolute left-1.5 size-8 bg-m3-primary hover:bg-m3-primary/90 text-white rounded-full flex items-center justify-center transition-transform active:scale-95 shadow-sm"
-                  title="جستجو"
-                >
-                  <span className="material-symbols-outlined text-base">search</span>
-                </button>
-              </div>
-            </div>
-            <div className="flex flex-row-reverse items-center gap-2 sm:gap-3 shrink-0">
-              {/* User chip — session aware (guest state rule) */}
-              {user ? (
-                <UserMenu
-                  user={{ name: user.name, avatarUrl: user.avatarUrl, isHost: user.isHost, isAdmin: user.isAdmin }}
-                />
-              ) : (
-                <Link
-                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-outline-variant/40 bg-surface-container-low/50 text-xs font-bold text-on-surface hover:border-m3-primary/40 transition-all"
-                  href="/signin-otp"
-                >
-                  <span className="material-symbols-outlined text-base text-m3-primary">person</span>
-                  ورود | ثبت‌نام
-                </Link>
-              )}
-              <div className="h-6 w-px bg-outline-variant/50 mx-1 hidden sm:block"></div>
-              <div className="relative">
-                <button
-                  className="size-9 rounded-full border border-outline-variant/40 flex items-center justify-center text-on-surface-variant hover:text-m3-primary hover:border-m3-primary/40 transition-colors"
-                  disabled
-                  title="به‌زودی"
-                >
-                  <span className="material-symbols-outlined text-lg">notifications</span>
-                </button>
-                <span className="absolute -top-1 -right-1 size-4 bg-m3-error text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-white">
-                  ۱
-                </span>
-              </div>
-              <button
-                className="size-9 rounded-full border border-outline-variant/40 flex items-center justify-center text-on-surface-variant hover:text-m3-primary hover:border-m3-primary/40 transition-colors"
-                disabled
-                title="به‌زودی"
-              >
-                <span className="material-symbols-outlined text-lg">favorite</span>
-              </button>
-              <Link
-                className="size-9 rounded-full border border-outline-variant/40 flex items-center justify-center text-on-surface-variant hover:text-m3-primary hover:border-m3-primary/40 transition-colors"
-                href="/live-chat"
-                title="گفتگو و پیام‌ها"
-              >
-                <span className="material-symbols-outlined text-lg">chat</span>
-              </Link>
-            </div>
-          </div>
-          <div className="flex items-center justify-between border-t border-outline-variant/20 pt-2.5 pb-2 text-xs font-semibold overflow-x-auto">
-            <nav className="flex items-center gap-6 sm:gap-8 shrink-0 text-on-surface/80">
-              {NAV_LINKS.map((l) => (
-                <Link
-                  key={l.label}
-                  href={l.href}
-                  className={
-                    l.active
-                      ? "text-m3-primary border-b-2 border-m3-primary py-1 font-bold"
-                      : "text-on-surface-variant hover:text-m3-primary transition-colors py-1"
-                  }
-                >
-                  {l.label}
-                </Link>
-              ))}
-            </nav>
-            <div className="flex items-center gap-1.5 text-emerald-600 font-bold shrink-0 mr-4">
-              <span className="size-2 rounded-full bg-emerald-600 animate-pulse"></span>
-              <span>پشتیبانی آنلاین فعال</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* Main Content */}
       <main className="w-full max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pb-16 flex-1 w-full">
@@ -139,11 +46,28 @@ export default async function LoadingPage() {
               <div className="flex items-start sm:items-center gap-4">
                 {/* Brand Pulsing Spinner */}
                 <div className="relative size-14 shrink-0 bg-white/15 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-inner">
-                  <svg className="animate-spin size-8 text-on-primary" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"></circle>
-                    <path className="opacity-90" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" fill="currentColor"></path>
+                  <svg
+                    className="animate-spin size-8 text-on-primary"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                    ></circle>
+                    <path
+                      className="opacity-90"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                      fill="currentColor"
+                    ></path>
                   </svg>
-                  <span className="material-symbols-outlined absolute text-base text-on-primary opacity-90 fill">sync</span>
+                  <span className="material-symbols-outlined absolute text-base text-on-primary opacity-90 fill">
+                    sync
+                  </span>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -153,10 +77,12 @@ export default async function LoadingPage() {
                     <span className="inline-flex size-2 rounded-full bg-emerald-300 animate-ping"></span>
                   </div>
                   <h2 className="text-headline-md text-on-primary tracking-tight font-bold">
-                    در حال بارگذاری تجهیزات آماده تحویل و استعلام ودیعه‌های امن...
+                    در حال بارگذاری تجهیزات آماده تحویل و استعلام ودیعه‌های
+                    امن...
                   </h2>
                   <p className="text-body-sm text-on-primary-container opacity-90">
-                    بررسی اصالت ۱,۴۸۰ وسیله موجود در تهران و کرج بر اساس رتبه میزبانان برتر
+                    بررسی اصالت ۱,۴۸۰ وسیله موجود در تهران و کرج بر اساس رتبه
+                    میزبانان برتر
                   </p>
                 </div>
               </div>
@@ -171,9 +97,13 @@ export default async function LoadingPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-2">
               <div className="h-4 w-16 bg-surface-container-high rounded-full animate-pulse"></div>
-              <span className="material-symbols-outlined text-m3-outline text-xs">arrow_back_ios</span>
+              <span className="material-symbols-outlined text-m3-outline text-xs">
+                arrow_back_ios
+              </span>
               <div className="h-4 w-28 bg-surface-container-high rounded-full animate-pulse"></div>
-              <span className="material-symbols-outlined text-m3-outline text-xs">arrow_back_ios</span>
+              <span className="material-symbols-outlined text-m3-outline text-xs">
+                arrow_back_ios
+              </span>
               <div className="h-4 w-36 bg-surface-container-highest rounded-full animate-pulse"></div>
             </div>
             <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
@@ -202,10 +132,18 @@ export default async function LoadingPage() {
                 <div className="h-4 w-32 bg-surface-container-high rounded animate-pulse"></div>
                 <div className="flex flex-col gap-2.5">
                   {[28, 36, 20].map((w, i) => (
-                    <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
+                    <div
+                      key={i}
+                      className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low"
+                    >
                       <div className="flex items-center gap-2">
                         <div className="size-4 bg-surface-container-highest rounded animate-pulse"></div>
-                        <div className={"h-3 bg-surface-container-highest rounded animate-pulse"} style={{ width: `${w * 4}px` }}></div>
+                        <div
+                          className={
+                            "h-3 bg-surface-container-highest rounded animate-pulse"
+                          }
+                          style={{ width: `${w * 4}px` }}
+                        ></div>
                       </div>
                       <div className="size-4 bg-surface-container rounded-full animate-pulse"></div>
                     </div>
@@ -260,7 +198,14 @@ export default async function LoadingPage() {
                   >
                     <div className="space-y-3">
                       <div className="w-full h-48 bg-surface-container-high rounded-xl relative overflow-hidden animate-pulse">
-                        <div className={"absolute top-3 right-3 h-6 rounded-full " + c.pill + " " + c.w}></div>
+                        <div
+                          className={
+                            "absolute top-3 right-3 h-6 rounded-full " +
+                            c.pill +
+                            " " +
+                            c.w
+                          }
+                        ></div>
                         <div className="absolute bottom-3 left-3 size-8 bg-surface-container-highest rounded-full"></div>
                       </div>
                       <div className="flex items-center justify-between">
@@ -270,8 +215,18 @@ export default async function LoadingPage() {
                           <div className="h-3 w-6 bg-surface-container rounded animate-pulse"></div>
                         </div>
                       </div>
-                      <div className={"h-5 bg-surface-container-highest rounded-lg animate-pulse " + (i === 0 ? "w-4/5" : i === 1 ? "w-11/12" : "w-3/4")}></div>
-                      <div className={"h-3.5 bg-surface-container rounded animate-pulse " + (i === 0 ? "w-3/5" : i === 1 ? "w-1/2" : "w-2/3")}></div>
+                      <div
+                        className={
+                          "h-5 bg-surface-container-highest rounded-lg animate-pulse " +
+                          (i === 0 ? "w-4/5" : i === 1 ? "w-11/12" : "w-3/4")
+                        }
+                      ></div>
+                      <div
+                        className={
+                          "h-3.5 bg-surface-container rounded animate-pulse " +
+                          (i === 0 ? "w-3/5" : i === 1 ? "w-1/2" : "w-2/3")
+                        }
+                      ></div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-surface-container">
                       <div className="h-6 bg-surface-container-low rounded animate-pulse"></div>
@@ -280,7 +235,12 @@ export default async function LoadingPage() {
                     <div className="mt-4 pt-3 flex items-center justify-between">
                       <div className="space-y-1">
                         <div className="h-3 w-12 bg-surface-container rounded animate-pulse"></div>
-                        <div className={"h-5 bg-primary-container/20 rounded-lg animate-pulse " + (i === 0 ? "w-24" : i === 1 ? "w-28" : "w-20")}></div>
+                        <div
+                          className={
+                            "h-5 bg-primary-container/20 rounded-lg animate-pulse " +
+                            (i === 0 ? "w-24" : i === 1 ? "w-28" : "w-20")
+                          }
+                        ></div>
                       </div>
                       <div className="h-9 w-20 bg-surface-container-highest rounded-lg animate-pulse"></div>
                     </div>
@@ -308,15 +268,18 @@ export default async function LoadingPage() {
           <div className="mt-12 bg-surface-container-low rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-right">
             <div className="flex items-center gap-3.5">
               <div className="size-10 rounded-full bg-secondary-fixed flex items-center justify-center text-m3-primary shrink-0">
-                <span className="material-symbols-outlined text-xl">cloud_sync</span>
+                <span className="material-symbols-outlined text-xl">
+                  cloud_sync
+                </span>
               </div>
               <div>
                 <p className="text-label-md text-on-surface font-semibold">
-                  داده‌ها از نزدیک‌ترین سرورهای ابری اورا دریافت می‌شوند، لطفاً چند لحظه شکیبا باشید.
+                  داده‌ها از نزدیک‌ترین سرورهای ابری اٌوِرا دریافت می‌شوند،
+                  لطفاً چند لحظه شکیبا باشید.
                 </p>
                 <p className="text-body-sm text-on-surface-variant mt-0.5">
-                  موجودی تجهیزات و مبالغ ودیعه ضمانت به صورت لحظه‌ای با دفتر امن اورا تطبیق داده می‌شوند
-                  (حالت شبیه‌سازی).
+                  موجودی تجهیزات و مبالغ ودیعه ضمانت به صورت لحظه‌ای با دفتر امن
+                  اٌوِرا تطبیق داده می‌شوند (حالت شبیه‌سازی).
                 </p>
               </div>
             </div>
@@ -333,22 +296,47 @@ export default async function LoadingPage() {
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <div className="size-8 rounded-lg bg-m3-primary text-white flex items-center justify-center font-black text-sm">O</div>
+              <div className="size-8 rounded-lg bg-m3-primary text-white flex items-center justify-center font-black text-sm">
+                O
+              </div>
               <div>
-                <p className="text-sm font-bold text-on-surface">سامانه هوشمند اشتراک‌گذاری و اجاره تجهیزات اورا (Overa)</p>
+                <p className="text-sm font-bold text-on-surface">
+                  سامانه هوشمند اشتراک‌گذاری و اجاره تجهیزات اٌوِرا (Overa)
+                </p>
                 <p className="text-xs text-on-surface-variant mt-0.5">
-                  تمامی حقوق برای پلتفرم اورا و میزبانان تاییدشده محفوظ است © ۱۴۰۴
+                  تمامی حقوق برای پلتفرم اٌوِرا و میزبانان تاییدشده محفوظ است ©
+                  ۱۴۰۴
                 </p>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-6 text-xs text-on-surface-variant font-medium">
-              <Link className="hover:text-m3-primary transition-colors flex items-center gap-1" href="/tos-support-faq">
-                <span className="material-symbols-outlined text-sm">headset_mic</span>
+              <Link
+                className="hover:text-m3-primary transition-colors flex items-center gap-1"
+                href="/tos-support-faq"
+              >
+                <span className="material-symbols-outlined text-sm">
+                  headset_mic
+                </span>
                 پشتیبانی ۲۴ ساعته میزبانان (۰۲۱-۸۸۹۹۰۰۱۱)
               </Link>
-              <Link className="hover:text-m3-primary transition-colors" href="/wallet">قوانین تضمین و ودیعه اورا</Link>
-              <Link className="hover:text-m3-primary transition-colors" href="/tos-support-faq">شرایط نشان سوپرمیزبان</Link>
-              <Link className="hover:text-m3-primary transition-colors" href="/reviews">راهنمای پاسخ‌گویی به نظرات</Link>
+              <Link
+                className="hover:text-m3-primary transition-colors"
+                href="/wallet"
+              >
+                قوانین تضمین و ودیعه اٌوِرا
+              </Link>
+              <Link
+                className="hover:text-m3-primary transition-colors"
+                href="/tos-support-faq"
+              >
+                شرایط نشان سوپرمیزبان
+              </Link>
+              <Link
+                className="hover:text-m3-primary transition-colors"
+                href="/reviews"
+              >
+                راهنمای پاسخ‌گویی به نظرات
+              </Link>
             </div>
           </div>
         </div>

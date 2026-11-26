@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
@@ -9,8 +10,55 @@ import ItemDetailsApp, {
   type ReviewData,
 } from "./ItemDetailsApp";
 import { parseBlockedRanges } from "@/lib/jalali";
+import { faToman } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Visibility check runs in the metadata phase so guests hitting an invalid
+ * (or non-public) id receive a REAL HTTP 404 — with streaming, checks made
+ * in the body phase would flush a 200 shell first.
+ */
+async function assertViewable(id: string) {
+  const viewer = await getCurrentUser();
+  const listing = await db.listing.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      status: true,
+      ownerId: true,
+      title: true,
+      description: true,
+      dailyPrice: true,
+      images: { orderBy: { sortOrder: "asc" }, take: 1 },
+    },
+  });
+  if (!listing) notFound();
+  const isOwner = viewer?.id === listing.ownerId;
+  if (listing.status !== "ACTIVE" && !isOwner && !viewer?.isAdmin) notFound();
+  return listing;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const listing = await assertViewable(id);
+  const ogImage = listing.images[0]?.url;
+  return {
+    title: listing.title,
+    description:
+      listing.description.slice(0, 150) +
+      ` — اجاره روزانه ${faToman(listing.dailyPrice)} تومان در اٌوِرا`,
+    openGraph: {
+      title: `${listing.title} | اٌوِرا`,
+      description: listing.description.slice(0, 200),
+      images: ogImage ? [ogImage] : undefined,
+    },
+  };
+}
 
 export default async function ItemDetailsPage({
   params,
@@ -19,12 +67,20 @@ export default async function ItemDetailsPage({
 }) {
   const { id } = await params;
 
+  // Real 404 for invalid/non-visible ids (already enforced pre-stream in
+  // generateMetadata — re-fetched here with full relations for the body).
+  await assertViewable(id);
+
+  const viewer = await getCurrentUser();
+
   const listing = await db.listing.findUnique({
     where: { id },
     include: {
       images: { orderBy: { sortOrder: "asc" } },
       category: { select: { id: true, slug: true, name: true } },
-      owner: { select: { id: true, name: true, isHost: true, avatarUrl: true } },
+      owner: {
+        select: { id: true, name: true, isHost: true, avatarUrl: true },
+      },
       reviews: {
         orderBy: { createdAt: "desc" },
         include: { author: { select: { id: true, name: true } } },
@@ -34,13 +90,12 @@ export default async function ItemDetailsPage({
 
   if (!listing) notFound();
 
-  const viewer = await getCurrentUser();
-  const isOwner = viewer?.id === listing.ownerId;
-  // 404 for guests/non-owners when the listing is not publicly visible.
-  if (listing.status !== "ACTIVE" && !isOwner) notFound();
-
   const ownerItems = await db.listing.findMany({
-    where: { ownerId: listing.ownerId, status: "ACTIVE", id: { not: listing.id } },
+    where: {
+      ownerId: listing.ownerId,
+      status: "ACTIVE",
+      id: { not: listing.id },
+    },
     orderBy: { createdAt: "desc" },
     take: 2,
     include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
@@ -58,6 +113,8 @@ export default async function ItemDetailsPage({
     deposit: listing.deposit,
     city: listing.city,
     area: listing.area,
+    lat: listing.lat,
+    lng: listing.lng,
     pickupInPerson: listing.pickupInPerson,
     deliveryCourier: listing.deliveryCourier,
     minDays: listing.minDays,
@@ -83,6 +140,9 @@ export default async function ItemDetailsPage({
     comment: r.comment,
     hostReply: r.hostReply,
     createdAt: r.createdAt.toISOString(),
+    // Only reservation-tied reviews carry the «اجاره‌کننده‌ی تأییدشده» badge.
+    verified: Boolean(r.reservationId),
+    isMine: viewer ? r.authorId === viewer.id : false,
   }));
 
   const otherItems: OwnerListingData[] = ownerItems.map((o) => ({
@@ -106,6 +166,17 @@ export default async function ItemDetailsPage({
   // Days the owner blocked from the create-listing wizard (Jalali calendar).
   const ownerBlockedRanges = parseBlockedRanges(listing.blockedRanges);
 
+  // Whether the signed-in viewer already saved this listing — drives the
+  // heart button's initial state (Favorite table, unique per user+listing).
+  const favorite = viewer
+    ? await db.favorite.findUnique({
+        where: {
+          userId_listingId: { userId: viewer.id, listingId: listing.id },
+        },
+        select: { id: true },
+      })
+    : null;
+
   return (
     <>
       {/* Page-local styles ported from the source page */}
@@ -119,8 +190,10 @@ export default async function ItemDetailsPage({
         reviews={reviews}
         otherItems={otherItems}
         viewerId={viewer?.id ?? null}
+        viewerWalletBalance={viewer?.walletBalance ?? 0}
         bookedRanges={bookedRanges}
         ownerBlockedRanges={ownerBlockedRanges}
+        initialFaved={Boolean(favorite)}
       />
       <SiteFooter />
     </>

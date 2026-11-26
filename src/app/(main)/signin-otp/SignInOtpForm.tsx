@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toPersianDigits } from "@/lib/format";
+import { normalizeIranMobile } from "@/lib/persian";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
@@ -31,6 +32,8 @@ export default function SignInOtpForm({ next }: { next: string }) {
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  /** API said this phone has no account — offer the sign-up page instead. */
+  const [notRegistered, setNotRegistered] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const boxRefs = useRef<Array<HTMLInputElement | null>>([]);
 
@@ -47,10 +50,13 @@ export default function SignInOtpForm({ next }: { next: string }) {
       : "کد منقضی شد";
 
   async function requestCode(phoneValue?: string) {
-    const target = toEnDigits(phoneValue ?? phone).trim();
+    const raw = toEnDigits(phoneValue ?? phone).trim();
     setError("");
-    if (!/^09\d{9}$/.test(target)) {
-      setError("شماره موبایل معتبر نیست؛ باید با ۰۹ شروع شده و ۱۱ رقم باشد.");
+    // With or without the leading zero (09… / 9… / +98…) — all accepted and
+    // normalized to the canonical «09…» form.
+    const target = normalizeIranMobile(raw) ?? "";
+    if (!target) {
+      setError("شماره موبایل معتبر نیست؛ مثلاً ۰۹۱۲۳۴۵۶۷۸۹ را وارد کنید.");
       return;
     }
     setLoading(true);
@@ -62,10 +68,17 @@ export default function SignInOtpForm({ next }: { next: string }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        // Unregistered number: no code was sent — the visitor is sent to the
+        // sign-up page instead of being silently registered and signed in.
+        if (data.extra?.notRegistered || data.notRegistered) {
+          setNotRegistered(true);
+          setStep("phone");
+        }
         setError(data.error ?? "خطایی در ارسال کد رخ داد؛ دوباره تلاش کنید.");
         setLoading(false);
         return;
       }
+      setNotRegistered(false);
       setPhone(target);
       setDevCode(typeof data.devCode === "string" ? data.devCode : null);
       setDigits(["", "", "", ""]);
@@ -124,6 +137,12 @@ export default function SignInOtpForm({ next }: { next: string }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        // Defence in depth: even at the verify stage an unregistered number is
+        // refused (the account is never created here) — go back to sign-up.
+        if (data.extra?.notRegistered || data.notRegistered) {
+          setNotRegistered(true);
+          setStep("phone");
+        }
         setError(data.error ?? "کد وارد‌شده صحیح نیست؛ دوباره تلاش کنید.");
         setLoading(false);
         return;
@@ -161,11 +180,15 @@ export default function SignInOtpForm({ next }: { next: string }) {
               dir="ltr"
               id="mobileInput"
               inputMode="numeric"
+              data-numeric="keep-zeros"
               maxLength={11}
               placeholder="۰۹۱۲۳۴۵۶۷۸۹"
               type="tel"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                setPhone(e.target.value);
+                setNotRegistered(false);
+              }}
             />
             <div className="pl-3.5 text-on-surface-variant flex items-center justify-center">
               <span className="material-symbols-outlined">smartphone</span>
@@ -210,6 +233,7 @@ export default function SignInOtpForm({ next }: { next: string }) {
                       : "border-outline-variant text-on-surface"
                   } rounded-xl focus:outline-none focus:border-m3-primary focus:ring-2 focus:ring-m3-primary/30`}
                   inputMode="numeric"
+                  data-numeric="keep-zeros"
                   maxLength={1}
                   placeholder="•"
                   type="text"
@@ -270,6 +294,17 @@ export default function SignInOtpForm({ next }: { next: string }) {
             role="alert"
           >
             {error}
+            {notRegistered ? (
+              <Link
+                href={next ? `/signup?next=${encodeURIComponent(next)}` : "/signup"}
+                className="mt-2.5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-m3-primary text-white px-3 py-2 text-[11px] font-bold hover:bg-primary-container transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm">
+                  person_add
+                </span>
+                رفتن به صفحهٔ ثبت‌نام
+              </Link>
+            ) : null}
           </div>
         ) : null}
 

@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { jsonError, jsonOk, requireUser } from "@/lib/api";
+import { notifyAdmins, type NotifyDb } from "@/lib/admin-notify";
 
 /** GET /api/claims — caller's claims (as claimant or respondent), admins see all. */
 export async function GET() {
@@ -24,6 +25,17 @@ export async function GET() {
 /**
  * POST /api/claims — open a damage claim on a reservation.
  * Body: { reservationId, title, description, evidenceUrls? }
+ *
+ * Stage detection (DamageClaim.stage):
+ *  - RENTER at DELIVERED  → stage "DELIVERY": the renter declares the damage
+ *    («اعلام خسارت و تحویل کالا») AND STILL RECEIVES the item — the order
+ *    STAYS in DELIVERED so the OTP delivery flow can complete; the claim is
+ *    recorded and visible in the renter, host and admin panels.
+ *  - At RETURN_REQUESTED/RETURNED (usually the HOST at the return stage)
+ *    → stage "RETURN": the order goes to DISPUTED and the arbitration panel
+ *    reads BOTH descriptions (renter's delivery-stage + host's return-stage)
+ *    before issuing the verdict.
+ *  - Any other stage → "GENERAL" (mid-rental disputes → DISPUTED as before).
  */
 export async function POST(req: Request) {
   const auth = await requireUser();
@@ -48,30 +60,83 @@ export async function POST(req: Request) {
     ? body.evidenceUrls.slice(0, 6).map(String)
     : [];
 
+  const isRenterClaimant = reservation.renterId === user.id;
+  const isDeliveryStage = isRenterClaimant && reservation.status === "DELIVERED";
+  const isReturnStage =
+    reservation.status === "RETURN_REQUESTED" || reservation.status === "RETURNED";
+  const stage = isDeliveryStage ? "DELIVERY" : isReturnStage ? "RETURN" : "GENERAL";
+
   const claim = await db.damageClaim.create({
     data: {
       reservationId,
       claimantId: user.id,
-      againstId: reservation.renterId === user.id ? reservation.hostId : reservation.renterId,
+      againstId: isRenterClaimant ? reservation.hostId : reservation.renterId,
       title,
       description,
       evidenceUrls: JSON.stringify(evidence),
       status: "OPEN",
+      stage,
     },
   });
 
-  // Move the reservation into DISPUTED via the state machine.
-  await db.reservation.update({ where: { id: reservationId }, data: { status: "DISPUTED" } });
+  // Delivery-stage declaration: the renter declared the damage but KEEPS the
+  // item — the order must stay in DELIVERED so the one-time-code delivery
+  // confirmation (→ RENTAL_ACTIVE) can still happen. No DISPUTED jump here.
+  // For every other stage, DISPUTED is applied only while the state machine
+  // still allows a dispute (terminal orders keep their status).
+  const DISPUTABLE_STATUSES = [
+    "PAID",
+    "DELIVERED",
+    "RENTAL_ACTIVE",
+    "RETURN_REQUESTED",
+    "RETURNED",
+    "INSPECTION",
+  ];
+  if (!isDeliveryStage && DISPUTABLE_STATUSES.includes(reservation.status)) {
+    await db.reservation.update({
+      where: { id: reservationId },
+      data: { status: "DISPUTED", disputeOpenedAt: new Date() },
+    });
+  }
   await db.reservationEvent.create({
-    data: { reservationId, actor: user.id === reservation.renterId ? "renter" : "host", type: "DISPUTE", message: `اعلام خسارت: ${title}` },
+    data: {
+      reservationId,
+      actor: isRenterClaimant ? "renter" : "host",
+      type: "DISPUTE",
+      message: isDeliveryStage
+        ? `اعلام خسارت در مرحله تحویل («اعلام خسارت و تحویل کالا») ثبت شد: ${title} — مستأجر با وجود اعلام خسارت، کالا را تحویل می‌گیرد و فرآیند تحویل ادامه می‌یابد؛ شرح در پنل مستأجر، میزبان و مدیریت قابل مشاهده است.`
+        : `اعلام خسارت: ${title}`,
+    },
   });
 
   await db.notification.create({
-    data: { userId: claim.againstId, type: "DISPUTE", title: "اعلام خسارت جدید", body: `${user.name} برای اجاره «${reservation.code}» خسارت اعلام کرد.`, link: "/damage-claims" },
+    data: {
+      userId: claim.againstId,
+      type: "DISPUTE",
+      title: isDeliveryStage ? "اعلام خسارت در مرحله تحویل" : "اعلام خسارت جدید",
+      body: isDeliveryStage
+        ? `${user.name} برای اجارهٔ «${reservation.code}» هنگام تحویل خسارت اعلام کرد و کالا را تحویل می‌گیرد؛ شرح خسارت در پروندهٔ «خسارت و داوری» قابل مشاهده است.`
+        : `${user.name} برای اجاره «${reservation.code}» خسارت اعلام کرد.`,
+      link: "/damage-claims",
+    },
   });
+  // Oversight: the admin panel must show every declaration (with the
+  // description and the goods-received status) the moment it is filed.
+  await notifyAdmins(
+    db as unknown as NotifyDb,
+    {
+      type: "DISPUTE",
+      title: isDeliveryStage ? "اعلام خسارت در مرحله تحویل (کالا تحویل گرفته شد)" : "اعلام خسارت جدید برای یک سفارش",
+      body: isDeliveryStage
+        ? `برای سفارش «${reservation.code}» مستأجر هنگام تحویل خسارت اعلام کرد و کالا را تحویل گرفت؛ شرح در پنل داوری قابل بررسی است.`
+        : `برای سفارش «${reservation.code}» خسارت اعلام شد؛ جزئیات در پنل داوری قابل بررسی است.`,
+      link: "/arbitration-panel",
+    },
+    [reservation.renterId, reservation.hostId],
+  );
   await db.auditLog.create({
     data: { actorId: user.id, action: "CLAIM_CREATE", entityType: "DamageClaim", entityId: claim.id },
   });
 
-  return jsonOk({ claim }, 201);
+  return jsonOk({ claim, deliveryStage: isDeliveryStage }, 201);
 }

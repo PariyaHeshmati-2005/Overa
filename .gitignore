@@ -73,5 +73,7 @@ server.log
 
 # exception: the environment template must be committed
 !.env.example
-overa_backup.dump
+
+# Local database backups
+*.dump
 restore.list

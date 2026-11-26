@@ -1,48 +1,33 @@
 #!/bin/sh
 set -e
 
-# Overa container entrypoint
-# 1. Ensure a writable database location (mounted volume wins).
-# 2. Push the Prisma schema (idempotent).
-# 3. Seed demo content only when the database is empty (retried, marker is
-#    written on success only — a failed seed is retried on the next start).
+# Overa container entrypoint (PostgreSQL edition)
+# 1. Apply controlled Prisma migrations (migrate deploy — never destructive).
+# 2. Optionally bootstrap the platform admin (ADMIN_PHONE + ADMIN_PASSWORD).
+# 3. Optionally seed DEMO content (only when SEED_DEMO=1 — demo data must
+#    never be written to a real production database by accident; the seed
+#    script itself refuses remote databases unless explicitly overridden).
 # 4. Start the Next.js server.
 
-DATA_DIR="/app/db"
-DB_FILE="$DATA_DIR/custom.db"
+echo "[overa] applying database migrations…"
+# NOTE: migrations go through scripts/migrate-deploy.sh (same script the
+# buildpack `build`/`start` hooks use) — production-safe, idempotent, with a
+# baseline fallback for databases created without migration history.
+# `prisma migrate deploy` never generates the Prisma Client (that happens at
+# image build: `prisma generate`).
+sh scripts/migrate-deploy.sh
 
-mkdir -p "$DATA_DIR"
-
-echo "[overa] applying database schema…"
-bunx prisma db push --accept-data-loss --skip-generate
-
-SEED_MARKER="$DATA_DIR/.seeded"
-if [ -f "$SEED_MARKER" ]; then
-  echo "[overa] database already seeded — skipping."
-else
-  echo "[overa] seeding demo content…"
-  max_attempts=3
-  attempt=1
-  seeded=0
-  while [ "$attempt" -le "$max_attempts" ]; do
-    if bun run scripts/seed.ts; then
-      seeded=1
-      break
-    fi
-    echo "[overa] seed attempt ${attempt}/${max_attempts} failed."
-    if [ "$attempt" -lt "$max_attempts" ]; then
-      sleep 5
-    fi
-    attempt=$((attempt + 1))
-  done
-  if [ "$seeded" -eq 1 ]; then
-    touch "$SEED_MARKER"
-    echo "[overa] demo content seeded."
-  else
-    echo "[overa] WARNING: seed failed after ${max_attempts} attempts — starting with an empty database."
-    echo "[overa] Restart the container to retry: docker compose restart app"
-  fi
+if [ -n "$ADMIN_PHONE" ] && [ -n "$ADMIN_PASSWORD" ]; then
+  echo "[overa] ensuring platform admin account…"
+  bun run scripts/create-admin.ts || echo "[overa] WARNING: admin bootstrap failed — check ADMIN_PHONE/ADMIN_PASSWORD."
 fi
 
-echo "[overa] starting server on port ${PORT:-3000}…"
+if [ "$SEED_DEMO" = "1" ]; then
+  echo "[overa] seeding DEMO content (SEED_DEMO=1)…"
+  bun run scripts/seed.ts || echo "[overa] WARNING: demo seed failed — the app will start with real data only."
+else
+  echo "[overa] SEED_DEMO not set — skipping demo content (production-safe default)."
+fi
+
+echo "[overa] starting server…"
 exec "$@"

@@ -1,8 +1,13 @@
-# Overa — production stack
+# Overa — production stack (PostgreSQL)
 # Usage:
 #   docker compose up -d --build     # build & start
 #   docker compose logs -f app       # follow logs
-#   Data persists in the `overa_db` volume (SQLite at /app/db/custom.db).
+#
+# Data persists in the `overa_pg` Postgres volume — listings, users,
+# reservations and the wallet ledger survive rebuilds and redeploys.
+#
+# First-run admin bootstrap (recommended):
+#   ADMIN_PHONE=09120000000 ADMIN_PASSWORD=<strong-password> docker compose up -d
 services:
   app:
     build:
@@ -15,12 +20,21 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: production
-      DATABASE_URL: file:/app/db/custom.db
       NEXT_TELEMETRY_DISABLED: "1"
+      DATABASE_URL: ${DATABASE_URL:-postgresql://overa:overa_pg_password@db:5432/overa?sslmode=disable}
+      DIRECT_URL: ${DIRECT_URL:-postgresql://overa:overa_pg_password@db:5432/overa?sslmode=disable}
+      # Public URL used by the PWA QR code (set to your real domain):
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      # Optional first-run admin bootstrap (both required together):
+      ADMIN_PHONE: ""
+      ADMIN_PASSWORD: ""
+      # Demo content is OFF by default. Set to "1" only for demo environments.
+      SEED_DEMO: ""
       # SMS provider key enables real OTP delivery; unset = visible demo mode.
       # SMS_PROVIDER_API_KEY: ""
-    volumes:
-      - overa_db:/app/db
+    depends_on:
+      db:
+        condition: service_healthy
     healthcheck:
       test:
         [
@@ -34,5 +48,21 @@ services:
       start_period: 20s
       retries: 3
 
+  db:
+    image: postgres:16-alpine
+    container_name: overa-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: overa
+      POSTGRES_PASSWORD: overa_pg_password
+      POSTGRES_DB: overa
+    volumes:
+      - overa_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U overa -d overa"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
-  overa_db:
+  overa_pg:

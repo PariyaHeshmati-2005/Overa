@@ -5,16 +5,19 @@ export function toPersianDigits(value: string | number): string {
   return String(value).replace(/\d/g, (d) => PERSIAN_DIGITS[Number(d)]);
 }
 
-/** Format a number with thousand separators and Persian digits (۱۲۳,۴۵۶). */
-export function faNumber(value: number | string): string {
+/** Format a number with thousand separators and Persian digits (۱۲۳,۴۵۶).
+ *  Null/undefined/non-numeric inputs are treated as ۰ instead of crashing —
+ *  a previous `null.toLocaleString()` TypeError took whole pages down. */
+export function faNumber(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || value === "") return toPersianDigits(0);
   const n = typeof value === "string" ? Number(value.replace(/,/g, "")) : value;
   if (Number.isNaN(n)) return toPersianDigits(value);
   return toPersianDigits(n.toLocaleString("en-US"));
 }
 
-/** Format a Toman amount: ۴۵۰,۰۰۰ */
-export function faToman(value: number | string): string {
-  return faNumber(value);
+/** Format a Toman amount: ۴۵۰,۰۰۰ (null-safe). */
+export function faToman(value: number | string | null | undefined): string {
+  return faNumber(value ?? 0);
 }
 
 /** Format a date in Persian calendar via Intl. */
@@ -76,4 +79,19 @@ export function parseIntSafe(v: string | null, fallback: number): number {
   if (v === null || v.trim() === "") return fallback;
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
+}
+
+const FA_COUNT_WORDS = [
+  "صفر", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه",
+  "ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده",
+  "هفده", "هجده", "نوزده", "بیست",
+];
+
+/** Spell a counter as a Persian word (یک، دو، سه … بیست) and fall back to
+ *  Persian digits beyond twenty — used by the automatic rental comments
+ *  (e.g. «دو اجاره ناموفق …»). */
+export function faCountWord(n: number): string {
+  if (!Number.isFinite(n) || n < 0) return toPersianDigits(0);
+  if (n < FA_COUNT_WORDS.length) return FA_COUNT_WORDS[n];
+  return toPersianDigits(n);
 }

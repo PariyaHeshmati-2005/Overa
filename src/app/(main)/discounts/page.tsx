@@ -1,13 +1,16 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import SiteHeader from "@/components/layout/SiteHeader";
 import SiteFooter from "@/components/layout/SiteFooter";
+import { getCurrentUser } from "@/lib/auth";
 import CouponValidator from "./CouponValidator";
 import CouponsGrid, { type Coupon } from "./CouponsGrid";
 import HostCouponActions from "./HostCouponActions";
 
 export const metadata = {
   title: "تخفیف‌ها",
-  description: "مرکز کوپن‌ها و کدهای تخفیف اورا (کوپن‌های نمایشی)",
+  description: "مرکز کوپن‌ها و کدهای تخفیف اٌوِرا (کوپن‌های نمایشی)",
+  robots: { index: false },
 };
 
 const COUPONS: Coupon[] = [
@@ -19,13 +22,13 @@ const COUPONS: Coupon[] = [
     badgeCls: "bg-purple-100 text-m3-primary",
     status: "فعال و آماده",
     statusCls: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-    from: "از طرف پلتفرم اورا (ادمین)",
+    from: "از طرف پلتفرم اٌوِرا (ادمین)",
     title: "۳۰٪ تخفیف اولین سفارش اجاره",
     highlight: "تا سقف ۵۰۰,۰۰۰ تومان تخفیف روی کل فاکتور",
     category: "عمومی و تمام کالاها",
     minOrderLabel: "حداقل سفارش",
     minOrderValue: "بدون محدودیت حداقل",
-    expiry: "تا پایان خرداد ۱۴۰۳ (۷ روز مانده)",
+    expiry: "تا پایان خرداد ۱۴۰۵ (۷ روز مانده)",
     expiryCls: "text-amber-700",
     featured: true,
   },
@@ -33,7 +36,7 @@ const COUPONS: Coupon[] = [
     code: "OVR-SPRING20",
     group: "platform",
     badgeIcon: "campaign",
-    badge: "جشنواره سراسری اورا",
+    badge: "جشنواره سراسری اٌوِرا",
     badgeCls: "bg-amber-100 text-amber-700",
     status: "فعال",
     statusCls: "bg-emerald-50 text-emerald-700 border border-emerald-200",
@@ -43,7 +46,7 @@ const COUPONS: Coupon[] = [
     category: "کمپینگ، چادر و کوهنوردی",
     minOrderLabel: "حداقل سفارش",
     minOrderValue: "۶۰۰,۰۰۰ تومان",
-    expiry: "تا ۱۰ تیر ۱۴۰۳ (۱۶ روز مانده)",
+    expiry: "تا ۱۰ تیر ۱۴۰۵ (۱۶ روز مانده)",
     expiryCls: "text-amber-700",
   },
   {
@@ -60,7 +63,7 @@ const COUPONS: Coupon[] = [
     category: "عکاسی و فیلم‌برداری سینمایی",
     minOrderLabel: "حداقل مدت",
     minOrderValue: "حداقل ۲ روز اجاره",
-    expiry: "تا ۲۵ خرداد ۱۴۰۳ (۳ روز مانده)",
+    expiry: "تا ۲۵ خرداد ۱۴۰۵ (۳ روز مانده)",
     expiryCls: "text-amber-700",
   },
   {
@@ -77,7 +80,7 @@ const COUPONS: Coupon[] = [
     category: "کنسول، VR و تجهیزات بازی",
     minOrderLabel: "حداقل سفارش",
     minOrderValue: "۴۰۰,۰۰۰ تومان",
-    expiry: "تا ۱۵ تیر ۱۴۰۳ (۲۰ روز مانده)",
+    expiry: "تا ۱۵ تیر ۱۴۰۵ (۲۰ روز مانده)",
     expiryCls: "text-on-surface-variant",
   },
   {
@@ -88,7 +91,7 @@ const COUPONS: Coupon[] = [
     badgeCls: "bg-purple-100 text-m3-primary",
     status: "دائمی",
     statusCls: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-    from: "باشگاه وفاداری کاربران اورا",
+    from: "باشگاه وفاداری کاربران اٌوِرا",
     title: "۱۰۰ هزار تومان تخفیف نقدی مستقیم",
     highlight: "به ازای هر دوست دعوت‌شده که اولین رزرو را ثبت کند",
     category: "عمومی و بدون محدودیت",
@@ -111,12 +114,20 @@ const COUPONS: Coupon[] = [
     category: "انواع دوربین و تجهیزات نور",
     minOrderLabel: "حداقل مدت",
     minOrderValue: "۳ روز و بیشتر",
-    expiry: "تا ۲۰ تیر ۱۴۰۳ (۲۵ روز مانده)",
+    expiry: "تا ۲۰ تیر ۱۴۰۵ (۲۵ روز مانده)",
     expiryCls: "text-amber-700",
   },
 ];
 
-export default function DiscountsPage() {
+export default async function DiscountsPage() {
+  // Members-only area: server-side session check (not CSS hiding). Guests —
+  // including direct URL access — are redirected to sign-in and sent back
+  // here after a successful login.
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/signin-otp?next=" + encodeURIComponent("/discounts"));
+  }
+
   return (
     <>
       <SiteHeader />
@@ -128,7 +139,10 @@ export default function DiscountsPage() {
               خانه
             </Link>
             <span className="text-[#694d99]/50">/</span>
-            <Link className="text-black hover:underline font-medium" href="/categories">
+            <Link
+              className="text-black hover:underline font-medium"
+              href="/categories"
+            >
               دسته‌بندی‌ها
             </Link>
             <span className="text-[#694d99]/50">/</span>
@@ -142,14 +156,18 @@ export default function DiscountsPage() {
             <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div className="space-y-3 max-w-2xl">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold text-white/90 border border-white/20">
-                  <span className="material-symbols-outlined text-[16px] text-amber-300">confirmation_number</span>
-                  <span>مرکز رسمی کوپن‌ها و تخفیف‌های ویژه اورا</span>
+                  <span className="material-symbols-outlined text-[16px] text-amber-300">
+                    confirmation_number
+                  </span>
+                  <span>مرکز رسمی کوپن‌ها و تخفیف‌های ویژه اٌوِرا</span>
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-snug">
                   کدهای تخفیف و بن‌های اجاره فعال
                 </h1>
                 <p className="text-white/80 text-sm sm:text-base leading-relaxed">
-                  از تخفیف‌های خوش‌آمدگویی، پروموشن‌های سراسری پلتفرم و کوپن‌های اختصاصی برترین میزبانان برای اجاره دوربین، گیمینگ و تجهیزات سفر با کمترین هزینه استفاده کنید.
+                  از تخفیف‌های خوش‌آمدگویی، پروموشن‌های سراسری پلتفرم و کوپن‌های
+                  اختصاصی برترین میزبانان برای اجاره دوربین، گیمینگ و تجهیزات
+                  سفر با کمترین هزینه استفاده کنید.
                 </p>
               </div>
               <CouponValidator />
@@ -161,38 +179,62 @@ export default function DiscountsPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="bg-surface-container-lowest p-3.5 rounded-xl border border-[#ece7f3] flex items-center gap-3">
                 <div className="size-9 rounded-lg bg-purple-100 text-m3-primary flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[20px]">percent</span>
+                  <span className="material-symbols-outlined text-[20px]">
+                    percent
+                  </span>
                 </div>
                 <div>
-                  <div className="text-xs text-on-surface-variant font-medium">کدهای فعال امروز</div>
-                  <div className="text-base font-extrabold text-[#130e1b]">۱۲ کد تخفیف</div>
+                  <div className="text-xs text-on-surface-variant font-medium">
+                    کدهای فعال امروز
+                  </div>
+                  <div className="text-base font-extrabold text-[#130e1b]">
+                    ۱۲ کد تخفیف
+                  </div>
                 </div>
               </div>
               <div className="bg-surface-container-lowest p-3.5 rounded-xl border border-[#ece7f3] flex items-center gap-3">
                 <div className="size-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[20px]">savings</span>
+                  <span className="material-symbols-outlined text-[20px]">
+                    savings
+                  </span>
                 </div>
                 <div>
-                  <div className="text-xs text-on-surface-variant font-medium">بیشترین درصد</div>
-                  <div className="text-base font-extrabold text-[#130e1b]">تا ۴۰٪ تخفیف</div>
+                  <div className="text-xs text-on-surface-variant font-medium">
+                    بیشترین درصد
+                  </div>
+                  <div className="text-base font-extrabold text-[#130e1b]">
+                    تا ۴۰٪ تخفیف
+                  </div>
                 </div>
               </div>
               <div className="bg-surface-container-lowest p-3.5 rounded-xl border border-[#ece7f3] flex items-center gap-3">
                 <div className="size-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[20px]">redeem</span>
+                  <span className="material-symbols-outlined text-[20px]">
+                    redeem
+                  </span>
                 </div>
                 <div>
-                  <div className="text-xs text-on-surface-variant font-medium">هدیه عضویت جدید</div>
-                  <div className="text-base font-extrabold text-[#130e1b]">۳۰٪ بدون قید</div>
+                  <div className="text-xs text-on-surface-variant font-medium">
+                    هدیه عضویت جدید
+                  </div>
+                  <div className="text-base font-extrabold text-[#130e1b]">
+                    ۳۰٪ بدون قید
+                  </div>
                 </div>
               </div>
               <div className="bg-surface-container-lowest p-3.5 rounded-xl border border-[#ece7f3] flex items-center gap-3">
                 <div className="size-9 rounded-lg bg-indigo-100 text-m3-secondary flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[20px]">verified_user</span>
+                  <span className="material-symbols-outlined text-[20px]">
+                    verified_user
+                  </span>
                 </div>
                 <div>
-                  <div className="text-xs text-on-surface-variant font-medium">کدهای اختصاصی میزبان</div>
-                  <div className="text-base font-extrabold text-[#130e1b]">۶ بن فعال</div>
+                  <div className="text-xs text-on-surface-variant font-medium">
+                    کدهای اختصاصی میزبان
+                  </div>
+                  <div className="text-base font-extrabold text-[#130e1b]">
+                    ۶ بن فعال
+                  </div>
                 </div>
               </div>
             </div>
@@ -206,25 +248,36 @@ export default function DiscountsPage() {
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 border-b border-[#ece7f3] pb-4">
               <div>
                 <div className="inline-flex items-center gap-1.5 text-xs font-bold text-m3-primary mb-1">
-                  <span className="material-symbols-outlined text-[18px]">storefront</span>
-                  <span>بخش اختصاصی میزبانان اورا</span>
+                  <span className="material-symbols-outlined text-[18px]">
+                    storefront
+                  </span>
+                  <span>بخش اختصاصی میزبانان اٌوِرا</span>
                 </div>
-                <h2 className="text-lg font-extrabold text-[#130e1b]">ایجاد و صدور کد تخفیف جدید توسط میزبان</h2>
+                <h2 className="text-lg font-extrabold text-[#130e1b]">
+                  ایجاد و صدور کد تخفیف جدید توسط میزبان
+                </h2>
                 <p className="text-xs text-on-surface-variant mt-0.5">
-                  میزبان گرامی، می‌توانید برای افزایش رزرو تجهیزات کم‌تردد یا جذب مشتریان همیشگی، کد تخفیف با شرایط دلخواه صادر کنید.
+                  میزبان گرامی، می‌توانید برای افزایش رزرو تجهیزات کم‌تردد یا
+                  جذب مشتریان همیشگی، کد تخفیف با شرایط دلخواه صادر کنید.
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-on-surface-variant font-medium">
-                  کدهای فعال شما: <strong className="text-[#130e1b]">۲ کد</strong>
+                  کدهای فعال شما:{" "}
+                  <strong className="text-[#130e1b]">۲ کد</strong>
                 </span>
                 <span className="text-outline-variant">|</span>
-                <span className="text-xs text-emerald-600 font-bold">نرخ موفقیت رزرو: +۲۸٪</span>
+                <span className="text-xs text-emerald-600 font-bold">
+                  نرخ موفقیت رزرو: +۲۸٪
+                </span>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
               <div>
-                <label className="block text-xs font-bold text-[#130e1b] mb-1.5" htmlFor="coupon-code">
+                <label
+                  className="block text-xs font-bold text-[#130e1b] mb-1.5"
+                  htmlFor="coupon-code"
+                >
                   عنوان کمپین / کد پیشنهادی
                 </label>
                 <input
@@ -237,7 +290,10 @@ export default function DiscountsPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#130e1b] mb-1.5" htmlFor="coupon-percent">
+                <label
+                  className="block text-xs font-bold text-[#130e1b] mb-1.5"
+                  htmlFor="coupon-percent"
+                >
                   درصد تخفیف (٪)
                 </label>
                 <select
@@ -253,7 +309,10 @@ export default function DiscountsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#130e1b] mb-1.5" htmlFor="coupon-items">
+                <label
+                  className="block text-xs font-bold text-[#130e1b] mb-1.5"
+                  htmlFor="coupon-items"
+                >
                   تجهیزات و کالاهای مشمول
                 </label>
                 <select
@@ -262,21 +321,26 @@ export default function DiscountsPage() {
                   defaultValue="a74iv"
                 >
                   <option value="all">تمام وسایل و آگهی‌های من</option>
-                  <option value="a74iv">دوربین سونی Alpha 7 IV + لنز ۲۴-۷۰</option>
+                  <option value="a74iv">
+                    دوربین سونی Alpha 7 IV + لنز ۲۴-۷۰
+                  </option>
                   <option value="ps5">کنسول پلی‌استیشن ۵ با دو دسته</option>
                   <option value="tent">چادر کلمبوس ۴ نفره و تجهیزات سفر</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#130e1b] mb-1.5" htmlFor="coupon-expiry">
+                <label
+                  className="block text-xs font-bold text-[#130e1b] mb-1.5"
+                  htmlFor="coupon-expiry"
+                >
                   مهلت اعتبار و انقضا
                 </label>
                 <input
                   id="coupon-expiry"
                   className="w-full text-xs px-3 py-2.5 rounded-xl border border-[#ece7f3] bg-[#f9f8fc] focus:outline-none focus:ring-2 focus:ring-m3-primary/20 text-[#130e1b]"
-                  placeholder="مثلاً تا ۳۰ تیر ۱۴۰۳"
+                  placeholder="مثلاً تا ۳۰ تیر ۱۴۰۵"
                   type="text"
-                  defaultValue="تا ۳۰ تیر ۱۴۰۳ (یک‌ماهه)"
+                  defaultValue="تا ۳۰ تیر ۱۴۰۵ (یک‌ماهه)"
                   readOnly
                 />
               </div>
@@ -284,7 +348,12 @@ export default function DiscountsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-[#ece7f3]">
               <div className="flex items-center gap-3 text-xs text-on-surface-variant">
                 <label className="inline-flex items-center gap-2 cursor-pointer">
-                  <input defaultChecked className="rounded accent-m3-primary" type="checkbox" readOnly />
+                  <input
+                    defaultChecked
+                    className="rounded accent-m3-primary"
+                    type="checkbox"
+                    readOnly
+                  />
                   <span className="font-medium text-[#130e1b]">
                     نمایش در صفحه عمومی آگهی‌ها به عنوان پیشنهاد ویژه
                   </span>
@@ -296,7 +365,10 @@ export default function DiscountsPage() {
 
           {/* Bottom Footer Info */}
           <footer className="mt-auto py-6 border-t border-[#ece7f3] text-center text-xs text-on-surface-variant/80">
-            <p>© ۱۴۰۳ تمام حقوق برای سامانه اشتراک‌گذاری و اجاره تجهیزات اورا (Overa) محفوظ است.</p>
+            <p>
+              © ۱۴۰۵ تمام حقوق برای سامانه اشتراک‌گذاری و اجاره تجهیزات اٌوِرا
+              (Overa) محفوظ است.
+            </p>
           </footer>
         </div>
       </div>

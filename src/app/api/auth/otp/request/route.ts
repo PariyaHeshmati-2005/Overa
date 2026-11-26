@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { generateOtp, OTP_DEMO_MODE } from "@/lib/auth";
 import { jsonError, jsonOk } from "@/lib/api";
+import { normalizeIranMobile } from "@/lib/persian";
 
 /**
  * POST /api/auth/otp/request — create a 4-digit OTP.
@@ -10,8 +11,9 @@ import { jsonError, jsonOk } from "@/lib/api";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const phone = String(body.phone ?? "").replace(/\s/g, "");
-    if (!/^09\d{9}$/.test(phone)) return jsonError("شماره موبایل معتبر نیست.");
+    // Accept both formats (09… / 9… / +98…) and store the canonical «09…».
+    const phone = normalizeIranMobile(String(body.phone ?? ""));
+    if (!phone) return jsonError("شماره موبایل معتبر نیست.");
 
     // simple rate limit: max 3 codes per phone per 10 minutes
     const recent = await db.otpCode.count({
@@ -22,6 +24,19 @@ export async function POST(req: Request) {
     });
     if (recent >= 3)
       return jsonError("تعداد درخواست کد بیش از حد مجاز است؛ کمی بعد دوباره تلاش کنید.", 429);
+
+    // Sign-in is ONLY for existing accounts: an unregistered number must be
+    // directed to the sign-up page — no code is sent, no account is created
+    // and no session is ever opened for it. (`notRegistered` drives the
+    // «رفتن به صفحهٔ ثبت‌نام» action in SignInOtpForm.)
+    const user = await db.user.findUnique({ where: { phone }, select: { id: true } });
+    if (!user) {
+      return jsonError(
+        "این شماره موبایل در اٌوِرا ثبت‌نام نشده است؛ لطفاً ابتدا از صفحهٔ ثبت‌نام حساب بسازید.",
+        404,
+        { notRegistered: true },
+      );
+    }
 
     const code = generateOtp();
     await db.otpCode.create({

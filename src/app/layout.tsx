@@ -1,14 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import PWARegister from "@/components/pwa/PWARegister";
+import NumericInputGuard from "@/components/overa/NumericInputGuard";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "اورا (Overa) | پلتفرم هوشمند اجاره آنلاین وسایل",
-    template: "%s | اورا (Overa)",
+    default: "اٌوِرا (Overa) | پلتفرم هوشمند اجاره آنلاین وسایل",
+    template: "%s | اٌوِرا (Overa)",
   },
   description:
-    "اورا؛ بزرگ‌ترین بستر تبادل و اجاره هوشمند وسایل در ایران — اجاره کن به‌جای خرید.",
+    "اٌوِرا؛ بزرگ‌ترین بستر تبادل و اجاره هوشمند وسایل در ایران — اجاره کن به‌جای خرید.",
   icons: {
     icon: "/assets/img/overa_logo_transparent.png",
     shortcut: "/assets/img/overa_logo_transparent.png",
@@ -42,6 +43,8 @@ export default function RootLayout({
       <body className="min-h-screen antialiased selection:bg-primary-soft selection:text-primary">
         {children}
         <PWARegister />
+        {/* App-wide rule: numeric inputs accept positive digits only. */}
+        <NumericInputGuard />
       </body>
     </html>
   );

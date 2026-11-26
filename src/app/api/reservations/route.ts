@@ -1,15 +1,38 @@
 import { db } from "@/lib/db";
 import { jsonError, jsonOk, requireUser } from "@/lib/api";
-import { daysBetween } from "@/lib/format";
-import { parseBlockedRanges, rangeHitsBooked } from "@/lib/jalali";
+import { maybeRunRentalReminderSweep } from "@/lib/rental-reminders";
+import {
+  diffDaysIso,
+  parseBlockedRanges,
+  rangeHitsBooked,
+  todayIsoTehran,
+} from "@/lib/jalali";
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Normalize a client-supplied calendar date into an exact UTC-midnight Date.
+ * Accepts "YYYY-MM-DD" (or any ISO string whose date part we slice); the
+ * stored instant is always midnight UTC of the PICKED calendar day, so the
+ * delivery/return day never drifts by a day across timezones.
+ */
+function toUtcMidnight(value: unknown): Date | null {
+  const raw = String(value ?? "").slice(0, 10);
+  if (!ISO_DATE_RE.test(raw)) return null;
+  return new Date(`${raw}T00:00:00.000Z`);
+}
 
 /**
  * GET /api/reservations — the caller's reservations (as renter and as host).
+ * The rentals page polls this endpoint, so it opportunistically drives the
+ * date-aware rental reminder sweep (delivery day + return deadline,
+ * throttled to at most one run per minute per server process).
  */
 export async function GET() {
   const auth = await requireUser();
   if (auth.response) return auth.response;
   const user = auth.user;
+  await maybeRunRentalReminderSweep();
 
   const reservations = await db.reservation.findMany({
     where: { OR: [{ renterId: user.id }, { hostId: user.id }] },
@@ -44,16 +67,21 @@ export async function POST(req: Request) {
     if (listing.ownerId === user.id)
       return jsonError("نمی‌توانید وسیله خودتان را اجاره کنید.", 422);
 
-    const start = new Date(String(body.startDate ?? ""));
-    const end = new Date(String(body.endDate ?? ""));
-    if (isNaN(start.getTime()) || isNaN(end.getTime()))
-      return jsonError("تاریخ تحویل و بازگشت را انتخاب کنید.");
-    if (start.getTime() < Date.now() - 86400000)
+    const start = toUtcMidnight(body.startDate);
+    const end = toUtcMidnight(body.endDate);
+    if (!start || !end)
+      return jsonError("تاریخ تحویل و بازگشت را از تقویم شمسی انتخاب کنید.");
+    // Calendar-date comparisons are done on the ISO day strings (Tehran
+    // "today"), never on raw timestamps — the picked delivery day is stored
+    // exactly as picked, and the return day is the day after the last rented day.
+    const startIso = String(body.startDate).slice(0, 10);
+    const endIso = String(body.endDate).slice(0, 10);
+    if (startIso < todayIsoTehran())
       return jsonError("تاریخ تحویل نمی‌تواند در گذشته باشد.");
-    if (end <= start)
+    if (endIso <= startIso)
       return jsonError("تاریخ بازگشت باید بعد از تاریخ تحویل باشد.");
 
-    const days = daysBetween(start, end);
+    const days = diffDaysIso(startIso, endIso); // nights-based, same as the calendar
     if (days < listing.minDays)
       return jsonError(`حداقل مدت اجاره ${listing.minDays} روز است.`);
     if (days > listing.maxDays)
@@ -74,14 +102,7 @@ export async function POST(req: Request) {
 
     // Owner-blocked days (picked by the host in the create-listing wizard).
     const blocked = parseBlockedRanges(listing.blockedRanges);
-    if (
-      blocked.length &&
-      rangeHitsBooked(
-        start.toISOString().slice(0, 10),
-        end.toISOString().slice(0, 10),
-        blocked,
-      )
-    ) {
+    if (blocked.length && rangeHitsBooked(startIso, endIso, blocked)) {
       return jsonError("برخی روزهای این بازه توسط میزبان مسدود شده است؛ بازه دیگری انتخاب کنید.", 422);
     }
 

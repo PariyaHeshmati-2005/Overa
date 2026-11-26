@@ -1,7 +1,7 @@
 /**
  * Page-local design tokens ported from the source pages' `tailwind.config`
  * blocks (M3 family pages: wallet, live-chat, admin-dashboard,
- * arbitration-panel, 404/500/loading, promissory pages).
+ * 404/500/loading pages).
  *
  * globals.css already carries the color tokens; this component adds the
  * fontSize scale (headline/body/label/display/numeric) and the custom

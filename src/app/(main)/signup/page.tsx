@@ -1,3 +1,4 @@
+import SiteHeader from "@/components/layout/SiteHeader";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth";
@@ -48,7 +49,9 @@ export default async function SignUpPage({
 
   return (
     <div className="bg-m3-background text-on-surface min-h-screen flex flex-col selection:bg-primary-fixed selection:text-on-primary-fixed">
-      <style href="ov-card-auth" precedence="default">{OV_CARD_CSS}</style>
+      <style href="ov-card-auth" precedence="default">
+        {OV_CARD_CSS}
+      </style>
       <div aria-hidden="true" className="ov-bg">
         <span className="ov-blob ov-blob-1"></span>
         <span className="ov-blob ov-blob-2"></span>
@@ -56,47 +59,7 @@ export default async function SignUpPage({
       </div>
 
       {/* Minimal Focused Header — preserved from source */}
-      <header className="w-full border-b border-outline-variant/40 bg-surface-container-lowest/80 backdrop-blur-md sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Brand Logo & Slogan */}
-          <Link
-            className="flex items-center gap-3 group shrink-0"
-            data-purpose="brand-logo"
-            href="/"
-          >
-            <div className="w-11 h-11 rounded-2xl from-m3-primary to-primary-light flex items-center justify-center text-white shadow-md shadow-m3-primary/20 group-hover:scale-105 transition-transform duration-200">
-              <img src="/assets/img/overa_logo_transparent.png" alt="logo" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-black tracking-tight text-[#801E76] mt-3 mb-1">
-                اٌوِرا
-              </span>
-              <span className="text-[11px] font-medium text-neutral-muted -mt-1">
-                وسایل بهتر، زندگی سبک‌تر
-              </span>
-            </div>
-          </Link>
-          {/* Quick Context Actions */}
-          <div className="flex items-center gap-3">
-            <Link
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-m3-secondary hover:text-m3-primary transition-colors"
-              href="/tos-support-faq"
-            >
-              <span className="material-symbols-outlined text-base">help</span>
-              <span className="">راهنمای عضویت و قوانین</span>
-            </Link>
-            <Link
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs md:text-sm font-semibold transition-all"
-              href="/"
-            >
-              <span className="material-symbols-outlined text-base">
-                arrow_forward
-              </span>
-              <span className="">بازگشت به خانه</span>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* Main Centered / Split Authentication Content (single card, as source) */}
       <main className="flex-1 flex items-center justify-center px-4 py-8 md:py-12">
@@ -118,7 +81,7 @@ export default async function SignUpPage({
               </div>
               <div className="mb-6 text-center">
                 <h1 className="text-2xl sm:text-3xl font-black text-on-surface tracking-tight mb-2">
-                  ایجاد حساب کاربری در اورا
+                  ایجاد حساب کاربری در اٌوِرا
                 </h1>
                 <p className="text-sm sm:text-base text-on-surface-variant font-normal">
                   به جمع بیش از ۴۵,۰۰۰ کاربر معتبر پلتفرم اجاره وسایل بپیوندید
@@ -128,7 +91,11 @@ export default async function SignUpPage({
               <div className="p-1 rounded-xl bg-surface-container mb-6 flex gap-1">
                 <Link
                   className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-center text-on-surface-variant hover:text-on-surface transition-all flex items-center justify-center gap-2"
-                  href={next && next !== "/" ? `/signin-otp?next=${encodeURIComponent(next)}` : "/signin-otp"}
+                  href={
+                    next && next !== "/"
+                      ? `/signin-otp?next=${encodeURIComponent(next)}`
+                      : "/signin-otp"
+                  }
                 >
                   <span className="material-symbols-outlined text-lg">sms</span>
                   <span className="">کد یکبار مصرف (OTP)</span>
@@ -146,7 +113,7 @@ export default async function SignUpPage({
             {/* Footer / Terms agreement */}
             <div className="mt-8 pt-4 border-t border-outline-variant/30 text-center">
               <p className="text-xs text-on-surface-variant leading-relaxed">
-                با ورود و ثبت‌نام در اورا،{" "}
+                با ورود و ثبت‌نام در اٌوِرا،{" "}
                 <Link
                   className="text-m3-primary font-semibold underline hover:text-on-primary-fixed-variant"
                   href="/tos-support-faq"
@@ -171,7 +138,7 @@ export default async function SignUpPage({
       <footer className="py-5 text-center text-xs text-on-surface-variant/80">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span className="">
-            تمامی حقوق مادی و معنوی متعلق به پلتفرم هوشمند «اورا» (Overa
+            تمامی حقوق مادی و معنوی متعلق به پلتفرم هوشمند «اٌوِرا» (Overa
             Technologies) می‌باشد.
           </span>
           <div className="flex items-center gap-4">

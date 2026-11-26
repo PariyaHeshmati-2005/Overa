@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "دسته‌بندی‌ها",
-  description: "کاوش و اجاره در میان هزاران تجهیزات تخصصی در اورا",
+  description: "کاوش و اجاره در میان هزاران تجهیزات تخصصی در اٌوِرا",
 };
 
 export default async function CategoriesPage() {

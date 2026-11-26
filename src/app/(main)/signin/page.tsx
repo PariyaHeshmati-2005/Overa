@@ -1,3 +1,4 @@
+import SiteHeader from "@/components/layout/SiteHeader";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth";
@@ -51,7 +52,9 @@ export default async function SignInPage({
 
   return (
     <div className="bg-m3-background text-on-surface min-h-screen flex flex-col selection:bg-primary-container selection:text-white">
-      <style href="ov-card-auth" precedence="default">{OV_CARD_CSS}</style>
+      <style href="ov-card-auth" precedence="default">
+        {OV_CARD_CSS}
+      </style>
       {/* Ambient background (classes shared in globals.css) */}
       <div aria-hidden="true" className="ov-bg">
         <span className="ov-blob ov-blob-1"></span>
@@ -60,57 +63,7 @@ export default async function SignInPage({
       </div>
 
       {/* Top Minimal Focused Navigation — preserved from source */}
-      <header className="w-full bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant/30 sticky top-0 z-50">
-        <div className="max-w-[1360px] mx-auto px-6 h-20 flex items-center justify-between">
-          {/* Brand Logo & Identity */}
-          <Link
-            className="flex items-center gap-3 group shrink-0"
-            data-purpose="brand-logo"
-            href="/"
-          >
-            <div className="w-11 h-11 rounded-2xl from-m3-primary to-primary-light flex items-center justify-center text-white shadow-md shadow-m3-primary/20 group-hover:scale-105 transition-transform duration-200">
-              <img src="/assets/img/overa_logo_transparent.png" alt="logo" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-black tracking-tight text-[#801E76] mt-3 mb-1">
-                اٌوِرا
-              </span>
-              <span className="text-[11px] font-medium text-neutral-muted -mt-1">
-                وسایل بهتر، زندگی سبک‌تر
-              </span>
-            </div>
-          </Link>
-          {/* Links & Back Button */}
-          <div className="flex items-center gap-6">
-            <Link
-              className="hidden md:flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant hover:text-m3-primary transition-colors"
-              href="/tos-support-faq"
-            >
-              <span className="material-symbols-outlined text-[18px]">
-                verified_user
-              </span>
-              راهنمای عضویت و قوانین
-            </Link>
-            <div className="h-4 w-px bg-outline-variant/50 hidden md:block"></div>
-            <a
-              className="hidden sm:flex items-center gap-2 text-xs font-semibold text-m3-secondary hover:text-m3-primary transition-colors bg-surface-container px-3 py-1.5 rounded-full"
-              href="tel:02191002424"
-            >
-              <span className="material-symbols-outlined text-[16px]">call</span>
-              پشتیبانی: ۰۲۱-۹۱۰۰۲۴۲۴
-            </a>
-            <Link
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-bold transition-all border border-outline-variant/30"
-              href="/"
-            >
-              <span className="material-symbols-outlined text-base">
-                arrow_forward
-              </span>
-              <span className="">بازگشت به خانه</span>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* Main Split-Card View */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-10">
@@ -133,7 +86,7 @@ export default async function SignInPage({
               {/* Section Headings */}
               <div className="space-y-2 mb-6 text-center">
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">
-                  ورود به حساب کاربری در اورا
+                  ورود به حساب کاربری در اٌوِرا
                 </h2>
                 <p className="text-sm text-on-surface-variant font-normal">
                   خوش آمدید! برای دسترسی به پنل و اجاره وسایل، اطلاعات حساب خود
@@ -155,7 +108,7 @@ export default async function SignInPage({
             {/* Footer Card Meta */}
             <div className="pt-6 mt-6 border-t border-outline-variant/30 space-y-3 w-full max-w-md mx-auto">
               <div className="text-center text-xs text-on-surface-variant">
-                <span className="">هنوز در اورا ثبت‌نام نکرده‌اید؟ </span>
+                <span className="">هنوز در اٌوِرا ثبت‌نام نکرده‌اید؟ </span>
                 <Link
                   className="font-extrabold text-m3-primary hover:underline"
                   href="/signup"
@@ -164,7 +117,7 @@ export default async function SignInPage({
                 </Link>
               </div>
               <p className="text-[11px] text-center text-on-surface-variant/80 leading-relaxed">
-                با ورود به پلتفرم اورا،{" "}
+                با ورود به پلتفرم اٌوِرا،{" "}
                 <Link
                   className="text-m3-secondary font-semibold hover:underline"
                   href="/tos-support-faq"
@@ -190,7 +143,8 @@ export default async function SignInPage({
         <div className="max-w-[1360px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-on-surface-variant">
           <div className="flex items-center gap-2">
             <span className="">
-              © ۱۴۰۳ تمامی حقوق مادی و معنوی برای پلتفرم اورا (Overa) محفوظ است.
+              © ۱۴۰۵ تمامی حقوق مادی و معنوی برای پلتفرم اٌوِرا (Overa) محفوظ
+              است.
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-6 font-medium">
@@ -210,7 +164,7 @@ export default async function SignInPage({
               className="hover:text-m3-primary transition-colors"
               href="/tos-support-faq"
             >
-              قوانین و ضمانت اوراگارد
+              قوانین و ضمانت اٌوِراگارد
             </Link>
             <span className="inline-flex items-center gap-1 text-m3-secondary font-bold">
               <span className="material-symbols-outlined text-sm">

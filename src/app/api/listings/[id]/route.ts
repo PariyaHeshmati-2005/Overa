@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { jsonError, jsonOk, requireUser } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { normalizeBlockedRangesInput } from "@/lib/jalali";
+import { buildListingSearchKey } from "@/lib/persian";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -46,6 +47,14 @@ export async function PATCH(req: Request, ctx: Ctx) {
 
   const body = await req.json();
   const data: Record<string, unknown> = {};
+  // Optional exact map coordinates (wizard location picker).
+  const toCoord = (value: unknown, min: number, max: number): number | null => {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < min || n > max) return null;
+    return Math.round(n * 1e6) / 1e6;
+  };
+  if (body.lat !== undefined) data.lat = toCoord(body.lat, -90, 90);
+  if (body.lng !== undefined) data.lng = toCoord(body.lng, -180, 180);
   const allowedFields = [
     "title", "description", "brand", "specs", "city", "area", "rules",
   ];
@@ -103,6 +112,35 @@ export async function PATCH(req: Request, ctx: Ctx) {
   }
 
   const updated = await db.listing.update({ where: { id }, data, include: { images: true } });
+
+  // Keep the normalized search key in sync with editable text fields.
+  if (Object.keys(data).some((k) =>
+    ["title", "description", "brand", "specs", "city", "categoryId"].includes(k)
+  )) {
+    const fresh = await db.listing.findUnique({
+      where: { id },
+      select: {
+        title: true, brand: true, specs: true, description: true, city: true,
+        category: { select: { name: true } },
+      },
+    });
+    if (fresh) {
+      await db.listing.update({
+        where: { id },
+        data: {
+          searchKey: buildListingSearchKey({
+            title: fresh.title,
+            brand: fresh.brand,
+            specs: fresh.specs,
+            description: fresh.description,
+            city: fresh.city,
+            categoryName: fresh.category?.name ?? null,
+          }),
+        },
+      });
+    }
+  }
+
   await db.auditLog.create({
     data: { actorId: auth.user.id, action: "LISTING_UPDATE", entityType: "Listing", entityId: id, meta: JSON.stringify(body) },
   });

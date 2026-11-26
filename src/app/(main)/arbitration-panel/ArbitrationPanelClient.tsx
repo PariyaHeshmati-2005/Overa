@@ -4,36 +4,92 @@ import { useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { faToman, faDateTime, toPersianDigits } from "@/lib/format";
+import { parseFaNumber } from "@/lib/input-guard";
+
+export type PanelCounterpartClaim = {
+  id: string;
+  title: string;
+  description: string;
+  stage: string;
+  status: string;
+  claimantName: string;
+  claimantRole: "renter" | "host";
+  createdAt: string;
+};
 
 export type PanelClaim = {
   id: string;
   title: string;
   description: string;
   status: string;
+  /** Lifecycle stage the damage was declared at: DELIVERY | RETURN | GENERAL. */
+  stage: string;
   decision: string | null;
   decidedAt: string | null;
   appealMessage: string | null;
   settlementNote: string | null;
   evidenceUrls: string[];
   claimant: { id: string; name: string; kycStatus: string };
+  /** Is the claimant of THIS file the renter or the host? */
+  claimantRole: "renter" | "host";
   against: { id: string; name: string; kycStatus: string };
+  /** Other claims on the SAME reservation (both parties' descriptions). */
+  counterparts: PanelCounterpartClaim[];
   reservation: {
     id: string;
     code: string;
     deposit: number;
+    paymentMethod?: string | null;
+    status?: string | null;
+    deliveryStatus?: string | null;
+    deliveryNote?: string | null;
     itemTitle: string | null;
     imageUrl: string | null;
   } | null;
 };
 
+const DELIVERY_STATUS_LABELS: Record<string, string> = {
+  PENDING: "بدون یادداشت بازرسی",
+  ACCEPTED_CLEAN: "کالا سالم تحویل گرفته شد",
+  ACCEPTED_WITH_ISSUES: "با یادداشت مشکلات تحویل گرفته شد",
+  REFUSED_DAMAGE: "تحویل رد شد (اجاره باطل شد)",
+};
+
+const CLAIM_STAGE_LABELS: Record<string, string> = {
+  DELIVERY: "اعلام خسارت در مرحلهٔ تحویل",
+  RETURN: "اعلام خسارت در مرحلهٔ بازگشت",
+  GENERAL: "اعلام خسارت",
+};
+
 const STATUS_BADGES: Record<string, { label: string; cls: string }> = {
-  OPEN: { label: "پرونده باز — در انتظار بررسی اورا", cls: "bg-amber-50 text-amber-700 border-amber-200" },
-  COUNTER_EVIDENCE: { label: "مستندات متقابل ثبت شد", cls: "bg-blue-50 text-blue-700 border-blue-200" },
-  UNDER_REVIEW: { label: "در حال بررسی کارشناس رسمی داوری اورا", cls: "bg-amber-50 text-amber-700 border-amber-200" },
-  DECIDED: { label: "رأی داوری صادر شد", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  APPEALED: { label: "درخواست تجدیدنظر ثبت شد", cls: "bg-purple-50 text-purple-700 border-purple-200" },
-  REJECTED: { label: "پرونده رد شد", cls: "bg-m3-error-container text-m3-on-error-container border-m3-error/20" },
-  SETTLED: { label: "تسویه و پایان پرونده", cls: "bg-emerald-50 text-emerald-700 border-emerald-300" },
+  OPEN: {
+    label: "پرونده باز — در انتظار بررسی اٌوِرا",
+    cls: "bg-amber-50 text-amber-700 border-amber-200",
+  },
+  COUNTER_EVIDENCE: {
+    label: "مستندات متقابل ثبت شد",
+    cls: "bg-blue-50 text-blue-700 border-blue-200",
+  },
+  UNDER_REVIEW: {
+    label: "در حال بررسی کارشناس رسمی داوری اٌوِرا",
+    cls: "bg-amber-50 text-amber-700 border-amber-200",
+  },
+  DECIDED: {
+    label: "رأی داوری صادر شد",
+    cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  },
+  APPEALED: {
+    label: "درخواست تجدیدنظر ثبت شد",
+    cls: "bg-purple-50 text-purple-700 border-purple-200",
+  },
+  REJECTED: {
+    label: "پرونده رد شد",
+    cls: "bg-m3-error-container text-m3-on-error-container border-m3-error/20",
+  },
+  SETTLED: {
+    label: "تسویه و پایان پرونده",
+    cls: "bg-emerald-50 text-emerald-700 border-emerald-300",
+  },
 };
 
 function initials(name: string) {
@@ -41,7 +97,11 @@ function initials(name: string) {
   return (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "");
 }
 
-export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[] }) {
+export default function ArbitrationPanelClient({
+  claims,
+}: {
+  claims: PanelClaim[];
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const caseId = searchParams.get("case");
@@ -49,14 +109,24 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
 
   const [busy, setBusy] = useState(false);
   const [decisionText, setDecisionText] = useState("");
-  const [toast, setToast] = useState<{ text: string; kind: "ok" | "err" } | null>(null);
+  const [verdict, setVerdict] = useState<string>("RELEASE_TO_RENTER");
+  const [chargeAmount, setChargeAmount] = useState("");
+  const [settleNote, setSettleNote] = useState("");
+  const [toast, setToast] = useState<{
+    text: string;
+    kind: "ok" | "err";
+  } | null>(null);
 
   const showToast = useCallback((text: string, kind: "ok" | "err" = "ok") => {
     setToast({ text, kind });
     setTimeout(() => setToast(null), 4500);
   }, []);
 
-  async function patchClaim(id: string, body: Record<string, unknown>, okMessage: string) {
+  async function patchClaim(
+    id: string,
+    body: Record<string, unknown>,
+    okMessage: string,
+  ) {
     setBusy(true);
     try {
       const res = await fetch(`/api/admin/claims/${id}`, {
@@ -80,75 +150,73 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
     router.push(`/arbitration-panel?case=${id}`);
   }
 
-  const badge = selected ? (STATUS_BADGES[selected.status] ?? { label: selected.status, cls: "bg-surface-container text-on-surface-variant border-outline-variant/40" }) : null;
+  const badge = selected
+    ? (STATUS_BADGES[selected.status] ?? {
+        label: selected.status,
+        cls: "bg-surface-container text-on-surface-variant border-outline-variant/40",
+      })
+    : null;
 
   return (
     <div className="bg-background-light text-slate-800 min-h-screen flex flex-col antialiased selection:bg-purple-100 selection:text-m3-primary">
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
-        {/* Tier 1: Main Platform Bar */}
-        <div className="border-b border-slate-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
-            <Link className="flex items-center gap-3 group shrink-0" href="/">
-              <div className="w-11 h-11 rounded-2xl from-m3-primary to-primary-light flex items-center justify-center text-white shadow-md shadow-m3-primary/20 group-hover:scale-105 transition-transform duration-200 bg-gradient-to-br">
-                { }
-                <img src="/assets/img/overa_logo_transparent.png" alt="لوگوی اورا" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-black tracking-tight text-[#801E76] mt-3 mb-1">اٌوِرا</span>
-                <span className="text-[11px] font-medium text-neutral-muted -mt-1">وسایل بهتر، زندگی سبک‌تر</span>
-              </div>
-            </Link>
-            <div className="hidden md:flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full text-[11px] font-semibold text-emerald-700">
-              <span className="material-symbols-outlined text-sm">verified</span>
-              تضمین اصالت و بیمه سپرده / تجهیزات
-            </div>
-            <div className="flex items-center gap-2">
-              <Link
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-m3-primary bg-m3-primary/10 hover:bg-m3-primary/20 transition-colors"
-                href="/admin-dashboard"
-              >
-                <span className="material-symbols-outlined text-base">dashboard</span>
-                بازگشت به داشبورد ادمین
-              </Link>
-            </div>
+      {/* Admin context strip — sits under the shared site header */}
+      <div className="bg-white border-b border-slate-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-wrap items-center justify-between gap-2">
+          <div className="hidden md:flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full text-[11px] font-semibold text-emerald-700">
+            <span className="material-symbols-outlined text-sm">verified</span>
+            تضمین اصالت و بیمه سپرده / تجهیزات
           </div>
+          <Link
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-m3-primary bg-m3-primary/10 hover:bg-m3-primary/20 transition-colors"
+            href="/admin-dashboard"
+          >
+            <span className="material-symbols-outlined text-base">
+              dashboard
+            </span>
+            بازگشت به داشبورد ادمین
+          </Link>
         </div>
-        {/* Tier 2: Sub-Navigation Bar */}
-        <div className="bg-slate-50/70">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between text-xs py-2">
-            <nav className="flex items-center gap-5 sm:gap-6 font-medium text-slate-600">
-              <Link href="/" className="hover:text-m3-primary transition-colors text-slate-800 font-bold">خانه</Link>
-              <Link href="/categories" className="hover:text-m3-primary transition-colors">دسته‌بندی‌ها</Link>
-              <Link href="/categories" className="hover:text-m3-primary transition-colors">اجاره وسایل</Link>
-              <Link href="/create-listing" className="hover:text-m3-primary transition-colors">ثبت وسیله</Link>
-              <Link href="/how-it-works" className="hover:text-m3-primary transition-colors">چگونه کار می‌کند؟</Link>
-              <Link href="/about" className="hover:text-m3-primary transition-colors">درباره ما</Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      </div>
 
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 pt-5 sm:px-6 lg:px-8 py-2 flex items-center gap-1.5 text-xs text-slate-500">
-        <Link href="/" className="hover:text-m3-primary transition-colors flex items-center gap-1">
+        <Link
+          href="/"
+          className="hover:text-m3-primary transition-colors flex items-center gap-1"
+        >
           <span className="material-symbols-outlined text-sm">home</span>
           <span>خانه</span>
         </Link>
-        <span className="material-symbols-outlined text-xs text-slate-400">chevron_left</span>
-        <Link href="/admin-dashboard" className="hover:text-m3-primary transition-colors">مرکز نظارت</Link>
-        <span className="material-symbols-outlined text-xs text-slate-400">chevron_left</span>
+        <span className="material-symbols-outlined text-xs text-slate-400">
+          chevron_left
+        </span>
+        <Link
+          href="/admin-dashboard"
+          className="hover:text-m3-primary transition-colors"
+        >
+          مرکز نظارت
+        </Link>
+        <span className="material-symbols-outlined text-xs text-slate-400">
+          chevron_left
+        </span>
         <span className="text-slate-800 font-bold">
-          رسیدگی به ادعای خسارت و داوری ودیعه{selected?.reservation ? ` (سفارش #${selected.reservation.code})` : ""}
+          رسیدگی به ادعای خسارت و داوری ودیعه
+          {selected?.reservation
+            ? ` (سفارش #${selected.reservation.code})`
+            : ""}
         </span>
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 w-full">
         {/* Truthful legal notice */}
         <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 flex items-start gap-3">
-          <span className="material-symbols-outlined text-amber-600 text-[20px] shrink-0 mt-0.5">balance</span>
+          <span className="material-symbols-outlined text-amber-600 text-[20px] shrink-0 mt-0.5">
+            balance
+          </span>
           <p className="text-xs sm:text-sm leading-relaxed text-amber-800">
-            <strong className="font-bold">توجه:</strong> تصمیمات این پنل جایگزین مراجع قانونی نیست و تسویه
-            واقعی ودیعه نیازمند تایید حقوقی و اتصال به سرویس‌دهنده مجاز است (در این نسخه شبیه‌سازی).
+            <strong className="font-bold">توجه:</strong> تصمیمات این پنل جایگزین
+            مراجع قانونی نیست و تسویه واقعی ودیعه نیازمند تایید حقوقی و اتصال به
+            سرویس‌دهنده مجاز است (در این نسخه شبیه‌سازی).
           </p>
         </div>
 
@@ -156,8 +224,12 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
         <section className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-m3-primary">folder_shared</span>
-              <h2 className="font-bold text-base text-slate-900">فهرست پرونده‌های داوری</h2>
+              <span className="material-symbols-outlined text-m3-primary">
+                folder_shared
+              </span>
+              <h2 className="font-bold text-base text-slate-900">
+                فهرست پرونده‌های داوری
+              </h2>
               <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium">
                 {toPersianDigits(claims.length)} پرونده
               </span>
@@ -170,7 +242,10 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {claims.map((c) => {
-                const b = STATUS_BADGES[c.status] ?? { label: c.status, cls: "bg-slate-100 text-slate-600 border-slate-200" };
+                const b = STATUS_BADGES[c.status] ?? {
+                  label: c.status,
+                  cls: "bg-slate-100 text-slate-600 border-slate-200",
+                };
                 const active = selected?.id === c.id;
                 return (
                   <button
@@ -184,10 +259,21 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
                     }
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className={"text-[10px] font-bold px-2 py-0.5 rounded-full border " + b.cls}>{b.label}</span>
-                      <span className="text-[10px] font-mono text-slate-500">#{c.id.slice(-6).toUpperCase()}</span>
+                      <span
+                        className={
+                          "text-[10px] font-bold px-2 py-0.5 rounded-full border " +
+                          b.cls
+                        }
+                      >
+                        {b.label}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-500">
+                        #{c.id.slice(-6).toUpperCase()}
+                      </span>
                     </div>
-                    <span className="text-sm font-bold text-slate-900 line-clamp-1">{c.title}</span>
+                    <span className="text-sm font-bold text-slate-900 line-clamp-1">
+                      {c.title}
+                    </span>
                     <span className="text-[11px] text-slate-500">
                       {c.claimant.name} ↔ {c.against.name}
                       {c.reservation ? ` • سفارش #${c.reservation.code}` : ""}
@@ -206,7 +292,12 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-b border-slate-100 pb-5">
                 <div>
                   <div className="flex flex-wrap items-center gap-2.5 mb-2">
-                    <span className={"inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border " + badge.cls}>
+                    <span
+                      className={
+                        "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border " +
+                        badge.cls
+                      }
+                    >
                       <span className="w-2 h-2 rounded-full bg-current animate-pulse"></span>
                       {badge.label}
                     </span>
@@ -218,26 +309,64 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
                         سفارش: #{selected.reservation.code}
                       </span>
                     )}
+                    {/* Stage of the declaration + goods-received status — the
+                        arbitrator sees HOW the file was opened. */}
+                    <span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-secondary-fixed text-on-secondary-fixed">
+                      {CLAIM_STAGE_LABELS[selected.stage] ?? CLAIM_STAGE_LABELS.GENERAL}
+                    </span>
+                    {(selected.reservation?.deliveryStatus === "ACCEPTED_CLEAN" ||
+                      selected.reservation?.deliveryStatus ===
+                        "ACCEPTED_WITH_ISSUES") && (
+                      <span className="px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">
+                          package_2
+                        </span>
+                        کالا تحویل گرفته شد (
+                        {DELIVERY_STATUS_LABELS[
+                          selected.reservation.deliveryStatus ?? ""
+                        ] ?? "تحویل ثبت شده"}
+                        )
+                      </span>
+                    )}
                   </div>
                   <h1 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2 flex-wrap">
                     <span className="mt-2">{selected.title}</span>
                     {selected.reservation?.itemTitle && (
-                      <span className="text-sm font-normal text-slate-400 mt-2">| {selected.reservation.itemTitle}</span>
+                      <span className="text-sm font-normal text-slate-400 mt-2">
+                        | {selected.reservation.itemTitle}
+                      </span>
                     )}
                   </h1>
                 </div>
                 {selected.reservation && (
                   <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 text-right">
                     <div className="w-10 h-10 rounded-lg bg-amber-500 text-white flex items-center justify-center shrink-0">
-                      <span className="material-symbols-outlined">hourglass_top</span>
+                      <span className="material-symbols-outlined">
+                        hourglass_top
+                      </span>
                     </div>
                     <div>
-                      <span className="text-xs text-amber-700 font-medium block mt-2">ودیعه مسدود نزد اورا:</span>
+                      <span className="text-xs text-amber-700 font-medium block mt-2">
+                        {selected.reservation.paymentMethod === "PROMISSORY"
+                          ? "ودیعه با سفته الکترونیک تضمین شده (نقدی نشده):"
+                          : "ودیعه مسدود نزد اٌوِرا:"}
+                      </span>
                       <div className="text-lg font-black font-mono text-amber-800 tracking-wider mt-2">
                         {faToman(selected.reservation.deposit)}{" "}
-                        <span className="text-xs font-normal">تومان (شبیه‌سازی)</span>
+                        <span className="text-xs font-normal">
+                          تومان (شبیه‌سازی)
+                        </span>
                       </div>
                     </div>
+                  </div>
+                )}
+                {selected.reservation?.deliveryNote && (
+                  <div className="md:col-span-3 rounded-xl border border-amber-300 bg-amber-50/70 p-3 text-xs text-slate-700 leading-6">
+                    <span className="font-bold text-amber-800 block mb-1">
+                      یادداشت بازرسی تحویل مستأجر (
+                      {DELIVERY_STATUS_LABELS[selected.reservation.deliveryStatus ?? ""] ?? selected.reservation.deliveryStatus}):
+                    </span>
+                    {selected.reservation.deliveryNote}
                   </div>
                 )}
               </div>
@@ -249,12 +378,16 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-slate-900">{selected.claimant.name}</span>
+                      <span className="font-bold text-slate-900">
+                        {selected.claimant.name}
+                      </span>
                       <span className="text-[10px] px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-semibold">
                         شاکی
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">احراز: {selected.claimant.kycStatus}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      احراز: {selected.claimant.kycStatus}
+                    </p>
                   </div>
                 </div>
                 {/* Against */}
@@ -264,27 +397,35 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-slate-900">{selected.against.name}</span>
+                      <span className="font-bold text-slate-900">
+                        {selected.against.name}
+                      </span>
                       <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 font-semibold">
                         متقابل
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">احراز: {selected.against.kycStatus}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      احراز: {selected.against.kycStatus}
+                    </p>
                   </div>
                 </div>
                 {/* Escrow box */}
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-purple-50/70 border border-purple-200/60">
                   <div className="w-11 h-11 rounded-full bg-m3-primary text-white flex items-center justify-center shadow">
-                    <span className="material-symbols-outlined text-xl">shield_lock</span>
+                    <span className="material-symbols-outlined text-xl">
+                      shield_lock
+                    </span>
                   </div>
                   <div>
-                    <span className="font-bold text-m3-primary text-xs">صندوق امانی امن اورا (Overa Escrow)</span>
+                    <span className="font-bold text-m3-primary text-xs">
+                      صندوق امانی امن اٌوِرا (Overa Escrow)
+                    </span>
                     <p className="text-xs text-slate-600 mt-0.5">
                       مبلغ{" "}
                       <span className="font-bold text-slate-900">
                         {faToman(selected.reservation?.deposit ?? 0)} تومان
                       </span>{" "}
-                      تا پایان داوری در دفتر اورا بلوکه است (شبیه‌سازی).
+                      تا پایان داوری در دفتر اٌوِرا بلوکه است (شبیه‌سازی).
                     </p>
                   </div>
                 </div>
@@ -298,50 +439,71 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
                 <section className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-m3-primary">compare</span>
-                      <h2 className="font-bold text-base text-slate-900">ادله و مستندات طرفین (تحویل و بازگشت)</h2>
+                      <span className="material-symbols-outlined text-m3-primary">
+                        compare
+                      </span>
+                      <h2 className="font-bold text-base text-slate-900">
+                        ادله و مستندات طرفین (تحویل و بازگشت)
+                      </h2>
                     </div>
                   </div>
                   <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-                    ادعای ثبت‌شده شاکی و پاسخ متقابل؛ کارشناس با بررسی این مستندات رأی را صادر می‌کند.
+                    ادعای ثبت‌شده شاکی و پاسخ متقابل؛ کارشناس با بررسی این
+                    مستندات رأی را صادر می‌کند.
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-xs">
                         <span className="flex items-center gap-1 font-bold text-emerald-600">
-                          <span className="material-symbols-outlined text-sm">check_circle</span>
+                          <span className="material-symbols-outlined text-sm">
+                            check_circle
+                          </span>
                           ادعای شاکی: {selected.claimant.name}
                         </span>
                       </div>
                       <div className="rounded-xl overflow-hidden border-2 border-emerald-500/40 bg-slate-100 aspect-[4/3] flex items-center justify-center">
                         {selected.evidenceUrls[0] ? (
-                           
-                          <img className="w-full h-full object-cover" src={selected.evidenceUrls[0]} alt="مستند ادعای شاکی" />
+                          <img
+                            className="w-full h-full object-cover"
+                            src={selected.evidenceUrls[0]}
+                            alt="مستند ادعای شاکی"
+                          />
                         ) : (
                           <div className="p-4 text-center text-[11px] text-slate-500 leading-relaxed">
-                            <span className="material-symbols-outlined text-3xl block mb-1 text-slate-400">image</span>
+                            <span className="material-symbols-outlined text-3xl block mb-1 text-slate-400">
+                              image
+                            </span>
                             مستند تصویری برای این ادعا ثبت نشده است.
                           </div>
                         )}
                       </div>
                       <div className="text-[11px] text-slate-500 flex items-center justify-between px-1">
-                        <span className="">{selected.description.slice(0, 80)}…</span>
+                        <span className="">
+                          {selected.description.slice(0, 80)}…
+                        </span>
                       </div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-xs">
                         <span className="flex items-center gap-1 font-bold text-rose-600">
-                          <span className="material-symbols-outlined text-sm">error</span>
+                          <span className="material-symbols-outlined text-sm">
+                            error
+                          </span>
                           مستندات متقابل / وضعیت عودت
                         </span>
                       </div>
                       <div className="rounded-xl overflow-hidden border-2 border-rose-500 bg-slate-100 aspect-[4/3] flex items-center justify-center">
                         {selected.evidenceUrls[1] ? (
-                           
-                          <img className="w-full h-full object-cover contrast-125" src={selected.evidenceUrls[1]} alt="مستند متقابل" />
+                          <img
+                            className="w-full h-full object-cover contrast-125"
+                            src={selected.evidenceUrls[1]}
+                            alt="مستند متقابل"
+                          />
                         ) : (
                           <div className="p-4 text-center text-[11px] text-slate-500 leading-relaxed">
-                            <span className="material-symbols-outlined text-3xl block mb-1 text-slate-400">upload</span>
+                            <span className="material-symbols-outlined text-3xl block mb-1 text-slate-400">
+                              upload
+                            </span>
                             {selected.appealMessage
                               ? "مستند متقابل تصویری ثبت نشده؛ پاسخ متقابل متنی در گفتگوی داوری آمده است."
                               : "در این پرونده پاسخ یا مستند متقابلی ثبت نشده است."}
@@ -350,11 +512,113 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
                       </div>
                       <div className="text-[11px] text-slate-500 flex items-center justify-between px-1">
                         <span>وضعیت مستندات:</span>
-                        <span className={"font-bold " + (selected.evidenceUrls[1] ? "text-rose-600" : "text-slate-600")}>
-                          {selected.evidenceUrls[1] ? "دو مستند ثبت شده" : "مستند ثانویه ندارد"}
+                        <span
+                          className={
+                            "font-bold " +
+                            (selected.evidenceUrls[1]
+                              ? "text-rose-600"
+                              : "text-slate-600")
+                          }
+                        >
+                          {selected.evidenceUrls[1]
+                            ? "دو مستند ثبت شده"
+                            : "مستند ثانویه ندارد"}
                         </span>
                       </div>
                     </div>
+                  </div>
+                </section>
+
+                {/* Both parties' damage descriptions — the arbitrator reads
+                    the renter's AND the host's account before the verdict. */}
+                <section className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-m3-primary">
+                        rate_review
+                      </span>
+                      <h2 className="font-bold text-base text-slate-900">
+                        توضیح خسارت مستأجر و میزبان (مبنای صدور رأی)
+                      </h2>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+                    متن کامل توضیحات هر دو طرف در این پرونده؛ رأی داوری باید با
+                    تطبیق این شرح‌ها و یادداشت بازرسی تحویل صادر شود.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {(
+                      [
+                        {
+                          role: "renter" as const,
+                          label: "توضیح خسارت مستأجر",
+                          icon: "person",
+                          cls: "border-amber-300 bg-amber-50/60",
+                          accounts: [
+                            ...(selected.claimantRole === "renter"
+                              ? [{ name: selected.claimant.name, title: selected.title, description: selected.description, stage: selected.stage, self: true }]
+                              : []),
+                            ...selected.counterparts
+                              .filter((x) => x.claimantRole === "renter")
+                              .map((x) => ({ name: x.claimantName, title: x.title, description: x.description, stage: x.stage, self: false })),
+                          ],
+                        },
+                        {
+                          role: "host" as const,
+                          label: "توضیح خسارت میزبان",
+                          icon: "storefront",
+                          cls: "border-emerald-300 bg-emerald-50/60",
+                          accounts: [
+                            ...(selected.claimantRole === "host"
+                              ? [{ name: selected.claimant.name, title: selected.title, description: selected.description, stage: selected.stage, self: true }]
+                              : []),
+                            ...selected.counterparts
+                              .filter((x) => x.claimantRole === "host")
+                              .map((x) => ({ name: x.claimantName, title: x.title, description: x.description, stage: x.stage, self: false })),
+                          ],
+                        },
+                      ] as const
+                    ).map((side) => (
+                      <div
+                        key={side.role}
+                        className={`rounded-xl border p-4 space-y-3 ${side.cls}`}
+                      >
+                        <div className="flex items-center gap-2 text-xs font-extrabold text-slate-800">
+                          <span className="material-symbols-outlined text-base">
+                            {side.icon}
+                          </span>
+                          {side.label}
+                        </div>
+                        {side.accounts.length === 0 ? (
+                          <p className="text-[11px] text-slate-500 leading-6">
+                            توضیح خسارتی از سمت این طرف ثبت نشده است.
+                          </p>
+                        ) : (
+                          side.accounts.map((a, i) => (
+                            <div
+                              key={i}
+                              className="rounded-lg bg-white/80 border border-slate-200 p-3 space-y-1.5"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <span className="text-[11px] font-bold text-slate-700">
+                                  {a.name}
+                                  {a.self && " — شرح این پرونده"}
+                                </span>
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold">
+                                  {CLAIM_STAGE_LABELS[a.stage] ?? CLAIM_STAGE_LABELS.GENERAL}
+                                </span>
+                              </div>
+                              <p className="text-[11px] font-bold text-slate-800">
+                                {a.title}
+                              </p>
+                              <p className="text-xs text-slate-700 leading-6 whitespace-pre-wrap">
+                                {a.description}
+                              </p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </section>
 
@@ -362,16 +626,25 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
                 <section className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
                   <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                     <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-m3-primary">request_quote</span>
-                      <h2 className="font-bold text-base text-slate-900">مرحله تصمیم‌گیری و تسویه خسارت</h2>
+                      <span className="material-symbols-outlined text-m3-primary">
+                        request_quote
+                      </span>
+                      <h2 className="font-bold text-base text-slate-900">
+                        مرحله تصمیم‌گیری و تسویه خسارت
+                      </h2>
                     </div>
                     {selected.decidedAt && (
-                      <span className="text-xs text-slate-500 font-mono">تاریخ رأی: {faDateTime(selected.decidedAt)}</span>
+                      <span className="text-xs text-slate-500 font-mono">
+                        تاریخ رأی: {faDateTime(selected.decidedAt)}
+                      </span>
                     )}
                   </div>
                   {selected.status === "UNDER_REVIEW" && (
                     <div className="space-y-3">
-                      <label className="text-xs font-bold text-slate-900 block" htmlFor="arb-decision">
+                      <label
+                        className="text-xs font-bold text-slate-900 block"
+                        htmlFor="arb-decision"
+                      >
                         متن رأی کارشناسی (به طرفین اعلام می‌شود):
                       </label>
                       <textarea
@@ -389,56 +662,144 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
                           onClick={() =>
                             patchClaim(
                               selected.id,
-                              { status: "DECIDED", decision: decisionText || undefined },
+                              {
+                                status: "DECIDED",
+                                decision: decisionText || undefined,
+                              },
                               "رأی داوری ثبت شد (شبیه‌سازی — نیازمند تایید حقوقی برای اجرا).",
                             )
                           }
                         >
-                          <span className="material-symbols-outlined text-sm">check_circle</span>
+                          <span className="material-symbols-outlined text-sm">
+                            check_circle
+                          </span>
                           تایید رأی داوری و ثبت تصمیم
                         </button>
                         <p className="text-[10px] text-slate-400 leading-tight">
-                          ثبت رأی در دفتر اورا انجام می‌شود؛ تسویه واقعی وابسته به تایید حقوقی است.
+                          ثبت رأی در دفتر اٌوِرا انجام می‌شود؛ تسویه واقعی
+                          وابسته به تایید حقوقی است.
                         </p>
                       </div>
                     </div>
                   )}
-                  {(selected.status === "DECIDED" || selected.status === "APPEALED") && (
+                  {(selected.status === "DECIDED" ||
+                    selected.status === "APPEALED") && (
                     <div className="space-y-3">
                       <div className="p-3 rounded-xl bg-purple-50 border-r-4 border-r-m3-primary border border-purple-200 text-xs text-slate-700 leading-relaxed">
-                        <span className="font-bold text-m3-primary block mb-1">متن رأی ثبت‌شده:</span>
+                        <span className="font-bold text-m3-primary block mb-1">
+                          متن رأی ثبت‌شده:
+                        </span>
                         {selected.decision ?? "—"}
                       </div>
                       {selected.status === "DECIDED" && (
-                        <button
-                          className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow transition flex items-center justify-center gap-2 disabled:opacity-60"
-                          disabled={busy}
-                          onClick={() =>
-                            patchClaim(
-                              selected.id,
-                              { status: "SETTLED", settlementNote: "تسویه ودیعه مطابق رأی داوری ثبت شد (شبیه‌سازی)." },
-                              "تسویه پرونده ثبت شد (شبیه‌سازی).",
-                            )
-                          }
-                        >
-                          <span className="material-symbols-outlined text-sm">handshake</span>
-                          تسویه از ودیعه و بستن پرونده
-                        </button>
+                        <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/50 p-3.5">
+                          <p className="text-xs font-extrabold text-slate-800">
+                            رأی دربارهٔ ودیعه (اجرای رأی، کیف پول طرفین را واقعاً تسویه می‌کند — شبیه‌سازی):
+                          </p>
+                          {[
+                            { id: "RELEASE_TO_RENTER", label: "آزادسازی کامل ودیعه به نفع مستأجر", icon: "undo" },
+                            { id: "PARTIAL_DEDUCTION", label: "کسر بخشی از ودیعه (سهم میزبان) و آزادسازی مابقی", icon: "content_cut" },
+                            { id: "PAY_TO_HOST", label: "پرداخت کامل ودیعه به میزبان", icon: "payments" },
+                          ].map((v) => (
+                            <label
+                              key={v.id}
+                              className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-xs font-bold cursor-pointer transition ${
+                                verdict === v.id
+                                  ? "border-m3-primary bg-white shadow-sm text-slate-900"
+                                  : "border-slate-200 bg-white/60 text-slate-600 hover:bg-white"
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name="verdict"
+                                value={v.id}
+                                checked={verdict === v.id}
+                                onChange={() => setVerdict(v.id)}
+                                className="accent-[#630ed4]"
+                              />
+                              <span className="material-symbols-outlined text-base text-m3-primary">
+                                {v.icon}
+                              </span>
+                              {v.label}
+                            </label>
+                          ))}
+                          {verdict === "PARTIAL_DEDUCTION" && selected.reservation && (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                data-numeric="money"
+                                value={chargeAmount}
+                                onChange={(e) => setChargeAmount(e.target.value)}
+                                placeholder={`مبلغ کسر به تومان (حداکثر ${faToman(selected.reservation.deposit)})`}
+                                className="w-full text-xs rounded-xl bg-white border border-slate-200 px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-m3-primary/30"
+                              />
+                              <span className="text-[11px] text-slate-500 whitespace-nowrap">
+                                از {faToman(selected.reservation.deposit)} تومان ودیعه
+                              </span>
+                            </div>
+                          )}
+                          <textarea
+                            rows={2}
+                            value={settleNote}
+                            onChange={(e) => setSettleNote(e.target.value)}
+                            placeholder="متن تسویه/توضیح اجرای رأی (اختیاری — به طرفین اعلام می‌شود)…"
+                            className="w-full text-xs rounded-xl bg-white border border-slate-200 px-3 py-2.5 text-slate-800 placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-m3-primary/30"
+                          />
+                          <button
+                            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow transition flex items-center justify-center gap-2 disabled:opacity-60"
+                            disabled={busy}
+                            onClick={() =>
+                              patchClaim(
+                                selected.id,
+                                {
+                                  status: "SETTLED",
+                                  verdict,
+                                  ...(verdict === "PARTIAL_DEDUCTION"
+                                    ? { chargeAmount: parseFaNumber(chargeAmount) }
+                                    : {}),
+                                  ...(settleNote.trim() ? { settlementNote: settleNote.trim() } : {}),
+                                },
+                                "رأی اجرا و ودیعه تسویه شد؛ سفارش تکمیل شد (شبیه‌سازی).",
+                              )
+                            }
+                          >
+                            <span className="material-symbols-outlined text-sm">
+                              handshake
+                            </span>
+                            اجرای رأی و تسویه ودیعه و بستن پرونده
+                          </button>
+                          <p className="text-[10px] text-slate-400 leading-tight">
+                            با اجرای رأی، مبلغ ودیعه طبق انتخاب شما بین کیف پول
+                            مستأجر و میزبان جابه‌جا می‌شود و سفارش تکمیل می‌گردد
+                            (شبیه‌سازی — هر رأی فقط یک‌بار قابل اجراست).
+                          </p>
+                        </div>
                       )}
                       {selected.status === "APPEALED" && (
                         <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 font-semibold">
-                          <span className="material-symbols-outlined text-base">replay</span>
-                          درخواست تجدیدنظر کارشناسی دوم ثبت شده است؛ می‌توانید پرونده را تسویه کنید یا به بررسی
-                          بازگردانید.
+                          <span className="material-symbols-outlined text-base">
+                            replay
+                          </span>
+                          درخواست تجدیدنظر کارشناسی دوم ثبت شده است؛ می‌توانید
+                          پرونده را تسویه کنید یا به بررسی بازگردانید.
                         </div>
                       )}
                       {selected.status === "APPEALED" && (
                         <button
                           className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold transition flex items-center justify-center gap-1.5 disabled:opacity-60"
                           disabled={busy}
-                          onClick={() => patchClaim(selected.id, { status: "UNDER_REVIEW" }, "پرونده به مرحله بررسی بازگشت.")}
+                          onClick={() =>
+                            patchClaim(
+                              selected.id,
+                              { status: "UNDER_REVIEW" },
+                              "پرونده به مرحله بررسی بازگشت.",
+                            )
+                          }
                         >
-                          <span className="material-symbols-outlined text-sm">replay</span>
+                          <span className="material-symbols-outlined text-sm">
+                            replay
+                          </span>
                           بازگشت به بررسی کارشناسی
                         </button>
                       )}
@@ -446,37 +807,56 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
                   )}
                   {selected.status === "SETTLED" && (
                     <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 leading-relaxed">
-                      <span className="font-bold block mb-1">پرونده تسویه و بسته شد (شبیه‌سازی):</span>
+                      <span className="font-bold block mb-1">
+                        پرونده تسویه و بسته شد (شبیه‌سازی):
+                      </span>
                       {selected.settlementNote ?? "تسویه ثبت شد."}
                     </div>
                   )}
                   {selected.status === "REJECTED" && (
                     <div className="p-3 rounded-xl bg-m3-error-container text-m3-on-error-container text-xs leading-relaxed">
-                      این پرونده در فرآیند بررسی رد شده است و تصمیم آن نهایی است.
+                      این پرونده در فرآیند بررسی رد شده است و تصمیم آن نهایی
+                      است.
                     </div>
                   )}
-                  {(selected.status === "OPEN" || selected.status === "COUNTER_EVIDENCE") && (
+                  {(selected.status === "OPEN" ||
+                    selected.status === "COUNTER_EVIDENCE") && (
                     <div className="flex flex-wrap items-center gap-3">
                       <button
                         className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-m3-primary/40 text-m3-primary hover:bg-purple-50 text-xs font-bold transition flex items-center justify-center gap-1.5 disabled:opacity-60"
                         disabled={busy}
                         onClick={() =>
-                          patchClaim(selected.id, { status: "UNDER_REVIEW" }, "پرونده به مرحله بررسی کارشناسی رفت.")
+                          patchClaim(
+                            selected.id,
+                            { status: "UNDER_REVIEW" },
+                            "پرونده به مرحله بررسی کارشناسی رفت.",
+                          )
                         }
                       >
-                        <span className="material-symbols-outlined text-sm">assured_workload</span>
+                        <span className="material-symbols-outlined text-sm">
+                          assured_workload
+                        </span>
                         ارسال به بررسی کارشناسی رسمی
                       </button>
                       <button
                         className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold transition flex items-center justify-center gap-1.5 disabled:opacity-60"
                         disabled={busy}
-                        onClick={() => patchClaim(selected.id, { status: "REJECTED" }, "پرونده رد شد.")}
+                        onClick={() =>
+                          patchClaim(
+                            selected.id,
+                            { status: "REJECTED" },
+                            "پرونده رد شد.",
+                          )
+                        }
                       >
-                        <span className="material-symbols-outlined text-sm">block</span>
+                        <span className="material-symbols-outlined text-sm">
+                          block
+                        </span>
                         رد پرونده (عدم ورود خسارت)
                       </button>
                       <p className="text-[10px] text-slate-400">
-                        برای صدور رأی، ابتدا پرونده باید در مرحله «بررسی کارشناسی» قرار گیرد.
+                        برای صدور رأی، ابتدا پرونده باید در مرحله «بررسی
+                        کارشناسی» قرار گیرد.
                       </p>
                     </div>
                   )}
@@ -488,8 +868,12 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
                 <section className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 flex flex-col h-full min-h-[640px]">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                     <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-m3-primary">forum</span>
-                      <h2 className="font-bold text-base text-slate-900">گفتگوی داوری و تبادل شواهد</h2>
+                      <span className="material-symbols-outlined text-m3-primary">
+                        forum
+                      </span>
+                      <h2 className="font-bold text-base text-slate-900">
+                        گفتگوی داوری و تبادل شواهد
+                      </h2>
                     </div>
                     <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium">
                       ۳ طرف متصل
@@ -499,7 +883,9 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-[11px]">
                         <span className="font-bold text-blue-600 flex items-center gap-1">
-                          <span className="material-symbols-outlined text-xs">person</span>
+                          <span className="material-symbols-outlined text-xs">
+                            person
+                          </span>
                           {selected.claimant.name} (شاکی)
                         </span>
                       </div>
@@ -507,11 +893,36 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
                         {selected.description}
                       </div>
                     </div>
+                    {/* Other declarations on the SAME order (the counterparty's
+                        damage description at its own lifecycle stage). */}
+                    {selected.counterparts.map((x) => (
+                      <div key={x.id} className="space-y-1">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="font-bold text-emerald-600 flex items-center gap-1">
+                            <span className="material-symbols-outlined text-xs">
+                              person
+                            </span>
+                            {x.claimantName} (
+                            {x.claimantRole === "renter" ? "مستأجر" : "میزبان"} —{" "}
+                            {CLAIM_STAGE_LABELS[x.stage] ?? CLAIM_STAGE_LABELS.GENERAL}
+                            )
+                          </span>
+                        </div>
+                        <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-2xl rounded-tr-none text-xs text-slate-700 leading-relaxed">
+                          <p className="font-bold text-slate-800 mb-1">
+                            {x.title}
+                          </p>
+                          {x.description}
+                        </div>
+                      </div>
+                    ))}
                     {selected.appealMessage && (
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[11px]">
                           <span className="font-bold text-emerald-600 flex items-center gap-1">
-                            <span className="material-symbols-outlined text-xs">person</span>
+                            <span className="material-symbols-outlined text-xs">
+                              person
+                            </span>
                             {selected.against.name} (مستندات متقابل)
                           </span>
                         </div>
@@ -524,18 +935,24 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[11px]">
                           <span className="font-bold text-m3-primary flex items-center gap-1">
-                            <span className="material-symbols-outlined text-xs fill">gavel</span>
-                            کارشناس داوری اورا
+                            <span className="material-symbols-outlined text-xs fill">
+                              gavel
+                            </span>
+                            کارشناس داوری اٌوِرا
                           </span>
                           {selected.decidedAt && (
-                            <span className="text-slate-400 font-mono">{faDateTime(selected.decidedAt)}</span>
+                            <span className="text-slate-400 font-mono">
+                              {faDateTime(selected.decidedAt)}
+                            </span>
                           )}
                         </div>
                         <div className="bg-purple-50 border-r-4 border-r-m3-primary border border-purple-200 p-3 rounded-2xl text-xs text-slate-700 leading-relaxed space-y-2">
                           <p>{selected.decision}</p>
                           {selected.settlementNote && (
                             <div className="flex items-center gap-2 pt-1 border-t border-purple-200/60 text-[11px] text-purple-700 font-semibold">
-                              <span className="material-symbols-outlined text-xs">handshake</span>
+                              <span className="material-symbols-outlined text-xs">
+                                handshake
+                              </span>
                               {selected.settlementNote}
                             </div>
                           )}
@@ -545,9 +962,16 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
                     {selected.reservation && (
                       <div className="flex justify-center my-2">
                         <div className="bg-slate-50 text-slate-500 text-[11px] font-medium px-4 py-1 rounded-full border border-slate-200 flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-[14px] text-m3-primary">link</span>
-                          <span>مرتبط با سفارش #{selected.reservation.code}</span>
-                          <Link className="text-m3-primary font-bold hover:underline" href={`/rental-lifecycle/${selected.reservation.id}`}>
+                          <span className="material-symbols-outlined text-[14px] text-m3-primary">
+                            link
+                          </span>
+                          <span>
+                            مرتبط با سفارش #{selected.reservation.code}
+                          </span>
+                          <Link
+                            className="text-m3-primary font-bold hover:underline"
+                            href={`/rental-lifecycle/${selected.reservation.id}`}
+                          >
                             مشاهده چرخه رزرو
                           </Link>
                         </div>
@@ -568,12 +992,15 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
                         disabled
                         title="به‌زودی"
                       >
-                        <span className="material-symbols-outlined text-sm">send</span>
+                        <span className="material-symbols-outlined text-sm">
+                          send
+                        </span>
                       </button>
                     </div>
                     <p className="text-[10px] text-slate-400 leading-tight">
-                      * تبادل پیام آزاد پرونده پس از اتصال سرویس پیام‌رسانی داوری فعال می‌شود؛ تصمیم رسمی از طریق
-                      باکس «مرحله تصمیم‌گیری» ثبت می‌شود.
+                      * تبادل پیام آزاد پرونده پس از اتصال سرویس پیام‌رسانی
+                      داوری فعال می‌شود؛ تصمیم رسمی از طریق باکس «مرحله
+                      تصمیم‌گیری» ثبت می‌شود.
                     </p>
                   </div>
                 </section>
@@ -582,10 +1009,15 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
           </>
         ) : (
           <section className="bg-white rounded-2xl p-10 shadow-sm border border-slate-200 text-center">
-            <span className="material-symbols-outlined text-[44px] text-slate-300 block mb-2">folder_open</span>
-            <p className="text-sm font-bold text-slate-900">پرونده‌ای برای نمایش انتخاب نشده است</p>
+            <span className="material-symbols-outlined text-[44px] text-slate-300 block mb-2">
+              folder_open
+            </span>
+            <p className="text-sm font-bold text-slate-900">
+              پرونده‌ای برای نمایش انتخاب نشده است
+            </p>
             <p className="text-xs text-slate-500 mt-1">
-              با اتصال جریان اجاره و ثبت ادعای خسارت، پرونده‌ها در این پنل نمایش داده می‌شوند.
+              با اتصال جریان اجاره و ثبت ادعای خسارت، پرونده‌ها در این پنل نمایش
+              داده می‌شوند.
             </p>
           </section>
         )}
@@ -595,11 +1027,23 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-right">
           <div className="flex items-center gap-2">
             <span className="size-2 rounded-full bg-m3-primary"></span>
-            <p className="font-semibold text-slate-800">پنل داوری و حل اختلاف اورا — نسخه شبیه‌سازی</p>
+            <p className="font-semibold text-slate-800">
+              پنل داوری و حل اختلاف اٌوِرا — نسخه شبیه‌سازی
+            </p>
           </div>
           <div className="flex items-center gap-4 text-[11px]">
-            <Link className="hover:text-m3-primary transition-colors" href="/tos-support-faq">مقررات داوری و حل اختلاف</Link>
-            <Link className="hover:text-m3-primary transition-colors" href="/admin-dashboard">بازگشت به مرکز نظارت</Link>
+            <Link
+              className="hover:text-m3-primary transition-colors"
+              href="/tos-support-faq"
+            >
+              مقررات داوری و حل اختلاف
+            </Link>
+            <Link
+              className="hover:text-m3-primary transition-colors"
+              href="/admin-dashboard"
+            >
+              بازگشت به مرکز نظارت
+            </Link>
           </div>
         </div>
       </footer>
@@ -608,7 +1052,9 @@ export default function ArbitrationPanelClient({ claims }: { claims: PanelClaim[
         <div
           className={
             "fixed bottom-6 right-1/2 translate-x-1/2 z-[60] px-5 py-3 rounded-xl shadow-xl text-sm font-semibold max-w-[92vw] text-center " +
-            (toast.kind === "ok" ? "bg-slate-900 text-white" : "bg-m3-error text-m3-on-error")
+            (toast.kind === "ok"
+              ? "bg-slate-900 text-white"
+              : "bg-m3-error text-m3-on-error")
           }
           role="status"
         >

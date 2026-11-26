@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
+import SiteHeader from "@/components/layout/SiteHeader";
 import { getCurrentUser } from "@/lib/auth";
 import CreateListingWizard, { type WizardInitial } from "./CreateListingWizard";
 import { parseBlockedRanges } from "@/lib/jalali";
@@ -72,6 +73,8 @@ export default async function CreateListingPage({
       deposit: listing.deposit,
       city: listing.city,
       area: listing.area,
+      lat: listing.lat,
+      lng: listing.lng,
       rules: listing.rules,
       minDays: listing.minDays,
       maxDays: listing.maxDays,
@@ -88,6 +91,9 @@ export default async function CreateListingPage({
   }
 
   return (
+    <>
+    {/* Shared site header — identical to the homepage (slide-out menu) */}
+    <SiteHeader />
     <CreateListingWizard
       categories={categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon }))}
       sampleImages={sampleImages}
@@ -95,5 +101,6 @@ export default async function CreateListingPage({
       userName={user.name}
       categoryAvgPrice={categoryAvgPrice}
     />
+    </>
   );
 }

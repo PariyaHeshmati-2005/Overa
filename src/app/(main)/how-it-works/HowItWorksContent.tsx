@@ -7,7 +7,11 @@ type GuideRole = "renter" | "owner";
 
 const STEPS: Record<
   GuideRole,
-  { badge: string; heading: string; steps: { icon: string; title: string; desc: string; sub: string }[] }
+  {
+    badge: string;
+    heading: string;
+    steps: { icon: string; title: string; desc: string; sub: string }[];
+  }
 > = {
   renter: {
     badge: "مسیر ۴ مرحله‌ای برای مستاجران",
@@ -28,7 +32,7 @@ const STEPS: Record<
       {
         icon: "security",
         title: "ودیعه امن و تحویل کالا",
-        desc: "پرداخت وجه در درگاه امن بانکی و نگهداری امانی ودیعه نزد اورا؛ بررسی سلامت ظاهری کالا در هنگام تحویل حضوری یا دریافت با پیک معتمد.",
+        desc: "پرداخت وجه در درگاه امن بانکی و نگهداری امانی ودیعه نزد اٌوِرا؛ بررسی سلامت ظاهری کالا در هنگام تحویل حضوری یا دریافت با پیک معتمد.",
         sub: "حفظ کامل پول در حساب امن امانی",
       },
       {
@@ -58,13 +62,13 @@ const STEPS: Record<
       {
         icon: "verified",
         title: "تحویل وسیله با قرارداد امن",
-        desc: "صدور خودکار قرارداد رسمی و استاندارد دیجیتال، هماهنگی زمان تحویل و سپردن کالا به مستاجر احراز هویت شده اورا.",
+        desc: "صدور خودکار قرارداد رسمی و استاندارد دیجیتال، هماهنگی زمان تحویل و سپردن کالا به مستاجر احراز هویت شده اٌوِرا.",
         sub: "تحویل مطمئن با قرارداد الکترونیک معتبر",
       },
       {
         icon: "payments",
         title: "دریافت اجاره و کسب درآمد",
-        desc: "واریز تضمینی و مستقیم کرایه به حساب شما و بهره‌مندی از پشتیبانی و پوشش کامل بیمه حوادث اورا در تمام مدت اجاره.",
+        desc: "واریز تضمینی و مستقیم کرایه به حساب شما و بهره‌مندی از پشتیبانی و پوشش کامل بیمه حوادث اٌوِرا در تمام مدت اجاره.",
         sub: "واریز منظم کرایه با پوشش بیمه تا ۵۰ م.ت",
       },
     ],
@@ -74,23 +78,23 @@ const STEPS: Record<
 const FAQS = [
   {
     q: "چگونه به صاحب وسیله یا مستاجر اعتماد کنم؟",
-    a: "تمامی کاربران پلتفرم اورا احراز هویت شده‌اند و شماره ملی، تلفن و سوابق آنان در سامانه تایید شده است. علاوه بر این، سیستم ثبت امتیاز و نظرات واقعی کاربران قبلی به شما کمک می‌کند تا با افراد خوش‌نام و معتبر معامله کنید. همچنین برای هر سفارش قرارداد معتبر دیجیتال منعقد می‌گردد.",
+    a: "تمامی کاربران پلتفرم اٌوِرا احراز هویت شده‌اند و شماره ملی، تلفن و سوابق آنان در سامانه تایید شده است. علاوه بر این، سیستم ثبت امتیاز و نظرات واقعی کاربران قبلی به شما کمک می‌کند تا با افراد خوش‌نام و معتبر معامله کنید. همچنین برای هر سفارش قرارداد معتبر دیجیتال منعقد می‌گردد.",
   },
   {
     q: "مبلغ ودیعه ضمانت چه زمانی و چگونه به حسابم برمی‌گردد؟",
-    a: "مبلغ ودیعه مستقیماً به حساب شخصی صاحب کالا داده نمی‌شود؛ بلکه در حساب امانی اورا مسدود می‌ماند. به محض اینکه وسیله در پایان مهلت اجاره به صاحبش بازگردانده شده و تایید سلامت آن ثبت گردد، ودیعه بلافاصله و در کمتر از یک ساعت بدون هیچ‌گونه کسر وجهی به شماره شبای شما واریز می‌شود.",
+    a: "مبلغ ودیعه مستقیماً به حساب شخصی صاحب کالا داده نمی‌شود؛ بلکه در حساب امانی اٌوِرا مسدود می‌ماند. به محض اینکه وسیله در پایان مهلت اجاره به صاحبش بازگردانده شده و تایید سلامت آن ثبت گردد، ودیعه بلافاصله و در کمتر از یک ساعت بدون هیچ‌گونه کسر وجهی به شماره شبای شما واریز می‌شود.",
   },
   {
     q: "اگر وسیله حین استفاده آسیب ببیند چه اتفاقی می‌افتد؟",
-    a: "تمام کالاهای اجاره داده شده در اورا تحت پوشش بیمه حوادث تا سقف ۵۰ میلیون تومان هستند. در صورت بروز هرگونه خرابی یا اشکال فنی غیرعمدی، موضوع توسط کارشناس بررسی شده و خسارت وارده از محل پوشش بیمه پرداخت خواهد شد تا هیچ ضرری متوجه مالک یا مستاجر نگردد.",
+    a: "تمام کالاهای اجاره داده شده در اٌوِرا تحت پوشش بیمه حوادث تا سقف ۵۰ میلیون تومان هستند. در صورت بروز هرگونه خرابی یا اشکال فنی غیرعمدی، موضوع توسط کارشناس بررسی شده و خسارت وارده از محل پوشش بیمه پرداخت خواهد شد تا هیچ ضرری متوجه مالک یا مستاجر نگردد.",
   },
   {
     q: "آیا امکان تحویل با پیک وجود دارد یا فقط حضوری است؟",
     a: "بله، روش تحویل کاملاً بر اساس توافق طرفین قابل انتخاب است. شما می‌توانید با هماهنگی در چت داخلی سایت، وسیله را به صورت حضوری تحویل بگیرید یا از خدمات پیک اختصاصی و مطمئن جهت جابه‌جایی سریع و ایمن استفاده فرمایید.",
   },
   {
-    q: "کارمزد سایت اورا چقدر است؟",
-    a: "ثبت آگهی کالا در اورا کاملاً رایگان است. پس از انجام موفقیت‌آمیز یک رزرو، تنها درصد اندکی به عنوان کارمزد خدمات پلتفرم، پوشش بیمه کالا و پشتیبانی ۲۴ ساعته از مبلغ نهایی کسر شده و باقی مبلغ مستقیماً به حساب مالک واریز می‌گردد.",
+    q: "کارمزد سایت اٌوِرا چقدر است؟",
+    a: "ثبت آگهی کالا در اٌوِرا کاملاً رایگان است. پس از انجام موفقیت‌آمیز یک رزرو، تنها درصد اندکی به عنوان کارمزد خدمات پلتفرم، پوشش بیمه کالا و پشتیبانی ۲۴ ساعته از مبلغ نهایی کسر شده و باقی مبلغ مستقیماً به حساب مالک واریز می‌گردد.",
   },
 ];
 
@@ -99,7 +103,7 @@ const SECURITY_ITEMS = [
     icon: "badge",
     iconCls: "bg-primary-soft text-primary",
     title: "احراز هویت معتبر کاربران",
-    desc: "بررسی دقیق مدارک شناسایی، شماره شبا بانکی و تایید هویت تمام افراد؛ هیچ کاربر ناشناسی در اورا امکان ثبت یا رزرو کالا ندارد.",
+    desc: "بررسی دقیق مدارک شناسایی، شماره شبا بانکی و تایید هویت تمام افراد؛ هیچ کاربر ناشناسی در اٌوِرا امکان ثبت یا رزرو کالا ندارد.",
   },
   {
     icon: "description",
@@ -117,19 +121,19 @@ const SECURITY_ITEMS = [
     icon: "account_balance_wallet",
     iconCls: "bg-primary-soft text-primary",
     title: "حساب امانی و پرداخت امن",
-    desc: "مبلغ ودیعه و هزینه اجاره تا زمان تحویل کامل وسیله و رضایت دوطرفه نزد حساب واسط امن اورا نگهداری شده و مسدود می‌ماند.",
+    desc: "مبلغ ودیعه و هزینه اجاره تا زمان تحویل کامل وسیله و رضایت دوطرفه نزد حساب واسط امن اٌوِرا نگهداری شده و مسدود می‌ماند.",
   },
   {
     icon: "support_agent",
     iconCls: "bg-primary-soft text-primary",
     title: "پشتیبانی ۲۴ ساعته در ۷ روز هفته",
-    desc: "تیم پشتیبانی اختصاصی اورا همیشه همراه شماست تا به هر پرسش، هماهنگی یا رفع ابهامی در سریع‌ترین زمان پاسخ دهد.",
+    desc: "تیم پشتیبانی اختصاصی اٌوِرا همیشه همراه شماست تا به هر پرسش، هماهنگی یا رفع ابهامی در سریع‌ترین زمان پاسخ دهد.",
   },
   {
     icon: "local_shipping",
     iconCls: "bg-primary-soft text-primary",
     title: "امکان تحویل اکسپرس یا حضوری",
-    desc: "انتخاب آزادانه نحوه تحویل بین مستاجر و میزبان؛ تحویل حضوری در مکان توافقی یا ارسال سریع با پیک‌های مطمئن اورا.",
+    desc: "انتخاب آزادانه نحوه تحویل بین مستاجر و میزبان؛ تحویل حضوری در مکان توافقی یا ارسال سریع با پیک‌های مطمئن اٌوِرا.",
   },
 ];
 
@@ -139,15 +143,26 @@ export default function HowItWorksContent() {
   const guide = STEPS[role];
 
   return (
-    <main className="w-full flex flex-col gap-8" data-purpose="how-it-works-container">
+    <main
+      className="w-full flex flex-col gap-8"
+      data-purpose="how-it-works-container"
+    >
       {/* Breadcrumb Navigation */}
-      <nav aria-label="مسیر صفحه" className="flex items-center gap-2 text-neutral-muted text-xs font-medium">
-        <Link className="hover:text-primary transition-colors flex items-center gap-1" href="/">
+      <nav
+        aria-label="مسیر صفحه"
+        className="flex items-center gap-2 text-neutral-muted text-xs font-medium"
+      >
+        <Link
+          className="hover:text-primary transition-colors flex items-center gap-1"
+          href="/"
+        >
           <span className="material-symbols-outlined text-base">home</span>
           <span>خانه</span>
         </Link>
         <span className="text-purple-300 font-bold">/</span>
-        <span className="text-primary font-bold">راهنمای استفاده و چگونه کار می‌کند</span>
+        <span className="text-primary font-bold">
+          راهنمای استفاده و چگونه کار می‌کند
+        </span>
       </nav>
 
       {/* 1. Header Hero Section */}
@@ -160,13 +175,14 @@ export default function HowItWorksContent() {
         <div className="relative z-10 flex flex-col items-center text-center max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-soft text-primary text-xs font-bold mb-4 border border-purple-200">
             <span className="material-symbols-outlined text-sm">lightbulb</span>
-            <span>راهنمای جامع پلتفرم اورا (Overa)</span>
+            <span>راهنمای جامع پلتفرم اٌوِرا (Overa)</span>
           </div>
           <h1 className="text-2xl md:text-4xl font-black text-neutral-text tracking-tight leading-snug mb-4">
-            چگونه در اورا وسایل را اجاره کنیم یا کسب درآمد داشته باشیم؟
+            چگونه در اٌوِرا وسایل را اجاره کنیم یا کسب درآمد داشته باشیم؟
           </h1>
           <p className="text-sm md:text-base text-neutral-muted leading-relaxed mb-8 max-w-2xl font-normal">
-            راهنمای گام‌به‌گام و سریع برای استفاده از پلتفرم اورا؛ از پیدا کردن وسیله تا تحویل و بازگشت، کاملاً امن و بی‌دردسر.
+            راهنمای گام‌به‌گام و سریع برای استفاده از پلتفرم اٌوِرا؛ از پیدا
+            کردن وسیله تا تحویل و بازگشت، کاملاً امن و بی‌دردسر.
           </p>
           {/* Dual Audience Toggle Switch */}
           <div
@@ -184,7 +200,9 @@ export default function HowItWorksContent() {
                   : "flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center justify-center gap-2 text-neutral-muted hover:text-primary active:scale-95"
               }
             >
-              <span className="material-symbols-outlined text-base">shopping_bag</span>
+              <span className="material-symbols-outlined text-base">
+                shopping_bag
+              </span>
               <span>راهنمای اجاره‌کنندگان (مستاجران)</span>
             </button>
             <button
@@ -198,7 +216,9 @@ export default function HowItWorksContent() {
                   : "flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center justify-center gap-2 text-neutral-muted hover:text-primary active:scale-95"
               }
             >
-              <span className="material-symbols-outlined text-base">monetization_on</span>
+              <span className="material-symbols-outlined text-base">
+                monetization_on
+              </span>
               <span>راهنمای مالکان وسایل (میزبانان)</span>
             </button>
           </div>
@@ -206,18 +226,25 @@ export default function HowItWorksContent() {
       </section>
 
       {/* 2 & 3. 4-Step Visual Path Container */}
-      <section className="flex flex-col gap-6" data-purpose="step-by-step-guide">
+      <section
+        className="flex flex-col gap-6"
+        data-purpose="step-by-step-guide"
+      >
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
           <div>
             <div className="inline-flex items-center gap-2 text-primary text-xs font-bold mb-1">
               <span className="w-2.5 h-2.5 rounded-full bg-primary"></span>
               <span>{guide.badge}</span>
             </div>
-            <h2 className="text-xl md:text-2xl font-black text-neutral-text">{guide.heading}</h2>
+            <h2 className="text-xl md:text-2xl font-black text-neutral-text">
+              {guide.heading}
+            </h2>
           </div>
           <span className="text-xs text-neutral-muted bg-white px-3.5 py-1.5 rounded-full border border-purple-100 shadow-sm self-start md:self-auto flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-primary text-sm">verified_user</span>
-            <span>تمامی معاملات تحت پوشش ضمانت و امانت‌داری اورا هستند</span>
+            <span className="material-symbols-outlined text-primary text-sm">
+              verified_user
+            </span>
+            <span>تمامی معاملات تحت پوشش ضمانت و امانت‌داری اٌوِرا هستند</span>
           </span>
         </div>
 
@@ -234,16 +261,22 @@ export default function HowItWorksContent() {
                     {["۱", "۲", "۳", "۴"][i]}
                   </span>
                   <div className="w-11 h-11 rounded-2xl bg-primary-soft text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <span className="material-symbols-outlined text-2xl">{s.icon}</span>
+                    <span className="material-symbols-outlined text-2xl">
+                      {s.icon}
+                    </span>
                   </div>
                 </div>
                 <h3 className="text-base font-bold text-neutral-text mb-2.5 group-hover:text-primary transition-colors">
                   {s.title}
                 </h3>
-                <p className="text-xs text-neutral-muted leading-relaxed mb-4">{s.desc}</p>
+                <p className="text-xs text-neutral-muted leading-relaxed mb-4">
+                  {s.desc}
+                </p>
               </div>
               <div className="pt-3 border-t border-purple-100/70 flex items-center gap-2 text-[11px] font-medium text-primary">
-                <span className="material-symbols-outlined text-sm">check_circle</span>
+                <span className="material-symbols-outlined text-sm">
+                  check_circle
+                </span>
                 <span>{s.sub}</span>
               </div>
             </div>
@@ -251,23 +284,32 @@ export default function HowItWorksContent() {
         </div>
         {/* Sandbox notice (mandatory labelling) */}
         <div className="flex items-center gap-2 text-[11px] text-neutral-muted bg-white border border-purple-100 rounded-xl px-4 py-2.5">
-          <span className="material-symbols-outlined text-base text-primary">science</span>
+          <span className="material-symbols-outlined text-base text-primary">
+            science
+          </span>
           <span>
-            فرآیندهای پرداخت، ودیعه و تسویه در این نسخه نمایشی (Sandbox) هستند — هیچ پول واقعی جابه‌جا نمی‌شود.
+            فرآیندهای پرداخت، ودیعه و تسویه در این نسخه نمایشی (Sandbox) هستند —
+            هیچ پول واقعی جابه‌جا نمی‌شود.
           </span>
         </div>
       </section>
 
       {/* 4. Guarantees and Platform Safety Section */}
-      <section className="bg-white rounded-3xl p-8 md:p-10 border border-purple-100 shadow-card" data-purpose="safety-and-trust-section">
+      <section
+        className="bg-white rounded-3xl p-8 md:p-10 border border-purple-100 shadow-card"
+        data-purpose="safety-and-trust-section"
+      >
         <div className="text-center max-w-2xl mx-auto mb-8">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-accent-emerald text-xs font-bold mb-2.5 border border-emerald-100">
             <span className="material-symbols-outlined text-sm">verified</span>
             <span>تجربه مطمئن و بی‌دغدغه</span>
           </div>
-          <h2 className="text-xl md:text-2xl font-black text-neutral-text mb-2">ضمانت‌ها و امنیت معامله در اورا</h2>
+          <h2 className="text-xl md:text-2xl font-black text-neutral-text mb-2">
+            ضمانت‌ها و امنیت معامله در اٌوِرا
+          </h2>
           <p className="text-xs md:text-sm text-neutral-muted leading-relaxed">
-            تمامی مراحل اجاره کالا با تدابیر دقیق قانونی، مالی و بیمه‌ای محافظت شده است تا طرفین با آسودگی خاطر معامله کنند.
+            تمامی مراحل اجاره کالا با تدابیر دقیق قانونی، مالی و بیمه‌ای محافظت
+            شده است تا طرفین با آسودگی خاطر معامله کنند.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -276,33 +318,50 @@ export default function HowItWorksContent() {
               key={item.title}
               className="bg-neutral-bg p-5 rounded-2xl border border-purple-100/80 flex flex-col gap-3 hover:bg-white hover:shadow-card transition-all"
             >
-              <div className={`w-12 h-12 rounded-2xl ${item.iconCls} flex items-center justify-center`}>
-                <span className="material-symbols-outlined text-2xl">{item.icon}</span>
+              <div
+                className={`w-12 h-12 rounded-2xl ${item.iconCls} flex items-center justify-center`}
+              >
+                <span className="material-symbols-outlined text-2xl">
+                  {item.icon}
+                </span>
               </div>
-              <h3 className="text-sm font-bold text-neutral-text">{item.title}</h3>
-              <p className="text-xs text-neutral-muted leading-relaxed">{item.desc}</p>
+              <h3 className="text-sm font-bold text-neutral-text">
+                {item.title}
+              </h3>
+              <p className="text-xs text-neutral-muted leading-relaxed">
+                {item.desc}
+              </p>
             </div>
           ))}
         </div>
       </section>
 
       {/* 5. User FAQ Accordion Section */}
-      <section className="max-w-4xl mx-auto w-full my-2" data-purpose="customer-faq-section">
+      <section
+        className="max-w-4xl mx-auto w-full my-2"
+        data-purpose="customer-faq-section"
+      >
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-soft text-primary text-xs font-bold mb-2">
             <span className="material-symbols-outlined text-sm">quiz</span>
             <span>پاسخ به سوالات پرتکرار</span>
           </div>
-          <h2 className="text-xl md:text-2xl font-black text-neutral-text mb-2">پرسش‌های متداول مشتریان و کاربران</h2>
+          <h2 className="text-xl md:text-2xl font-black text-neutral-text mb-2">
+            پرسش‌های متداول مشتریان و کاربران
+          </h2>
           <p className="text-xs md:text-sm text-neutral-muted">
-            پاسخ به مهم‌ترین دغدغه‌ها پیرامون امانت‌داری، ودیعه، بیمه و فرآیند تحویل.
+            پاسخ به مهم‌ترین دغدغه‌ها پیرامون امانت‌داری، ودیعه، بیمه و فرآیند
+            تحویل.
           </p>
         </div>
         <div className="flex flex-col gap-3.5">
           {FAQS.map((f, i) => {
             const open = openFaq === i;
             return (
-              <div key={i} className="bg-white rounded-2xl border border-purple-100 shadow-sm overflow-hidden transition-all">
+              <div
+                key={i}
+                className="bg-white rounded-2xl border border-purple-100 shadow-sm overflow-hidden transition-all"
+              >
                 <button
                   type="button"
                   onClick={() => setOpenFaq(open ? null : i)}
@@ -341,13 +400,16 @@ export default function HowItWorksContent() {
         <div className="absolute -left-16 -bottom-16 w-56 h-56 rounded-full bg-primary-light/20 blur-2xl pointer-events-none"></div>
         <div className="relative z-10 max-w-2xl mx-auto flex flex-col items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center mb-1">
-            <span className="material-symbols-outlined text-3xl">handshake</span>
+            <span className="material-symbols-outlined text-3xl">
+              handshake
+            </span>
           </div>
           <h2 className="text-2xl md:text-3xl font-black tracking-tight leading-snug">
             آماده‌اید وسایل مورد نیازتان را اجاره کنید؟
           </h2>
           <p className="text-purple-100 text-xs md:text-sm max-w-md mb-4 leading-relaxed font-normal">
-            همین حالا به جمع هزاران کاربر اورا بپیوندید؛ کالای مورد علاقه‌تان را اجاره کنید یا با وسایل بی‌مصرف خانه به درآمدزایی برسید.
+            همین حالا به جمع هزاران کاربر اٌوِرا بپیوندید؛ کالای مورد علاقه‌تان
+            را اجاره کنید یا با وسایل بی‌مصرف خانه به درآمدزایی برسید.
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-3.5 w-full sm:w-auto">
             <Link

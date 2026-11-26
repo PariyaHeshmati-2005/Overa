@@ -21,8 +21,6 @@ Every original source page and its production route. Originals live in
 | 14 | submit-review.html | `/submit-review` | participants | `?reservation=<id>`, POST `/api/reviews` (COMPLETED-only, one per side) | done |
 | 15 | live-chat.html | `/live-chat` | authenticated | conversation list + 4s polling, `?c=<id>` deep-link | done |
 | 16 | wallet.html | `/wallet` | authenticated | real balance/ledger, payout/topup (sandbox-labelled) | done |
-| 17 | Electronic-Promissory-Notes.html | `/promissory-notes` | public | process info; issuing labelled pending provider/legal | done |
-| 18 | Registration-in-the-Treasury…html | `/promissory-notes/registration` | public | process info, same labelling | done |
 | 19 | host-dashboard.html | `/host-dashboard` | host | real aggregates, moderation-aware pending queue, approve/reject/deliver actions | done |
 | 20 | my-items.html | `/my-items` | host | listing table, status tabs, pause/resume/submit/archive via PATCH | done |
 | 21 | create-listing.html | `/create-listing` | authenticated | 4-step wizard + preview, `?edit=<id>`, draft/submit | done |

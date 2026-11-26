@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { faToman, toPersianDigits } from "@/lib/format";
+import { parseFaNumber } from "@/lib/input-guard";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
@@ -71,7 +72,9 @@ export default function SettingsBody({
   const [saving, setSaving] = useState(false);
   const [profileError, setProfileError] = useState("");
   const dirty =
-    name !== user.name || city !== (user.city ?? "") || bio !== (user.bio ?? "");
+    name !== user.name ||
+    city !== (user.city ?? "") ||
+    bio !== (user.bio ?? "");
 
   async function saveProfile() {
     setProfileError("");
@@ -84,7 +87,11 @@ export default function SettingsBody({
       const res = await fetch("/api/auth/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), city: city.trim(), bio: bio.trim() }),
+        body: JSON.stringify({
+          name: name.trim(),
+          city: city.trim(),
+          bio: bio.trim(),
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -140,7 +147,10 @@ export default function SettingsBody({
     emailInvoice: true,
     emailCampaigns: false,
   });
-  function setPref<K extends keyof typeof prefs>(key: K, value: (typeof prefs)[K]) {
+  function setPref<K extends keyof typeof prefs>(
+    key: K,
+    value: (typeof prefs)[K],
+  ) {
     setPrefs((p) => ({ ...p, [key]: value }));
   }
 
@@ -158,7 +168,8 @@ export default function SettingsBody({
   }
 
   const kycLabel = KYC_LABELS[user.kycStatus] ?? user.kycStatus;
-  const kycStyle = KYC_STYLES[user.kycStatus] ?? "bg-surface-container text-on-surface";
+  const kycStyle =
+    KYC_STYLES[user.kycStatus] ?? "bg-surface-container text-on-surface";
   const kycIcon = KYC_ICONS[user.kycStatus] ?? "badge";
   const initial = user.name?.trim()?.[0] ?? "ک";
 
@@ -208,20 +219,28 @@ export default function SettingsBody({
               title="تغییر عکس نمایه — به‌زودی"
               type="button"
             >
-              <span className="material-symbols-outlined text-base">photo_camera</span>
+              <span className="material-symbols-outlined text-base">
+                photo_camera
+              </span>
             </button>
           </div>
           <div className="flex-1 text-center sm:text-right space-y-2">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <h4 className="text-xl font-black text-on-surface">{user.name}</h4>
-              <span className={`px-2.5 py-1 rounded-lg text-[11px] font-bold inline-flex items-center gap-1 ${kycStyle}`}>
-                <span className="material-symbols-outlined text-sm">{kycIcon}</span>
+              <h4 className="text-xl font-black text-on-surface">
+                {user.name}
+              </h4>
+              <span
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold inline-flex items-center gap-1 ${kycStyle}`}
+              >
+                <span className="material-symbols-outlined text-sm">
+                  {kycIcon}
+                </span>
                 احراز هویت: {kycLabel}
               </span>
             </div>
             <p className="text-xs text-on-surface-variant leading-relaxed">
               عضویت از {joinedFaDate} • {toPersianDigits(completedRentals)} رزرو
-              موفق • {user.isHost ? "میزبان اورا" : "کاربر اورا"}
+              موفق • {user.isHost ? "میزبان اٌوِرا" : "کاربر اٌوِرا"}
             </p>
           </div>
           <div className="sm:self-center">
@@ -231,7 +250,9 @@ export default function SettingsBody({
               title="به‌زودی"
               type="button"
             >
-              <span className="material-symbols-outlined text-base">cloud_upload</span>
+              <span className="material-symbols-outlined text-base">
+                cloud_upload
+              </span>
               <span className="">بارگذاری تصویر جدید</span>
             </button>
           </div>
@@ -240,20 +261,24 @@ export default function SettingsBody({
         <div className="rounded-2xl border border-outline-variant/40 bg-surface-container-low p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-start gap-3">
             <div className="size-10 rounded-xl bg-surface-container-lowest border border-outline-variant/40 text-m3-primary flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-xl">identity_platform</span>
+              <span className="material-symbols-outlined text-xl">
+                identity_platform
+              </span>
             </div>
             <div className="space-y-1">
               <div className="text-sm font-bold text-on-surface">
                 وضعیت احراز هویت (KYC): {kycLabel}
               </div>
               <p className="text-[11px] text-on-surface-variant leading-relaxed">
-                بارگذاری و بررسی مدارک هویتی توسط اپراتورهای اورا انجام می‌شود؛
-                این فرآیند خودکار نیست. در نسخه آزمایشی، احراز هویت صرفاً شبیه‌سازی
-                شده است.
+                بارگذاری و بررسی مدارک هویتی توسط اپراتورهای اٌوِرا انجام
+                می‌شود؛ این فرآیند خودکار نیست. در نسخه آزمایشی، احراز هویت
+                صرفاً شبیه‌سازی شده است.
               </p>
             </div>
           </div>
-          <span className={`px-3 py-1.5 rounded-xl text-xs font-bold self-start sm:self-center inline-flex items-center gap-1 ${kycStyle}`}>
+          <span
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold self-start sm:self-center inline-flex items-center gap-1 ${kycStyle}`}
+          >
             <span className="material-symbols-outlined text-sm">{kycIcon}</span>
             {kycLabel}
           </span>
@@ -262,7 +287,10 @@ export default function SettingsBody({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
           {/* نام و نام خانوادگی (editable) */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-on-surface flex items-center gap-1" htmlFor="profile-name">
+            <label
+              className="text-xs font-bold text-on-surface flex items-center gap-1"
+              htmlFor="profile-name"
+            >
               <span className="">نام و نام خانوادگی</span>
               <span className="text-rose-500">*</span>
             </label>
@@ -282,7 +310,9 @@ export default function SettingsBody({
           {/* کد ملی (locked — honest demo labelling) */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-on-surface">کد ملی (تایید هویت)</label>
+              <label className="text-xs font-bold text-on-surface">
+                کد ملی (تایید هویت)
+              </label>
             </div>
             <div className="relative">
               <input
@@ -304,7 +334,10 @@ export default function SettingsBody({
               <label className="text-xs font-bold text-on-surface">
                 شماره تلفن همراه (سامانه احراز هویت)
               </label>
-              <span className="text-[11px] text-m3-secondary font-semibold cursor-not-allowed" title="به‌زودی">
+              <span
+                className="text-[11px] text-m3-secondary font-semibold cursor-not-allowed"
+                title="به‌زودی"
+              >
                 درخواست تغییر خط
               </span>
             </div>
@@ -322,7 +355,10 @@ export default function SettingsBody({
           </div>
           {/* شهر (editable — saved with profile) */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-on-surface" htmlFor="profile-city">
+            <label
+              className="text-xs font-bold text-on-surface"
+              htmlFor="profile-city"
+            >
               شهر (محل پیش‌فرض تحویل وسایل)
             </label>
             <div className="relative">
@@ -341,7 +377,9 @@ export default function SettingsBody({
           </div>
           {/* ایمیل (read-only) */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-on-surface">نشانی پست الکترونیک</label>
+            <label className="text-xs font-bold text-on-surface">
+              نشانی پست الکترونیک
+            </label>
             <div className="relative">
               <input
                 className="w-full h-11 px-3.5 bg-surface-container border border-dashed border-outline-variant/60 rounded-xl text-sm font-medium text-on-surface-variant text-left font-sans cursor-not-allowed"
@@ -358,7 +396,10 @@ export default function SettingsBody({
           </div>
           {/* بیوگرافی و معرفی عمومی (editable) */}
           <div className="md:col-span-2 space-y-1.5">
-            <label className="text-xs font-bold text-on-surface" htmlFor="profile-bio">
+            <label
+              className="text-xs font-bold text-on-surface"
+              htmlFor="profile-bio"
+            >
               بیوگرافی و معرفی کوتاه در پروفایل عمومی
             </label>
             <textarea
@@ -376,7 +417,10 @@ export default function SettingsBody({
           </div>
         </div>
         {profileError ? (
-          <div className="rounded-xl bg-m3-error-container text-m3-on-error-container px-4 py-3 text-xs font-bold" role="alert">
+          <div
+            className="rounded-xl bg-m3-error-container text-m3-on-error-container px-4 py-3 text-xs font-bold"
+            role="alert"
+          >
             {profileError}
           </div>
         ) : null}
@@ -431,7 +475,9 @@ export default function SettingsBody({
               />
               <div>
                 <div className="flex items-center gap-1.5 font-bold text-sm text-on-surface">
-                  <span className="material-symbols-outlined text-m3-primary text-base">storefront</span>
+                  <span className="material-symbols-outlined text-m3-primary text-base">
+                    storefront
+                  </span>
                   <span className="">تحویل حضوری در محل میزبان</span>
                 </div>
                 <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
@@ -454,11 +500,14 @@ export default function SettingsBody({
               />
               <div>
                 <div className="flex items-center gap-1.5 font-bold text-sm text-on-surface">
-                  <span className="material-symbols-outlined text-m3-primary text-base">electric_moped</span>
-                  <span className="">پیک اکسپرس و سفیر اورا</span>
+                  <span className="material-symbols-outlined text-m3-primary text-base">
+                    electric_moped
+                  </span>
+                  <span className="">پیک اکسپرس و سفیر اٌوِرا</span>
                 </div>
                 <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
-                  ارسال امن با بیمه ترانزیت کالا توسط ناوگان اختصاصی اورا اکسپرس.
+                  ارسال امن با بیمه ترانزیت کالا توسط ناوگان اختصاصی اٌوِرا
+                  اکسپرس.
                 </p>
               </div>
             </label>
@@ -477,7 +526,9 @@ export default function SettingsBody({
               />
               <div>
                 <div className="flex items-center gap-1.5 font-bold text-sm text-on-surface">
-                  <span className="material-symbols-outlined text-m3-secondary text-base">local_shipping</span>
+                  <span className="material-symbols-outlined text-m3-secondary text-base">
+                    local_shipping
+                  </span>
                   <span className="">تحویل اختصاصی توسط خود میزبان</span>
                 </div>
                 <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
@@ -491,7 +542,10 @@ export default function SettingsBody({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
           {/* سیاست کنسلی */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-on-surface" htmlFor="pref-cancel">
+            <label
+              className="text-xs font-bold text-on-surface"
+              htmlFor="pref-cancel"
+            >
               سیاست پیش‌فرض کنسلی رزرو
             </label>
             <select
@@ -500,14 +554,23 @@ export default function SettingsBody({
               value={prefs.cancelPolicy}
               onChange={(e) => setPref("cancelPolicy", e.target.value)}
             >
-              <option value="flexible">انعطاف‌پذیر (استرداد ۱۰۰٪ تا ۲۴ ساعت قبل)</option>
-              <option value="semi">نیمه‌منعطف (استرداد ۵۰٪ تا ۴۸ ساعت قبل)</option>
-              <option value="strict">سخت‌گیرانه (عدم استرداد در صورت کنسلی زیر ۷۲ ساعت)</option>
+              <option value="flexible">
+                انعطاف‌پذیر (استرداد ۱۰۰٪ تا ۲۴ ساعت قبل)
+              </option>
+              <option value="semi">
+                نیمه‌منعطف (استرداد ۵۰٪ تا ۴۸ ساعت قبل)
+              </option>
+              <option value="strict">
+                سخت‌گیرانه (عدم استرداد در صورت کنسلی زیر ۷۲ ساعت)
+              </option>
             </select>
           </div>
           {/* مهلت بازرسی سلامت کالا */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-on-surface" htmlFor="pref-inspection">
+            <label
+              className="text-xs font-bold text-on-surface"
+              htmlFor="pref-inspection"
+            >
               مهلت زمان تحویل و بازرسی فنی کالا
             </label>
             <select
@@ -517,7 +580,7 @@ export default function SettingsBody({
               onChange={(e) => setPref("inspectionWindow", e.target.value)}
             >
               <option value="1h">۱ ساعت پس از تحویل</option>
-              <option value="2h">۲ ساعت پس از تحویل (استاندارد اورا)</option>
+              <option value="2h">۲ ساعت پس از تحویل (استاندارد اٌوِرا)</option>
               <option value="4h">۴ ساعت جهت تجهیزات فیلم‌برداری تخصصی</option>
             </select>
           </div>
@@ -532,11 +595,19 @@ export default function SettingsBody({
                   className="w-full h-11 px-3 bg-surface-container-low border border-outline-variant/50 rounded-xl text-xs font-medium text-center"
                   max={90}
                   min={1}
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   value={prefs.minDays}
-                  onChange={(e) => setPref("minDays", Number(e.target.value) || 1)}
+                  onChange={(e) =>
+                    setPref(
+                      "minDays",
+                      Math.min(90, Math.max(1, parseFaNumber(e.target.value) || 1)),
+                    )
+                  }
                 />
-                <span className="absolute left-2 top-3 text-[11px] text-on-surface-variant">روز</span>
+                <span className="absolute left-2 top-3 text-[11px] text-on-surface-variant">
+                  روز
+                </span>
               </div>
               <span className="text-on-surface-variant text-xs">تا</span>
               <div className="relative flex-1">
@@ -544,11 +615,19 @@ export default function SettingsBody({
                   className="w-full h-11 px-3 bg-surface-container-low border border-outline-variant/50 rounded-xl text-xs font-medium text-center"
                   max={365}
                   min={1}
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   value={prefs.maxDays}
-                  onChange={(e) => setPref("maxDays", Number(e.target.value) || 1)}
+                  onChange={(e) =>
+                    setPref(
+                      "maxDays",
+                      Math.min(365, Math.max(1, parseFaNumber(e.target.value) || 1)),
+                    )
+                  }
                 />
-                <span className="absolute left-2 top-3 text-[11px] text-on-surface-variant">روز</span>
+                <span className="absolute left-2 top-3 text-[11px] text-on-surface-variant">
+                  روز
+                </span>
               </div>
             </div>
           </div>
@@ -609,16 +688,22 @@ export default function SettingsBody({
                 </div>
                 <div>
                   <h4 className="font-bold text-sm">بانک ملت ایران</h4>
-                  <p className="text-[11px] text-[#cebdff]/70">حساب جاری متمرکز جام</p>
+                  <p className="text-[11px] text-[#cebdff]/70">
+                    حساب جاری متمرکز جام
+                  </p>
                 </div>
               </div>
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold flex items-center gap-1">
-                <span className="material-symbols-outlined text-xs">check_circle</span>
+                <span className="material-symbols-outlined text-xs">
+                  check_circle
+                </span>
                 حساب پیش‌فرض تسویه
               </span>
             </div>
             <div className="my-6">
-              <div className="text-[11px] text-[#cebdff]/60 mb-1">شماره شبا (IBAN):</div>
+              <div className="text-[11px] text-[#cebdff]/60 mb-1">
+                شماره شبا (IBAN):
+              </div>
               <div className="font-mono text-base lg:text-lg font-bold tracking-widest text-[#ece4ff] text-left">
                 IR58 0120 0000 0000 0048 2144 01
               </div>
@@ -628,7 +713,9 @@ export default function SettingsBody({
                 صاحب حساب: <strong className="text-white">{user.name}</strong>
               </span>
               <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                <span className="material-symbols-outlined text-xs">verified</span>
+                <span className="material-symbols-outlined text-xs">
+                  verified
+                </span>
                 پایا / ساتنا فعال
               </span>
             </div>
@@ -637,7 +724,9 @@ export default function SettingsBody({
           <div className="p-5 rounded-2xl bg-surface-container-low border border-surface-container-high flex flex-col justify-between space-y-4">
             <div className="space-y-3">
               <h4 className="font-bold text-sm text-on-surface flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-m3-primary text-base">schedule</span>
+                <span className="material-symbols-outlined text-m3-primary text-base">
+                  schedule
+                </span>
                 قوانین و چرخه خودکار انتقال وجه
               </h4>
               <p className="text-xs text-on-surface-variant leading-relaxed">
@@ -657,9 +746,11 @@ export default function SettingsBody({
                 </div>
                 <div className="p-3 bg-surface-container-lowest rounded-xl border border-outline-variant/40">
                   <span className="text-[11px] text-on-surface-variant block">
-                    کارمزد پلتفرم اورا:
+                    کارمزد پلتفرم اٌوِرا:
                   </span>
-                  <span className="text-sm font-bold text-emerald-600">۸٪ (سطح طلایی)</span>
+                  <span className="text-sm font-bold text-emerald-600">
+                    ۸٪ (سطح طلایی)
+                  </span>
                 </div>
               </div>
             </div>
@@ -667,7 +758,10 @@ export default function SettingsBody({
               <span className="text-on-surface-variant">
                 آخرین تسویه: ۳ روز پیش ({faToman(4850000)} تومان)
               </span>
-              <Link className="text-m3-primary font-bold hover:underline" href="/wallet">
+              <Link
+                className="text-m3-primary font-bold hover:underline"
+                href="/wallet"
+              >
                 مشاهده تاریخچه تراکنش‌ها
               </Link>
             </div>
@@ -719,7 +813,8 @@ export default function SettingsBody({
                   </span>
                 </div>
                 <p className="text-xs text-on-surface-variant">
-                  ارسال کد امنیتی پیامکی به {maskPhone(user.phone)} در هر بار ورود
+                  ارسال کد امنیتی پیامکی به {maskPhone(user.phone)} در هر بار
+                  ورود
                 </p>
               </div>
               <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-lg">
@@ -729,10 +824,15 @@ export default function SettingsBody({
             {/* تغییر رمز عبور (به‌زودی) */}
             <div className="p-5 rounded-2xl bg-surface-container-low border border-surface-container-high space-y-3">
               <h4 className="font-bold text-sm text-on-surface flex items-center gap-2">
-                <span className="material-symbols-outlined text-m3-primary text-base">password</span>
+                <span className="material-symbols-outlined text-m3-primary text-base">
+                  password
+                </span>
                 تغییر رمز عبور حساب
               </h4>
-              <div className="space-y-2.5" title="تغییر رمز عبور در نسخه آزمایشی فعال نیست">
+              <div
+                className="space-y-2.5"
+                title="تغییر رمز عبور در نسخه آزمایشی فعال نیست"
+              >
                 <input
                   className="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant/50 rounded-xl text-xs focus:ring-1 focus:ring-m3-primary disabled:opacity-60"
                   disabled
@@ -772,7 +872,9 @@ export default function SettingsBody({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="font-bold text-sm text-on-surface flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-m3-secondary text-base">devices</span>
+                <span className="material-symbols-outlined text-m3-secondary text-base">
+                  devices
+                </span>
                 دستگاه‌ها و نشست‌های مجاز (Active Sessions)
               </h4>
               <button
@@ -789,7 +891,9 @@ export default function SettingsBody({
               <div className="p-3.5 rounded-2xl bg-surface-container-low border-2 border-emerald-500/40 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="size-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-xl">laptop_windows</span>
+                    <span className="material-symbols-outlined text-xl">
+                      laptop_windows
+                    </span>
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
@@ -801,7 +905,7 @@ export default function SettingsBody({
                       </span>
                     </div>
                     <span className="text-[11px] text-on-surface-variant">
-                      نشست جاری وارد‌شده به حساب اورا
+                      نشست جاری وارد‌شده به حساب اٌوِرا
                     </span>
                   </div>
                 </div>
@@ -811,11 +915,13 @@ export default function SettingsBody({
               <div className="p-3.5 rounded-2xl bg-surface-container-low border border-surface-container-high flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="size-10 rounded-xl bg-surface-container text-on-surface-variant flex items-center justify-center">
-                    <span className="material-symbols-outlined text-xl">smartphone</span>
+                    <span className="material-symbols-outlined text-xl">
+                      smartphone
+                    </span>
                   </div>
                   <div>
                     <span className="text-xs font-bold text-on-surface block">
-                      اپلیکیشن اورا • iPhone 13 Pro (iOS 17.4)
+                      اپلیکیشن اٌوِرا • iPhone 13 Pro (iOS 17.4)
                     </span>
                     <span className="text-[11px] text-on-surface-variant">
                       آخرین فعالیت: ۲ ساعت پیش • تهران
@@ -863,13 +969,17 @@ export default function SettingsBody({
               </p>
             </div>
           </div>
-          <span className="text-xs font-bold text-m3-secondary">پیامک و ایمیل</span>
+          <span className="text-xs font-bold text-m3-secondary">
+            پیامک و ایمیل
+          </span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* رویدادهای پیامک فوری */}
           <div className="p-5 rounded-2xl bg-surface-container-low border border-surface-container-high space-y-3">
             <h4 className="font-bold text-sm text-on-surface flex items-center gap-2">
-              <span className="material-symbols-outlined text-m3-primary text-base">sms</span>
+              <span className="material-symbols-outlined text-m3-primary text-base">
+                sms
+              </span>
               پیامک‌های فوق‌العاده حیاتی (SMS آنی)
             </h4>
             <div className="space-y-2.5 pt-1">
@@ -884,7 +994,9 @@ export default function SettingsBody({
                   key={key}
                   className="flex items-center justify-between p-2.5 rounded-xl hover:bg-surface-container cursor-pointer transition-colors"
                 >
-                  <span className="text-xs font-semibold text-on-surface">{label}</span>
+                  <span className="text-xs font-semibold text-on-surface">
+                    {label}
+                  </span>
                   <input
                     checked={prefs[key]}
                     className="size-4 rounded text-m3-primary focus:ring-m3-primary border-outline-variant"
@@ -906,16 +1018,27 @@ export default function SettingsBody({
             <div className="space-y-2.5 pt-1">
               {(
                 [
-                  ["emailWeeklyReport", "گزارش هفتگی درآمد و تقاضای کالاها در منطقه شما"],
-                  ["emailInvoice", "صدور فاکتور و صورت‌حساب رسمی مالیاتی ماهانه"],
-                  ["emailCampaigns", "اخبار کمپین‌های تخفیفی و مشوق‌های فصلی اورا"],
+                  [
+                    "emailWeeklyReport",
+                    "گزارش هفتگی درآمد و تقاضای کالاها در منطقه شما",
+                  ],
+                  [
+                    "emailInvoice",
+                    "صدور فاکتور و صورت‌حساب رسمی مالیاتی ماهانه",
+                  ],
+                  [
+                    "emailCampaigns",
+                    "اخبار کمپین‌های تخفیفی و مشوق‌های فصلی اٌوِرا",
+                  ],
                 ] as const
               ).map(([key, label]) => (
                 <label
                   key={key}
                   className="flex items-center justify-between p-2.5 rounded-xl hover:bg-surface-container cursor-pointer transition-colors"
                 >
-                  <span className="text-xs font-semibold text-on-surface">{label}</span>
+                  <span className="text-xs font-semibold text-on-surface">
+                    {label}
+                  </span>
                   <input
                     checked={prefs[key]}
                     className="size-4 rounded text-m3-primary focus:ring-m3-primary border-outline-variant"
@@ -930,7 +1053,9 @@ export default function SettingsBody({
         {/* اعلان‌های واقعی کاربر — GET/POST /api/notifications */}
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-sm font-bold text-on-surface">
-            <span className="material-symbols-outlined text-m3-primary text-lg">notifications</span>
+            <span className="material-symbols-outlined text-m3-primary text-lg">
+              notifications
+            </span>
             اعلان‌های اخیر حساب شما
           </div>
           {children}
@@ -973,7 +1098,9 @@ export default function SettingsBody({
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-rose-200">
           <div className="space-y-1">
-            <h4 className="text-sm font-bold text-on-surface">خروج از حساب کاربری</h4>
+            <h4 className="text-sm font-bold text-on-surface">
+              خروج از حساب کاربری
+            </h4>
             <p className="text-xs text-on-surface-variant">
               با خروج، نشست فعلی در همه صفحات به حالت مهمان بازمی‌گردد.
             </p>
@@ -990,11 +1117,14 @@ export default function SettingsBody({
         </div>
         <div className="flex items-center justify-between pt-1 text-xs text-rose-700">
           <span className="">
-            جهت حذف دائم حساب کاربری یا خاتمه کامل قرارداد میزبانی، با واحد حقوقی
-            اورا در ارتباط باشید.
+            جهت حذف دائم حساب کاربری یا خاتمه کامل قرارداد میزبانی، با واحد
+            حقوقی اٌوِرا در ارتباط باشید.
           </span>
-          <Link className="font-bold underline hover:text-rose-950" href="/damage-claims">
-            ارسال تیکت به واحد حقوقی
+          <Link
+            className="font-bold underline hover:text-rose-950"
+            href="/tos-support-faq"
+          >
+            ارتباط با پشتیبانی اٌوِرا
           </Link>
         </div>
       </section>
@@ -1008,7 +1138,7 @@ export default function SettingsBody({
           <span className="">
             {dirty
               ? "تغییرات پروفایل ذخیره‌نشده دارید؛ برای ثبت، «ذخیره نهایی تنظیمات» را بزنید."
-              : "تمام تغییرات به صورت رمزنگاری‌شده در سرورهای ابری اورا ثبت خواهند شد."}
+              : "تمام تغییرات به صورت رمزنگاری‌شده در سرورهای ابری اٌوِرا ثبت خواهند شد."}
           </span>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">

@@ -3,17 +3,22 @@
   "version": "0.2.1",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000 2>&1 | tee dev.log",
-    "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
-    "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
+    "dev": "bash scripts/env-run.sh prisma generate && bash scripts/env-run.sh next dev -p 3000 2>&1 | tee dev.log",
+    "build": "bash scripts/env-run.sh prisma generate && bash scripts/env-run.sh next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/ && sh scripts/migrate-deploy.sh",
+    "start": "sh scripts/migrate-deploy.sh && NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
-    "db:push": "prisma db push --accept-data-loss",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:reset": "prisma migrate reset",
+    "db:push": "bash scripts/env-run.sh prisma db push",
+    "db:generate": "bash scripts/env-run.sh prisma generate",
+    "db:migrate": "bash scripts/env-run.sh prisma migrate dev",
+    "db:reset": "bash scripts/env-run.sh prisma migrate reset",
     "test": "bun test",
-    "seed": "bun run scripts/seed.ts",
-    "postinstall": "prisma generate"
+    "seed": "bash scripts/env-run.sh bun run scripts/seed.ts",
+    "db:migrate:deploy": "bash scripts/env-run.sh sh scripts/migrate-deploy.sh",
+    "db:seed:categories": "bash scripts/env-run.sh bun run scripts/seed-categories.ts",
+    "db:import": "bash scripts/env-run.sh bun run scripts/import-listings.ts",
+    "db:coords": "bash scripts/env-run.sh bun run scripts/backfill-listing-coords.ts",
+    "reminders": "bash scripts/env-run.sh bun run scripts/run-reminders.ts",
+    "db:seed": "bash scripts/env-run.sh bun run scripts/seed.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -65,6 +70,7 @@
     "next-intl": "^4.3.4",
     "next-themes": "^0.4.6",
     "prisma": "^6.11.1",
+    "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-day-picker": "^9.8.0",
     "react-dom": "^19.0.0",
@@ -84,15 +90,18 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
+    "@embedded-postgres/linux-x64": "^19.0.0-beta.20",
     "@tailwindcss/postcss": "^4",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "bun-types": "^1.3.4",
     "eslint": "^9",
     "eslint-config-next": "^16.1.1",
+    "pg": "^8.23.1",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.5",
     "typescript": "^5"
   },
-  "description": "Overa (اورا) — Persian-first peer-to-peer rental marketplace. Next.js 16 full-stack with Docker and GitHub Actions CI/CD."
+  "description": "Overa (اٌوِرا) — Persian-first peer-to-peer rental marketplace. Next.js 16 full-stack with Docker and GitHub Actions CI/CD."
 }

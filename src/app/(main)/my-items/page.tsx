@@ -4,6 +4,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { faDate } from "@/lib/format";
+import SiteHeader from "@/components/layout/SiteHeader";
 import HostSidebar from "../host-dashboard/HostSidebar";
 import MyItemsClient, { type ApiListing, type MyItemsStats } from "./MyItemsClient";
 
@@ -22,7 +23,10 @@ export default async function MyItemsPage() {
   /* ------------------------- non-host onboarding state -------------------- */
   if (!user.isHost) {
     return (
-      <div className="flex min-h-screen w-full bg-m3-background items-stretch">
+      <>
+      {/* Shared site header — identical to the homepage (slide-out menu) */}
+      <SiteHeader />
+      <div className="flex w-full bg-m3-background items-stretch">
         {sidebar}
         <div className="flex-1 flex flex-col min-w-0">
           <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto flex flex-col justify-center">
@@ -48,6 +52,7 @@ export default async function MyItemsPage() {
           </main>
         </div>
       </div>
+      </>
     );
   }
 
@@ -136,16 +141,14 @@ export default async function MyItemsPage() {
   }));
 
   return (
+    <>
+    {/* Shared site header — identical to the homepage (slide-out menu) */}
+    <SiteHeader />
     <MyItemsClient
-      user={{
-        name: user.name,
-        avatarUrl: user.avatarUrl,
-        isHost: user.isHost,
-        isAdmin: user.isAdmin,
-      }}
       stats={stats}
       rentedMap={rentedMap}
       initialListings={initialListings}
     />
+    </>
   );
 }

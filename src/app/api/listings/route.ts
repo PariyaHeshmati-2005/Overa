@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { jsonError, jsonOk, parseIntSafe, requireUser } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { normalizeBlockedRangesInput } from "@/lib/jalali";
+import { buildListingSearchKey } from "@/lib/persian";
 
 /** GET /api/listings?q=&category=&city=&min=&max=&sort=&instant=&mine=&status= */
 export async function GET(req: Request) {
@@ -61,6 +62,14 @@ export async function GET(req: Request) {
   return jsonOk({ listings });
 }
 
+/** Validate an optional geographic coordinate (null when absent/invalid). */
+function toCoord(value: unknown, min: number, max: number): number | null {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < min || n > max) return null;
+  // ~1e6 (≈11 cm) precision is plenty for a pickup pin.
+  return Math.round(n * 1e6) / 1e6;
+}
+
 /** POST /api/listings — create a listing (draft or submit for review). */
 export async function POST(req: Request) {
   const auth = await requireUser();
@@ -93,12 +102,23 @@ export async function POST(req: Request) {
         description,
         brand: body.brand ? String(body.brand) : null,
         specs: body.specs ? String(body.specs) : null,
+        searchKey: buildListingSearchKey({
+          title,
+          brand: body.brand ? String(body.brand) : null,
+          specs: body.specs ? String(body.specs) : null,
+          description,
+          city: String(body.city ?? user.city ?? "تهران"),
+          categoryName: category.name,
+        }),
         dailyPrice: Math.floor(dailyPrice),
         weeklyPrice: Number.isFinite(Number(body.weeklyPrice)) && Number(body.weeklyPrice) > 0
           ? Math.floor(Number(body.weeklyPrice)) : null,
         deposit: Math.max(0, Math.floor(Number(body.deposit) || 0)),
         city: String(body.city ?? user.city ?? "تهران"),
         area: body.area ? String(body.area) : null,
+        // Exact map coordinates from the wizard's location picker (optional).
+        lat: toCoord(body.lat, -90, 90),
+        lng: toCoord(body.lng, -180, 180),
         pickupInPerson: body.pickupInPerson !== false,
         deliveryCourier: Boolean(body.deliveryCourier),
         rules: body.rules ? String(body.rules) : null,

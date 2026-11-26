@@ -1,3 +1,4 @@
+import SiteHeader from "@/components/layout/SiteHeader";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -43,23 +44,49 @@ function InfoState({
           : "bg-slate-100 text-slate-500";
   return (
     <section className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-8 text-center space-y-4">
-      <div className={`w-14 h-14 mx-auto rounded-full flex items-center justify-center ${iconClass}`}>
+      <div
+        className={`w-14 h-14 mx-auto rounded-full flex items-center justify-center ${iconClass}`}
+      >
         {icon === "check" ? (
-          <svg className="w-7 h-7 stroke-current" fill="none" strokeWidth="2.5" viewBox="0 0 24 24">
-            <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round"></polyline>
+          <svg
+            className="w-7 h-7 stroke-current"
+            fill="none"
+            strokeWidth="2.5"
+            viewBox="0 0 24 24"
+          >
+            <polyline
+              points="20 6 9 17 4 12"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            ></polyline>
           </svg>
         ) : icon === "lock" ? (
-          <svg className="w-7 h-7 stroke-current" fill="none" strokeWidth="2" viewBox="0 0 24 24">
+          <svg
+            className="w-7 h-7 stroke-current"
+            fill="none"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
             <rect height="11" rx="2" width="18" x="3" y="11"></rect>
             <path d="M7 11V7a5 5 0 0110 0v4" strokeLinecap="round"></path>
           </svg>
         ) : icon === "hourglass" ? (
-          <svg className="w-7 h-7 stroke-current" fill="none" strokeWidth="2" viewBox="0 0 24 24">
+          <svg
+            className="w-7 h-7 stroke-current"
+            fill="none"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
             <circle cx="12" cy="12" r="9"></circle>
             <path d="M12 7v5l3 3" strokeLinecap="round"></path>
           </svg>
         ) : (
-          <svg className="w-7 h-7 stroke-current" fill="none" strokeWidth="2" viewBox="0 0 24 24">
+          <svg
+            className="w-7 h-7 stroke-current"
+            fill="none"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
             <circle cx="12" cy="12" r="9"></circle>
             <path d="M12 8h.01M11 12h1v4h1" strokeLinecap="round"></path>
           </svg>
@@ -111,24 +138,7 @@ export default async function SubmitReviewPage({
     return (
       <div className="min-h-screen bg-[#f8fafc] text-slate-800 antialiased selection:bg-m3-primary selection:text-white">
         {/* Minimal header — preserved from source */}
-        <header className="bg-white border-b border-purple-100">
-          <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
-            <Link className="flex items-center gap-2.5" href="/">
-              <img
-                alt="logo"
-                className="w-9 h-9"
-                src="/assets/img/overa_logo_transparent.png"
-              />
-              <span className="text-xl font-black text-[#801E76] mt-2">اٌوِرا</span>
-            </Link>
-            <Link
-              className="text-xs font-medium text-slate-500 hover:text-m3-primary transition-colors"
-              href="/"
-            >
-              بازگشت به صفحه‌ی اصلی
-            </Link>
-          </div>
-        </header>
+        <SiteHeader />
 
         <main className="max-w-xl mx-auto px-4 py-8 space-y-5">
           <InfoState
@@ -142,8 +152,8 @@ export default async function SubmitReviewPage({
                 هنوز اجاره‌ی تکمیل‌شده‌ای ندارید.
               </p>
               <p className="text-xs text-slate-500 leading-relaxed">
-                پس از پایان اولین اجاره (وضعیت «اجاره تکمیل شد»)، دکمه ثبت دیدگاه
-                همین‌جا برای شما فعال می‌شود.
+                پس از پایان اولین اجاره (وضعیت «اجاره تکمیل شد»)، دکمه ثبت
+                دیدگاه همین‌جا برای شما فعال می‌شود.
               </p>
               <Link
                 className="inline-flex items-center justify-center gap-2 bg-m3-primary hover:bg-m3-primary/90 text-white font-bold py-2.5 px-6 rounded-xl text-sm transition-colors"
@@ -160,7 +170,8 @@ export default async function SubmitReviewPage({
               </h3>
               <ul className="space-y-2.5">
                 {pending.map((r) => {
-                  const img = r.listing.images[0]?.url ?? "/assets/img/45fb8e31c9b9.jpg";
+                  const img =
+                    r.listing.images[0]?.url ?? "/assets/img/45fb8e31c9b9.jpg";
                   return (
                     <li
                       className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl p-3"
@@ -176,8 +187,8 @@ export default async function SubmitReviewPage({
                           {r.listing.title}
                         </p>
                         <p className="text-[11px] text-slate-500 mt-0.5">
-                          کد رزرو: <span className="font-mono">{r.code}</span> • پایان:{" "}
-                          {faDate(r.endDate)} • {faToman(r.total)} تومان
+                          کد رزرو: <span className="font-mono">{r.code}</span> •
+                          پایان: {faDate(r.endDate)} • {faToman(r.total)} تومان
                         </p>
                       </div>
                       <Link
@@ -256,24 +267,7 @@ export default async function SubmitReviewPage({
   if (!reservation) {
     return (
       <div className="min-h-screen bg-[#f8fafc] text-slate-800 antialiased selection:bg-m3-primary selection:text-white">
-        <header className="bg-white border-b border-purple-100">
-          <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
-            <Link className="flex items-center gap-2.5" href="/">
-              <img
-                alt="logo"
-                className="w-9 h-9"
-                src="/assets/img/overa_logo_transparent.png"
-              />
-              <span className="text-xl font-black text-[#801E76] mt-2">اٌوِرا</span>
-            </Link>
-            <Link
-              className="text-xs font-medium text-slate-500 hover:text-m3-primary transition-colors"
-              href="/"
-            >
-              بازگشت به صفحه‌ی اصلی
-            </Link>
-          </div>
-        </header>
+        <SiteHeader />
         <main className="max-w-xl mx-auto px-4 py-8">{notFoundBlock}</main>
       </div>
     );
@@ -285,24 +279,7 @@ export default async function SubmitReviewPage({
   const renderShell = (inner: React.ReactNode) => (
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 antialiased selection:bg-m3-primary selection:text-white">
       {/* Minimal header — preserved from source */}
-      <header className="bg-white border-b border-purple-100">
-        <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link className="flex items-center gap-2.5" href="/">
-            <img
-              alt="logo"
-              className="w-9 h-9"
-              src="/assets/img/overa_logo_transparent.png"
-            />
-            <span className="text-xl font-black text-[#801E76] mt-2">اٌوِرا</span>
-          </Link>
-          <Link
-            className="text-xs font-medium text-slate-500 hover:text-m3-primary transition-colors"
-            href={`/item-details/${reservation.listing.id}`}
-          >
-            بازگشت به صفحه‌ی محصول
-          </Link>
-        </div>
-      </header>
+      <SiteHeader />
       <main className="max-w-xl mx-auto px-4 py-8">{inner}</main>
     </div>
   );
@@ -380,7 +357,8 @@ export default async function SubmitReviewPage({
   }
 
   /* ---------------------------- The review form ---------------------------- */
-  const img = reservation.listing.images[0]?.url ?? "/assets/img/45fb8e31c9b9.jpg";
+  const img =
+    reservation.listing.images[0]?.url ?? "/assets/img/45fb8e31c9b9.jpg";
   return renderShell(
     <SubmitReviewForm
       authorName={user.name}
@@ -388,7 +366,7 @@ export default async function SubmitReviewPage({
         id: reservation.listing.id,
         title: reservation.listing.title,
         imageUrl: img,
-        ownerName: reservation.listing.owner?.name ?? "میزبان اورا",
+        ownerName: reservation.listing.owner?.name ?? "میزبان اٌوِرا",
       }}
       reservationCode={reservation.code}
       reservationId={reservation.id}
