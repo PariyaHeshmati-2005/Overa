@@ -91,8 +91,19 @@ export async function POST(req: Request) {
     const category = await db.category.findUnique({ where: { id: categoryId } });
     if (!category) return jsonError("دسته‌بندی یافت نشد.", 404);
 
-    const images: string[] = Array.isArray(body.images) ? body.images.slice(0, 8) : [];
+    // Server-side image rule (mirrors the wizard's frontend validation so a
+    // direct API call cannot bypass it): a FINAL submission must carry at
+    // least one usable image; a DRAFT may still be saved without any. Max 8.
+    const images: string[] = (Array.isArray(body.images) ? body.images : [])
+      .map((img: unknown) => String(img).trim())
+      .filter((img: string) => img.length > 0)
+      .slice(0, 8);
     const status = body.submit ? "PENDING" : "DRAFT";
+    if (status === "PENDING" && images.length < 1) {
+      return jsonError(
+        "برای ثبت نهایی آگهی، حداقل یک تصویر معتبر الزامی است؛ ابتدا تصویر اضافه کنید.",
+      );
+    }
 
     const listing = await db.listing.create({
       data: {

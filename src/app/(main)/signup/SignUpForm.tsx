@@ -25,7 +25,9 @@ export default function SignUpForm({ next }: { next: string }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [intent, setIntent] = useState<Intent>("both");
-  const [agree, setAgree] = useState(true);
+  // Both consents start UNCHECKED — the user must personally tick each one.
+  const [agree, setAgree] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -70,6 +72,10 @@ export default function SignUpForm({ next }: { next: string }) {
       setError("رمز عبور باید حداقل ۸ کاراکتر باشد.");
       return;
     }
+    if (!ageConfirmed) {
+      setError("برای ایجاد حساب باید تأیید کنید که حداقل ۱۸ سال سن دارید.");
+      return;
+    }
     if (!agree) {
       setError("برای ایجاد حساب، پذیرش قوانین و حریم خصوصی الزامی است.");
       return;
@@ -83,6 +89,8 @@ export default function SignUpForm({ next }: { next: string }) {
           name: name.trim(),
           phone: normalizedPhone,
           password,
+          ageConfirmed: ageConfirmed === true,
+          agreeTos: agree === true,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -324,6 +332,19 @@ export default function SignUpForm({ next }: { next: string }) {
                 </Link>{" "}
                 را می‌پذیرم.
               </span>
+            </label>
+          </div>
+          {/* Age Confirmation Checkbox — a separate, independent consent
+              (never merged with the TOS/privacy checkbox above). */}
+          <div className="pt-1">
+            <label className="flex items-start gap-2.5 cursor-pointer text-xs font-medium text-on-surface-variant leading-relaxed">
+              <input
+                checked={ageConfirmed}
+                className="rounded border-outline-variant text-m3-primary focus:ring-m3-primary w-4 h-4 mt-0.5"
+                type="checkbox"
+                onChange={(e) => setAgeConfirmed(e.target.checked)}
+              />
+              <span className="">تأیید می‌کنم که حداقل ۱۸ سال سن دارم.</span>
             </label>
           </div>
         </div>

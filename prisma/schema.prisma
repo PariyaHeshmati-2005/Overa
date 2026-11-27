@@ -29,6 +29,12 @@ model User {
   // accounts stay visually labelled in the app and are never mixed with real
   // user data (real users created via signup/OTP always have isDemo = false).
   isDemo        Boolean  @default(false)
+  // Registration consents, captured server-side at signup (see
+  // /api/auth/register): the 18+ age self-declaration and the TOS/privacy
+  // acceptance. Null = consent not recorded (pre-existing accounts); the
+  // timestamp itself is the recorded status + time of acceptance.
+  ageConfirmedAt DateTime?
+  tosAcceptedAt  DateTime?
   kycStatus     String   @default("UNVERIFIED") // UNVERIFIED | PENDING | VERIFIED | REJECTED
   walletBalance Int      @default(0) // Toman, application ledger only (sandbox)
   createdAt     DateTime @default(now())

@@ -97,21 +97,60 @@ export async function PATCH(req: Request, ctx: Ctx) {
     data.rejectionReason = body.rejectionReason;
   }
 
-  if (Array.isArray(body.images)) {
-    await db.listingImage.deleteMany({ where: { listingId: id } });
-    const imgs = body.images.slice(0, 8);
-    if (imgs.length) {
-      await db.listingImage.createMany({
-        data: imgs.map((img: string, i: number) => ({
-          listingId: id,
-          url: String(img).startsWith("/") ? String(img) : `/assets/img/${img}`,
-          sortOrder: i,
-        })),
-      });
+  // ---- Image validation (server-side, BEFORE any database write) ----
+  // Mirrors the wizard's frontend rule so direct API calls cannot bypass it:
+  // usable images only (non-empty strings), max 8 — same cap as creation.
+  const submittedImages = Array.isArray(body.images)
+    ? body.images
+        .map((img: unknown) => String(img).trim())
+        .filter((img: string) => img.length > 0)
+        .slice(0, 8)
+    : null;
+  // Effective status AFTER this request (the transition was validated above).
+  const nextStatus =
+    typeof data.status === "string" ? data.status : listing.status;
+  // "Final" = everything but an unsaved DRAFT (submitted for moderation once).
+  const isFinal = nextStatus !== "DRAFT";
+
+  if (isFinal && submittedImages !== null && submittedImages.length < 1) {
+    // A submitted listing can never end up without images.
+    return jsonError(
+      nextStatus === "PENDING"
+        ? "برای ثبت نهایی/ارسال به بررسی مدیریت، حداقل یک تصویر معتبر الزامی است."
+        : "حذف تمام تصاویر آگهی ثبت‌شده مجاز نیست؛ حداقل یک تصویر باید باقی بماند.",
+      400,
+    );
+  }
+  if (nextStatus === "PENDING" && submittedImages === null) {
+    // Submitting for review without touching images: the listing must already
+    // carry at least one image — checked WITHOUT modifying anything.
+    const imageCount = await db.listingImage.count({ where: { listingId: id } });
+    if (imageCount < 1) {
+      return jsonError(
+        "برای ارسال آگهی به بررسی مدیریت، حداقل یک تصویر الزامی است؛ ابتدا تصویر اضافه کنید.",
+        400,
+      );
     }
   }
 
-  const updated = await db.listing.update({ where: { id }, data, include: { images: true } });
+  // All validations passed — persist field changes and (optionally) replace
+  // the images atomically; the previous images are deleted only here, never
+  // before validation.
+  const updated = await db.$transaction(async (tx) => {
+    if (submittedImages !== null) {
+      await tx.listingImage.deleteMany({ where: { listingId: id } });
+      if (submittedImages.length) {
+        await tx.listingImage.createMany({
+          data: submittedImages.map((img: string, i: number) => ({
+            listingId: id,
+            url: img.startsWith("/") ? img : `/assets/img/${img}`,
+            sortOrder: i,
+          })),
+        });
+      }
+    }
+    return tx.listing.update({ where: { id }, data, include: { images: true } });
+  });
 
   // Keep the normalized search key in sync with editable text fields.
   if (Object.keys(data).some((k) =>
