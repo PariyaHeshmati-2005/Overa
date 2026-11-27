@@ -72,6 +72,7 @@ const TYPE_META: Record<string, { icon: string; label: string }> = {
   DEPOSIT_HOLD: { icon: "lock_clock", label: "مسدودی ودیعه" },
   DEPOSIT_RELEASE: { icon: "lock_open", label: "آزادسازی ودیعه" },
   DEPOSIT_DEDUCTION: { icon: "gavel", label: "کسر از ودیعه" },
+  PLATFORM_FEE: { icon: "receipt_long", label: "کارمزد پلتفرم" },
   PAYOUT: { icon: "account_balance", label: "تسویه به شبا" },
   TOPUP: { icon: "add_card", label: "شارژ کیف پول" },
 };
@@ -193,7 +194,10 @@ export default function WalletClient({
         t.amount > 0 &&
         new Date(t.createdAt).getTime() >= monthStart,
     ).length;
-    return { absSum, released, holdsSum, holds, earnings, earningsCount };
+    const fees = transactions
+      .filter((t) => t.type === "PLATFORM_FEE")
+      .reduce((s, t) => s + Math.abs(t.amount), 0);
+    return { absSum, released, holdsSum, holds, earnings, earningsCount, fees };
   }, [transactions]);
 
   /* client-side filters (tabs + search + date + status) */
@@ -532,10 +536,10 @@ export default function WalletClient({
         </div>
         <div className="p-space-sm space-y-1">
           <span className="text-label-sm text-m3-outline block">
-            کارمزد و بیمه اٌوِراگارد پرداختی
+            کارمزد پلتفرم پرداختی
           </span>
           <span className="text-headline-sm font-bold text-on-surface">
-            {faNumber(0)}{" "}
+            {faToman(agg.fees)}{" "}
             <span className="text-body-sm text-[12px] font-normal text-on-surface-variant">
               تومان
             </span>

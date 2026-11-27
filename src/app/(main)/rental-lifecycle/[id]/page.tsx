@@ -202,12 +202,12 @@ export default async function RentalLifecyclePage({
                 </span>
               </div>
               <p className="text-xs text-slate-500 leading-relaxed">
-                سامانه هوشمند اشتراک و اجاره کالا و تجهیزات در سراسر کشور با
-                ضمانت امانی و پوشش بیمه اٌوِراگارد.
+                سامانه هوشمند اشتراک و اجاره کالا و تجهیزات در سراسر کشور
+                با ضمانت امانی.
               </p>
               <div className="text-xs text-m3-primary font-semibold flex items-center gap-1">
                 <span className="material-symbols-outlined text-sm">call</span>
-                <span>پشتیبانی شبانه‌روزی: ۰۲۱-۸۸۸۸۹۹۹۹</span>
+                <span>پشتیبانی اٌوِرا: ۰۲۱-۸۸۸۸۹۹۹۹</span>
               </div>
             </div>
             <div>
@@ -267,7 +267,7 @@ export default async function RentalLifecyclePage({
                     href="/tos-support-faq"
                     className="hover:text-m3-primary transition"
                   >
-                    پوشش بیمه خسارت
+                    جبران خسارت
                   </Link>
                 </li>
                 <li>

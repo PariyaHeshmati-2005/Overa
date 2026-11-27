@@ -1,7 +1,10 @@
 # Overa — Project state
 
-**Last updated:** 2026-11-12 (Tehran time) — re-verified independently in a
-second session on the same day (see the end of this file).
+**Last updated:** 2026-11-27 (Tehran time) — scope-lock pass: registration
+consents (18+ age + TOS, server-validated + stored), server-side minimum-one
+image rule for listing submit/edit, commission copy (8% host / 4% renter with
+wallet ledger row), insurance/fleet/24-7 copy removed, promissory pages
+guide-only banners, device uploads hidden pending cloud storage.
 
 ## Current phase
 
@@ -18,7 +21,7 @@ second session on the same day (see the end of this file).
 | Unified session/auth | Password + OTP (demo-labelled), session cookie, guest/auth header invariant verified in browser |
 | Rental state machine | Server-enforced transitions + roles; invalid/forbidden actions return 422 with Persian messages (verified via API) |
 | APIs | auth, listings, reservations, conversations, wallet, reviews, claims, notifications, admin — all live |
-| Data | Prisma/SQLite schema + seed from the source page content (8 categories, 18 listings incl. draft/pending, 6 reservations across states, chats, reviews, claims, ledger) |
+| Data | Prisma/PostgreSQL schema + seed from the source page content (8 categories, 18 listings incl. draft/pending, 6 reservations across states, chats, reviews, claims, ledger) |
 | Docker | Dockerfile (multi-stage, non-root, healthcheck), docker-compose (volume), entrypoint (db push + first-run seed) |
 | CI/CD | `ci.yml` (lint/type/test/build/smoke), `docker-publish.yml` (GHCR + optional SSH deploy), `vercel.yml` (manual) |
 | Tests | `bun test` — 12 passing (state machine, formatters, `parseIntSafe` regression) |
@@ -39,7 +42,11 @@ second session on the same day (see the end of this file).
 
 - OTP SMS delivery: demo mode until `SMS_PROVIDER_API_KEY` + provider path.
 - Payments/escrow/payouts: sandbox adapter, labelled everywhere; no provider.
-- Uploads: disabled with «به‌زودی» until object storage is connected.
+- Image uploads: work against the local runtime (`public/uploads` via
+  `/api/uploads`) but the device-upload button is HIDDEN in the UI
+  (`DEVICE_UPLOAD_ENABLED = false`) because local disk storage is not
+  durable on serverless hosts (Vercel) — only sample images stay
+  selectable until Vercel Blob / Cloudinary is connected.
 - Chat realtime: 4s polling (Vercel-compatible) instead of WebSockets.
 - `/404` and `/500` direct URLs return their HTTP status codes (by design);
   browsers render the full page designs.

@@ -72,15 +72,15 @@ export default async function WalletPage() {
                 </span>
               </div>
               <p className="text-body-sm text-on-surface-variant leading-relaxed">
-                پلتفرم اشتراک‌گذاری و اجاره تجهیزات با تضمین امنیت سپرده و بیمه
-                اختصاصی. وسایل بهتر، تجربه‌های ماندگار و زندگی آسوده‌تر.
+                پلتفرم اشتراک‌گذاری و اجاره تجهیزات با تضمین امنیت سپرده.
+                وسایل بهتر، تجربه‌های ماندگار و زندگی آسوده‌تر.
               </p>
               <div className="flex items-center gap-space-xs">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#10B981]/10 text-[#065F46] text-label-sm font-semibold">
                   <span className="material-symbols-outlined text-[16px]">
                     verified_user
                   </span>
-                  تضمین بازپرداخت و بیمه
+                  تضمین بازپرداخت ودیعه
                 </span>
               </div>
             </div>
@@ -133,7 +133,7 @@ export default async function WalletPage() {
                     className="hover:text-m3-primary transition-colors"
                     href="/tos-support-faq"
                   >
-                    پوشش بیمه تجهیزات
+                    ضمانت سلامت تجهیزات
                   </Link>
                 </li>
                 <li>
@@ -157,7 +157,7 @@ export default async function WalletPage() {
                     className="hover:text-m3-primary transition-colors"
                     href="/tos-support-faq"
                   >
-                    تماس با پشتیبانی ۲۴/۷
+                    تماس با پشتیبانی
                   </Link>
                 </li>
               </ul>
@@ -194,7 +194,7 @@ export default async function WalletPage() {
                     shield
                   </span>
                   <span className="text-label-sm text-on-surface-variant mt-1">
-                    بیمه کالا
+                    ضمانت کالا
                   </span>
                 </div>
               </div>

@@ -506,8 +506,7 @@ export default function SettingsBody({
                   <span className="">پیک اکسپرس و سفیر اٌوِرا</span>
                 </div>
                 <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
-                  ارسال امن با بیمه ترانزیت کالا توسط ناوگان اختصاصی اٌوِرا
-                  اکسپرس.
+                  ارسال سریع و امن کالا با سفیر اٌوِرا اکسپرس.
                 </p>
               </div>
             </label>
@@ -749,7 +748,7 @@ export default function SettingsBody({
                     کارمزد پلتفرم اٌوِرا:
                   </span>
                   <span className="text-sm font-bold text-emerald-600">
-                    ۸٪ (سطح طلایی)
+                    ۸٪
                   </span>
                 </div>
               </div>

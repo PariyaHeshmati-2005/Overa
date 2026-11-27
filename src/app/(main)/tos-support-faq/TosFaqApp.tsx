@@ -16,7 +16,7 @@ const NAV_ITEMS = [
   {
     id: "item-2",
     icon: "verified_user",
-    label: "بیمه، گارانتی و حوادث",
+    label: "گارانتی، سلامت کالا و حوادث",
     count: "۵",
     iconCls: "text-m3-outline",
     countCls: "bg-surface-variant text-m3-tertiary",
@@ -69,7 +69,7 @@ const SECTION_TABS = [
   },
   {
     key: "dispute",
-    label: "پروتکل حل اختلاف و پوشش بیمه",
+    label: "پروتکل حل اختلاف و پشتیبانی",
     target: "support-banner",
   },
 ];
@@ -187,16 +187,16 @@ export default function TosFaqApp() {
       id: "item-2",
       num: "۰۲",
       question:
-        "سقف پوشش بیمه اختصاصی اٌوِرا (تا ۵۰ میلیون تومان) شامل چه مواردی است؟",
-      search: "بیمه گارانتی پوشش استثنا فرانشیز سرقت خسارت ۵۰ میلیون",
+        "سلامت کالا و جبران خسارت‌های احتمالی حین اجاره چگونه تضمین می‌شود؟",
+      search: "گارانتی سلامت کالا خسارت ودیعه داوری بازرسی",
       body: (
         <>
           <p>
             کلیه کالاهایی که با برچسب{" "}
-            <strong>«پوشش گارانتی و بیمه اٌوِرا»</strong> ثبت می‌شوند، در طول
-            دوره اجاره تحت قرارداد گروهی با بیمه معتبر طرف قرارداد پوشش داده
-            می‌شوند. سقف این بیمه تا ۵۰,۰۰۰,۰۰۰ تومان ارزش کارشناسی شده کالا را
-            شامل می‌شود.
+            <strong>«تضمین سلامت کالا»</strong> ثبت می‌شوند، در ابتدای اجاره
+            به‌صورت مشترک بازرسی و صورت‌جلسه سلامت کالا ثبت می‌شود؛ در صورت
+            بروز خسارت، جبران آن طبق پروتکل اعلام خسارت و داوری اٌوِرا از محل
+            ودیعهٔ مسدودشده انجام می‌گیرد.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
             <div className="p-3 bg-surface-container-low rounded-xl border border-outline-variant/30 flex items-start gap-2">
@@ -327,7 +327,7 @@ export default function TosFaqApp() {
             <li>
               در صورت تایید قصور مستاجر، هزینه تعمیرات یا افت قیمت کارشناسی از
               محل ودیعه کسر شده و مابقی آزاد می‌شود. در صورت هزینه‌های بالاتر،
-              پرونده به بیمه واریز خسارت ارجاع داده خواهد شد.
+              پرونده به کارشناسان داوری اٌوِرا ارجاع داده خواهد شد.
             </li>
           </ol>
         </>
@@ -361,7 +361,7 @@ export default function TosFaqApp() {
           شماره‌های تماس تا زمان تایید نهایی سفارش و پرداخت ودیعه مخفی خواهند
           ماند. کلیه هماهنگی‌های اولیه از طریق چت اختصاصی اٌوِرا صورت می‌گیرد و
           تبادل هرگونه شماره تماس خارج از بستر پلتفرم قبل از ثبت رزرو، مطابق
-          قوانین مندرج در بند ۶ باعث غیرفعال شدن پوشش بیمه‌ای خواهد شد.
+          قوانین مندرج در بند ۶ تخلف از مقررات پلتفرم محسوب می‌شود.
         </p>
       ),
     },
@@ -393,7 +393,7 @@ export default function TosFaqApp() {
       clause: "ماده ۴",
       icon: "block",
       title: "ممنوعیت انتقال به شخص ثالث",
-      text: "تنها شخصی که احراز هویت او در سامانه تایید گردیده مجاز به تحویل‌گیری و کاربری کالا است. تحویل کالا به پیک بدون هماهنگی یا اشخاص ثالث، پوشش بیمه را بلااثر می‌کند.",
+      text: "تنها شخصی که احراز هویت او در سامانه تایید گردیده مجاز به تحویل‌گیری و کاربری کالا است؛ تحویل کالا به اشخاص ثالث بدون هماهنگی، تخلف از قوانین پلتفرم محسوب می‌شود.",
       ref: "بند ۴-۱ مسئولیت انحصاری",
     },
   ];
@@ -412,7 +412,7 @@ export default function TosFaqApp() {
             مرکز شفافیت، قوانین و سوالات متداول اٌوِرا
           </p>
           <p className="text-[#694d99] text-base font-normal leading-normal">
-            همه چیز درباره حقوق کاربران، ضمانت سلامت وسایل، ودیعه امانی، بیمه و
+            همه چیز درباره حقوق کاربران، ضمانت سلامت وسایل، ودیعه امانی و
             پاسخ به پرسش‌های شما
           </p>
         </div>
@@ -426,7 +426,7 @@ export default function TosFaqApp() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#130e1b] focus:outline-0 focus:ring-0 border-none bg-[#ece7f3] focus:border-none h-full placeholder:text-[#694d99] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal"
-              placeholder="جستجو در قوانین، ودیعه امانی، شرایط بیمه، لغو رزرو یا جبران خسارت..."
+              placeholder="جستجو در قوانین، ودیعه امانی، لغو رزرو یا جبران خسارت..."
             />
             <div className="text-[#694d99] flex border-none bg-[#ece7f3] items-center justify-center pl-4 rounded-l-lg border-r-0">
               <button type="button" aria-label="جستجو">
@@ -681,7 +681,7 @@ export default function TosFaqApp() {
               پاسخ سوال خود را نیافتید یا در معامله جاری نیاز به داوری دارید؟
             </h3>
             <p className="text-xs md:text-sm text-m3-outline leading-relaxed">
-              تیم حقوقی و کارشناسان فنی اٌوِرا هفت روز هفته، ۲۴ ساعته در کنار
+              تیم حقوقی و کارشناسان فنی اٌوِرا در کنار
               شما هستند تا هرگونه ابهام درباره تسویه حساب، پیگیری وضعیت سلامت
               تجهیزات، یا حل اختلافات ملکی را بررسی نمایند.
             </p>
@@ -698,7 +698,7 @@ export default function TosFaqApp() {
                 <span className="material-symbols-outlined text-base">
                   chat
                 </span>
-                <span>گفتگوی آنلاین با پشتیبانی ۲۴/۷</span>
+                <span>گفتگوی آنلاین با پشتیبانی</span>
               </button>
               <Link
                 href="/account-settings"

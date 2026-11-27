@@ -133,6 +133,12 @@ const STEPS: { num: 1 | 2 | 3 | 4; title: string }[] = [
 ];
 
 const PERCENTS = ["۲۵٪", "۵۰٪", "۷۵٪", "۱۰۰٪"];
+
+/** Device uploads are stored under public/uploads, which does NOT persist on
+ *  serverless hosting (e.g. Vercel). Until a cloud store (Vercel Blob /
+ *  Cloudinary) is wired up, the device-upload button stays hidden and only
+ *  the sample images remain selectable. Flip to true to re-enable. */
+const DEVICE_UPLOAD_ENABLED = false;
 const WIDTHS = ["25%", "50%", "75%", "100%"];
 
 const PROVINCES = ["تهران", "البرز", "اصفهان", "فارس", "خراسان رضوی"];
@@ -755,7 +761,7 @@ export default function CreateListingWizard({
             className="hover:text-m3-primary transition-colors"
             href="/tos-support-faq"
           >
-            پوشش بیمه اٌوِراگارد
+            شرایط و ضمانت‌ها
           </Link>
         </div>
       </div>
@@ -1194,38 +1200,41 @@ export default function CreateListingWizard({
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-bold text-on-surface">
-                  عکس وسیله خود را از گوشی یا لپ‌تاپ انتخاب کنید — یا از نمونه‌های
-                  آماده استفاده کنید
+                  عکس وسیله خود را از نمونه‌های آماده انتخاب کنید
                 </p>
                 <p className="text-xs text-m3-tertiary">
-                  تا ۸ تصویر (JPEG/PNG/WEBP)؛ تصاویر به‌صورت خودکار فشرده و ذخیره
-                  می‌شوند
+                  تا ۸ تصویر از نمونه‌های آماده زیر انتخاب کنید (JPEG/PNG/WEBP)
                 </p>
               </div>
-              {/* Real device file picker — camera roll on phones, files on laptops */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => void handleFiles(e.target.files)}
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingCount > 0 || form.images.length >= 8}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-m3-primary text-on-primary text-xs font-bold shadow-md shadow-m3-primary/25 hover:bg-primary-container transition-all active:scale-[0.98] disabled:opacity-60 cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[18px]">
-                  upload_file
-                </span>
-                {uploadingCount > 0
-                  ? `در حال آپلود ${faNumber(uploadingCount)} تصویر…`
-                  : form.images.length >= 8
-                    ? "سقف ۸ تصویر تکمیل است"
-                    : "انتخاب فایل از دستگاه (گوشی / لپ‌تاپ)"}
-              </button>
+              {/* Real device file picker — hidden until a cloud store is
+                  wired up (see DEVICE_UPLOAD_ENABLED above). */}
+              {DEVICE_UPLOAD_ENABLED ? (
+                <>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => void handleFiles(e.target.files)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingCount > 0 || form.images.length >= 8}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-m3-primary text-on-primary text-xs font-bold shadow-md shadow-m3-primary/25 hover:bg-primary-container transition-all active:scale-[0.98] disabled:opacity-60 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">
+                      upload_file
+                    </span>
+                    {uploadingCount > 0
+                      ? `در حال آپلود ${faNumber(uploadingCount)} تصویر…`
+                      : form.images.length >= 8
+                        ? "سقف ۸ تصویر تکمیل است"
+                        : "انتخاب فایل از دستگاه (گوشی / لپ‌تاپ)"}
+                  </button>
+                </>
+              ) : null}
             </div>
 
             {/* Selected photos strip */}
@@ -1554,7 +1563,7 @@ export default function CreateListingWizard({
                       ارسال با پیک اکسپرس و سفیر اختصاصی اٌوِرا
                     </span>
                     <span className="text-[11px] text-m3-tertiary">
-                      سفیر بیمه‌شده کالا را تست و درب منزل مستاجر تحویل می‌دهد
+                      سفیر اٌوِرا کالا را تست و درب منزل مستاجر تحویل می‌دهد
                       (هزینه پیک بر عهده مستاجر)
                     </span>
                   </div>
@@ -1732,7 +1741,7 @@ export default function CreateListingWizard({
     : NaN;
   const fee =
     Number.isFinite(gross) && Number.isFinite(discountAmt)
-      ? Math.round((gross - discountAmt) * 0.1)
+      ? Math.round((gross - discountAmt) * 0.08)
       : NaN;
   const net =
     Number.isFinite(gross) && Number.isFinite(fee)
@@ -2007,7 +2016,7 @@ export default function CreateListingWizard({
                   >
                     verified_user
                   </span>
-                  <span>تعهد اٌوِراگارد (OveraGuard)</span>
+                  <span>تعهد اٌوِرا</span>
                 </div>
                 <p className="text-sm text-on-surface-variant mt-2 leading-relaxed">
                   ودیعه نقدی در صورت بروز خسارت یا تاخیر، پس از ارائه صورت‌جلسه
@@ -2220,14 +2229,10 @@ export default function CreateListingWizard({
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-on-surface-variant">
-                  <span>کارمزد پلتفرم اٌوِرا (۱۰٪):</span>
+                  <span>کارمزد پلتفرم اٌوِرا (۸٪):</span>
                   <span>
                     {Number.isFinite(fee) ? `- ${faNumber(fee)} تومان` : "—"}
                   </span>
-                </div>
-                <div className="flex justify-between items-center text-emerald-700 font-medium">
-                  <span>بیمه سلامت کالا (اٌوِراگارد):</span>
-                  <span className="font-bold">رایگان برای میزبان</span>
                 </div>
               </div>
 
@@ -2404,7 +2409,7 @@ export default function CreateListingWizard({
                   ارسال با سفیر اختصاصی اٌوِرا
                 </span>
                 <span className="text-sm text-on-surface-variant mt-1">
-                  ناوگان امن مجهز به جعبه ضدضربه
+                  بسته‌بندی امن مجهز به جعبه ضدضربه
                 </span>
                 <span className="inline-flex mt-3 text-[11px] font-semibold text-m3-primary bg-primary-fixed/60 w-fit px-2 py-0.5 rounded">
                   هزینه به عهده مستاجر

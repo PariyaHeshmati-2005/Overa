@@ -164,7 +164,7 @@ export default function ArbitrationPanelClient({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-wrap items-center justify-between gap-2">
           <div className="hidden md:flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full text-[11px] font-semibold text-emerald-700">
             <span className="material-symbols-outlined text-sm">verified</span>
-            تضمین اصالت و بیمه سپرده / تجهیزات
+            تضمین اصالت و امنیت سپرده / تجهیزات
           </div>
           <Link
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-m3-primary bg-m3-primary/10 hover:bg-m3-primary/20 transition-colors"

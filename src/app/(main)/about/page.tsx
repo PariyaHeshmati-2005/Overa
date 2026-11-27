@@ -58,7 +58,7 @@ const VALUES = [
     icon: "security",
     iconCls: "bg-secondary-fixed text-m3-secondary",
     title: "حفظ امنیت دارایی و پول",
-    desc: "پوشش بیمه‌ای معتبر تا سقف ۵۰ میلیون تومان و استفاده از سیستم حساب امانی (Escrow)؛ وجه تنها پس از تایید سلامت کالا آزاد می‌شود.",
+    desc: "استفاده از سیستم حساب امانی (Escrow)؛ وجه تنها پس از تایید سلامت کالا آزاد می‌شود.",
     sub: "تضمین سلامت تجهیزات",
   },
   {
@@ -93,8 +93,8 @@ const TIMELINE = [
       "bg-surface-container-lowest border-4 border-outline-variant text-m3-tertiary",
     boxCls: "bg-surface-container-low border border-surface-container-highest",
     titleCls: "font-bold text-base text-on-surface mb-2",
-    title: "نسخه آزمایشی با بیمه",
-    desc: "ورود به بازار تهران با ۵۰۰ کاربر اولیه و امضای نخستین تفاهم‌نامه بیمه انحصاری برای تجهیزات عکاسی و لوازم دیجیتال.",
+    title: "نسخه آزمایشی اولیه",
+    desc: "ورود به بازار تهران با ۵۰۰ کاربر اولیه و شروع فعالیت اختصاصی برای تجهیزات عکاسی و لوازم دیجیتال.",
   },
   {
     year: "۱۴۰۷",
@@ -183,12 +183,6 @@ const CERTS = [
     iconCls: "text-m3-primary",
     title: "درگاه پرداخت شاپرک",
     sub: "تسویه امانی معتبر بانکی",
-  },
-  {
-    icon: "health_and_safety",
-    iconCls: "text-m3-secondary",
-    title: "پوشش بیمه کالا",
-    sub: "تضمین جبران خسارت",
   },
 ];
 
@@ -299,7 +293,7 @@ export default function AboutPage() {
                 <span className="material-symbols-outlined text-xl">
                   check_circle
                 </span>
-                <span>بیش از ۳۵ دسته‌بندی تجهیزات استاندارد و بیمه‌شده</span>
+                <span>بیش از ۳۵ دسته‌بندی تجهیزات استاندارد و اصالت‌سنجی‌شده</span>
               </div>
             </div>
             <div className="bg-gradient-to-br from-surface-container-lowest to-surface-container-low border border-surface-container-highest rounded-2xl p-8 relative flex flex-col justify-between shadow-sm hover:border-secondary-container transition-all">

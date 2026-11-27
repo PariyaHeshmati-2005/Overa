@@ -317,7 +317,7 @@ export default async function LoadingPage() {
                 <span className="material-symbols-outlined text-sm">
                   headset_mic
                 </span>
-                پشتیبانی ۲۴ ساعته میزبانان (۰۲۱-۸۸۹۹۰۰۱۱)
+                پشتیبانی میزبانان
               </Link>
               <Link
                 className="hover:text-m3-primary transition-colors"

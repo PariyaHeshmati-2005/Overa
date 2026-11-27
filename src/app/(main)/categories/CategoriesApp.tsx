@@ -245,7 +245,7 @@ const MEGA_CATEGORIES = [
     tags: ["چادر ۴ نفره", "کیسه خواب", "یخچال خودرویی"],
     price: "۸۰,۰۰۰ تومان",
     img: "/assets/img/9ea4705013cf.jpg",
-    badge: "بیمه طبیعت‌گردی",
+    badge: "تجهیزات طبیعت‌گردی",
     icon: "camping",
   },
   {
@@ -278,7 +278,7 @@ const MEGA_CATEGORIES = [
     tags: ["MacBook Pro M3", "iPad Pro M2", "ویدئو پروژکتور"],
     price: "۳۰۰,۰۰۰ تومان",
     img: "/assets/img/246d69b67ee6.jpg",
-    badge: "بیمه ضد سرقت",
+    badge: "اصالت‌سنجی‌شده",
     icon: "laptop_mac",
   },
   {
@@ -340,7 +340,7 @@ function AllScreen({ goTab }: { goTab: (t: TabKey) => void }) {
               </h1>
               <p className="text-sm md:text-base text-on-surface-variant leading-relaxed">
                 بدون نیاز به خرید سنگین و هزینه‌بر، به بهترین تجهیزات استودیویی،
-                کمپی، سرگرمی و صنعتی دسترسی پیدا کنید؛ با بیمه کامل و ضمانت
+                کمپی، سرگرمی و صنعتی دسترسی پیدا کنید؛ با ضمانت
                 اصالت کالا.
               </p>
 
@@ -407,10 +407,10 @@ function AllScreen({ goTab }: { goTab: (t: TabKey) => void }) {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xl font-black text-on-surface font-numeric-stat">
-                    ۱۰۰٪ بیمه کالا
+                    ۱۰۰٪ اصالت‌سنجی کالا
                   </span>
                   <span className="text-xs text-on-surface-variant font-medium">
-                    پوشش طلایی اٌوِراگارد
+                    ضمانت سلامت کالا
                   </span>
                 </div>
               </div>
@@ -645,11 +645,11 @@ function AllScreen({ goTab }: { goTab: (t: TabKey) => void }) {
                 </span>
               </div>
               <h4 className="text-sm font-bold text-on-surface mb-1">
-                بیمه جامع اٌوِراگارد
+                ضمانت جامع کالا
               </h4>
               <p className="text-xs text-on-surface-variant leading-relaxed">
-                پوشش خسارت‌های ناخواسته، ضربه و حوادث تا سقف ۱۰۰ میلیون تومان با
-                همکاری بیمه سامان.
+                جبران خسارت‌های ناخواسته، ضربه و حوادث از محل ودیعه طبق
+                پروتکل داوری اٌوِرا.
               </p>
             </div>
 
@@ -678,7 +678,7 @@ function AllScreen({ goTab }: { goTab: (t: TabKey) => void }) {
                 تحویل اکسپرس در محل
               </h4>
               <p className="text-xs text-on-surface-variant leading-relaxed">
-                امکان ارسال سریع با ناوگان اختصاصی بیمه‌شده اٌوِرا در کمتر از ۲
+                امکان ارسال سریع توسط میزبان در کمتر از ۲
                 ساعت در سراسر تهران.
               </p>
             </div>
@@ -806,7 +806,7 @@ function CampingScreen({
               <span className="material-symbols-outlined text-[16px]">
                 verified_user
               </span>
-              <span>پوشش طلایی اٌوِراگارد کمپینگ</span>
+              <span>ضمانت سلامت تجهیزات کمپینگ</span>
             </div>
             <h1 className="text-2xl md:text-4xl font-extrabold text-white leading-tight">
               اجاره تجهیزات سفر، کمپینگ و آفرود
@@ -820,7 +820,7 @@ function CampingScreen({
 
           <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-2.5 mt-6">
             {[
-              { icon: "security", text: "بیمه اٌوِراگارد تا ۱۰۰ م.ت" },
+              { icon: "security", text: "ضمانت سلامت کالا" },
               { icon: "verified", text: "تست درزها و زیپ‌ها قبل تحویل" },
               { icon: "bolt", text: "تحویل فوری ۲ ساعته" },
               { icon: "lock", text: "ودیعه امن بانکی" },
@@ -1101,7 +1101,7 @@ function CamerasScreen({
                   تضمین سلامت تجهیزات
                 </span>
                 <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
-                  بیمه تا ۵۰۰ میلیون تومان
+                  ضمانت اصالت کالا
                 </span>
               </div>
               <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight">
@@ -1385,7 +1385,7 @@ function DigitalScreen({
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-col gap-6">
         <section className="rounded-2xl bg-surface-container-low p-6 md:p-8 border border-surface-container-high">
           <span className="px-3 py-1 rounded-full bg-primary-fixed text-m3-primary text-xs font-bold">
-            پوشش بیمه اٌوِراگارد تا ۸۰ م.ت
+            ضمانت سلامت تجهیزات
           </span>
           <h1 className="text-2xl md:text-3xl font-extrabold text-on-surface mt-2">
             اجاره لپ‌تاپ، مک‌بوک و تجهیزات دیجیتال
@@ -1587,7 +1587,7 @@ function ToolsScreen({
         <div className="rounded-2xl bg-surface-container-low p-6 md:p-8 border border-surface-container-high flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <span className="px-3 py-1 rounded-full bg-primary-container text-on-primary text-xs font-bold">
-              تضمین فوری اٌوِراگارد صنعتی
+              تضمین فوری سلامت تجهیزات
             </span>
             <h1 className="text-2xl md:text-3xl font-extrabold text-on-surface mt-2">
               اجاره ابزارآلات و تجهیزات کارگاهی
@@ -1598,7 +1598,7 @@ function ToolsScreen({
             </p>
           </div>
           <div className="bg-surface-container-lowest p-4 rounded-xl shadow-sm border border-surface-container-high text-xs text-on-surface font-semibold shrink-0">
-            <span>تست سلامت موتور قبل از تحویل + بیمه سوختگی</span>
+            <span>تست سلامت موتور قبل از تحویل</span>
           </div>
         </div>
 

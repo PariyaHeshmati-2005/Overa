@@ -470,9 +470,9 @@ export default function LiveChatClient({
                 </span>
                 <p className="leading-relaxed">
                   <strong className="text-on-surface">
-                    ضمانت اٌوِرا گارد:
+                    ضمانت امنیت معامله:
                   </strong>{" "}
-                  جهت حفظ پوشش بیمه، تمام پرداخت‌ها و مذاکرات باید داخل سامانه
+                  جهت حفظ امنیت معامله، تمام پرداخت‌ها و مذاکرات باید داخل سامانه
                   انجام شود. از پرداخت کارت‌به‌کارت خودداری کنید.
                 </p>
               </div>

@@ -135,7 +135,7 @@ export default async function RentalsPage() {
               className="hover:text-m3-primary transition-colors"
               href="/tos-support-faq"
             >
-              قوانین بیمه و ضمانت
+              قوانین و ضمانت
             </Link>
             <Link
               className="hover:text-m3-primary transition-colors"

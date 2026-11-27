@@ -292,7 +292,7 @@ export default function HomeExplore({
             {(
               [
                 { key: "instant", label: "رزرو فوری", checked: filters.instant },
-                { key: "courier", label: "تحویل در محل با پیک", checked: filters.courier },
+                { key: "courier", label: "ارسال توسط میزبان", checked: filters.courier },
                 { key: "pickup", label: "تحویل حضوری", checked: filters.pickup },
               ] as const
             ).map((f) => (

@@ -1596,13 +1596,13 @@ export default function AdminDashboardClient({
               className="hover:text-m3-primary transition-colors"
               href="/tos-support-faq"
             >
-              دستورالعمل بیمه تجهیزات
+              دستورالعمل سلامت تجهیزات
             </Link>
             <Link
               className="hover:text-m3-primary transition-colors"
               href="/tos-support-faq"
             >
-              پشتیبانی فنی ۲۴/۷
+              پشتیبانی فنی
             </Link>
           </div>
         </div>

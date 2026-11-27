@@ -767,7 +767,7 @@ export default function RentalLifecycleClient({
                     {contractTab === 0
                       ? "قرارداد اجاره وسایل اٌوِرا"
                       : contractTab === 1
-                        ? "شرایط ضمانت‌نامه و بیمه"
+                        ? "شرایط ضمانت‌نامه"
                         : "اطلاعات ودیعه امانی"}
                   </h2>
                 </div>
@@ -1004,6 +1004,14 @@ export default function RentalLifecycleClient({
                     {faToman(r.subtotal)} تومان
                   </span>
                 </div>
+                <div className="flex justify-between items-center text-xs py-2 border-b border-slate-100">
+                  <span className="text-slate-600">
+                    کارمزد خدمات پلتفرم (۴٪ — پس از تأیید دریافت کالا):
+                  </span>
+                  <span className="font-bold text-slate-800">
+                    {faToman(Math.round(r.subtotal * 0.04))} تومان
+                  </span>
+                </div>
                 <div className="flex justify-between items-center p-3 rounded-xl bg-surface-container-high text-xs">
                   <span className="font-bold text-m3-primary">
                     ودیعه امانی مسدودشونده (قابل استرداد) — پرداخت همین حالا:
@@ -1018,8 +1026,8 @@ export default function RentalLifecycleClient({
                       مجموع پرداختی در درگاه:
                     </span>
                     <div className="text-[11px] text-slate-400">
-                      فقط ودیعه — هزینهٔ اجارهٔ روزانه پس از تأیید دریافت کالا
-                      از کیف پول کسر می‌شود
+                      فقط ودیعه — هزینهٔ اجارهٔ روزانه + کارمزد ۴٪ پس از تأیید
+                      دریافت کالا از کیف پول کسر می‌شود
                     </div>
                   </div>
                   <div className="text-base font-extrabold text-m3-primary">
@@ -1314,7 +1322,7 @@ export default function RentalLifecycleClient({
                       فاز ۱: تحویل اولیه کالا
                     </h4>
                     <p className="text-[11px] text-slate-500">
-                      ثبت اقلام و آغاز مسئولیت بیمه
+                      ثبت اقلام و آغاز مسئولیت اجاره
                     </p>
                   </div>
                 </div>

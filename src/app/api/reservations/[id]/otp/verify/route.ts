@@ -130,15 +130,19 @@ export async function POST(req: Request, ctx: Ctx) {
           // Wallet guard: the rent (daily rate × days) must be covered by the
           // renter's balance — otherwise the whole verification (and the
           // consumed code) rolls back and the client is told to top up first.
+          // Renter's 4% platform service fee — charged together with the
+          // rent at receipt confirmation and recorded as its own ledger row.
+          const platformFee = Math.round(reservation.subtotal * 0.04);
+          const renterCharge = reservation.subtotal + platformFee;
           const renter = await tx.user.findUnique({
             where: { id: reservation.renterId },
             select: { walletBalance: true },
           });
-          if (!renter || renter.walletBalance < reservation.subtotal) {
+          if (!renter || renter.walletBalance < renterCharge) {
             throw new OtpError(
-              `برای شروع دورهٔ اجاره، هزینهٔ اجارهٔ ${reservation.days} روزه (${reservation.subtotal.toLocaleString("fa-IR")} تومان) باید از کیف پول پرداخت شود؛ موجودی کیف پول شما کافی نیست؛ لطفاً ابتدا کیف پول را شارژ کنید.`,
+              `برای شروع دورهٔ اجاره، هزینهٔ اجارهٔ ${reservation.days} روزه (${reservation.subtotal.toLocaleString("fa-IR")} تومان) + کارمزد خدمات پلتفرم ۴٪ (${platformFee.toLocaleString("fa-IR")} تومان) باید از کیف پول پرداخت شود؛ موجودی کیف پول شما کافی نیست؛ لطفاً ابتدا کیف پول را شارژ کنید.`,
               402,
-              { needTopup: true, needed: reservation.subtotal, currentBalance: renter?.walletBalance ?? 0 },
+              { needTopup: true, needed: renterCharge, currentBalance: renter?.walletBalance ?? 0 },
             );
           }
           const claimed = await tx.reservation.updateMany({
@@ -166,6 +170,18 @@ export async function POST(req: Request, ctx: Ctx) {
               status: "COMPLETED",
             },
           });
+          // Platform service fee ledger (sandbox): the renter's 4% fee gets
+          // its own wallet-statement row (see WalletClient PLATFORM_FEE).
+          await tx.walletTransaction.create({
+            data: {
+              userId: reservation.renterId,
+              type: "PLATFORM_FEE",
+              amount: -platformFee,
+              reference: reservation.code,
+              description: `کارمزد خدمات پلتفرم (۴٪ از مبلغ اجاره) ${reservation.code} — پس از تأیید دریافت کالا — حالت شبیه‌سازی`,
+              status: "COMPLETED",
+            },
+          });
           await tx.walletTransaction.create({
             data: {
               userId: reservation.hostId,
@@ -178,7 +194,7 @@ export async function POST(req: Request, ctx: Ctx) {
           });
           await tx.user.update({
             where: { id: reservation.renterId },
-            data: { walletBalance: { decrement: reservation.subtotal } },
+            data: { walletBalance: { decrement: renterCharge } },
           });
           await tx.user.update({
             where: { id: reservation.hostId },
@@ -189,7 +205,7 @@ export async function POST(req: Request, ctx: Ctx) {
               reservationId: reservation.id,
               actor: "renter",
               type: "CONFIRM_DELIVERY",
-              message: `دریافت کالا با کد یک‌بارمصرف توسط مستأجر تأیید شد؛ روند اجاره آغاز شد و هزینهٔ اجارهٔ روزانه (${reservation.days} روز — ${reservation.subtotal.toLocaleString("fa-IR")} تومان) از کیف پول کسر گردید (شبیه‌سازی).`,
+              message: `دریافت کالا با کد یک‌بارمصرف توسط مستأجر تأیید شد؛ روند اجاره آغاز شد و هزینهٔ اجارهٔ روزانه (${reservation.days} روز — ${reservation.subtotal.toLocaleString("fa-IR")} تومان) + کارمزد خدمات پلتفرم ۴٪ (${platformFee.toLocaleString("fa-IR")} تومان) از کیف پول کسر گردید (شبیه‌سازی).`,
             },
           });
           await tx.notification.create({

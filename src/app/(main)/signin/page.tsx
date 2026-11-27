@@ -80,7 +80,7 @@ export default async function SignInPage({
                   <span className="">احراز هویت دو مرحله‌ای امن</span>
                 </div>
                 <span className="text-xs text-on-surface-variant font-medium hidden sm:inline-block">
-                  پشتیبانی برخط ۲۴/۷
+                  پشتیبانی برخط
                 </span>
               </div>
               {/* Section Headings */}
@@ -164,7 +164,7 @@ export default async function SignInPage({
               className="hover:text-m3-primary transition-colors"
               href="/tos-support-faq"
             >
-              قوانین و ضمانت اٌوِراگارد
+              قوانین و ضمانت اٌوِرا
             </Link>
             <span className="inline-flex items-center gap-1 text-m3-secondary font-bold">
               <span className="material-symbols-outlined text-sm">

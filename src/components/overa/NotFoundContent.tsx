@@ -196,7 +196,7 @@ export default async function NotFoundContent() {
                       </p>
                       <div className="flex items-center gap-2 mt-2">
                         <span className="px-2 py-0.5 rounded bg-surface-container text-m3-primary text-[11px] font-bold">
-                          بیمه مسافرتی
+                          اصالت‌سنجی‌شده
                         </span>
                         <span className="text-on-surface-variant text-[11px]">
                           از ۹۰ هزار تومان/روز
@@ -303,7 +303,7 @@ export default async function NotFoundContent() {
                 <span className="material-symbols-outlined text-sm">
                   headset_mic
                 </span>
-                پشتیبانی ۲۴ ساعته میزبانان (۰۲۱-۸۸۹۹۰۰۱۱)
+                پشتیبانی میزبانان
               </Link>
               <Link
                 className="hover:text-m3-primary transition-colors"

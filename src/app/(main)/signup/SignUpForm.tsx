@@ -202,8 +202,7 @@ export default function SignUpForm({ next }: { next: string }) {
               </div>
             </div>
             <p className="text-[11px] text-on-surface-variant mt-1.5 leading-relaxed">
-              تنها برای استعلام اصالت و فعال‌سازی پوشش بیمه ۵۰ میلیون تومانی
-              اٌوِراگارد استفاده می‌شود.
+              تنها برای استعلام اصالت استفاده می‌شود.
             </p>
           </div>
           {/* Field 4: Password with strength meter */}

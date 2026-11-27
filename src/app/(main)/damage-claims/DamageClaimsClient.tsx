@@ -293,7 +293,7 @@ export default function DamageClaimsClient({
                     مهلت قانونی اعلام خسارت و مغایرت فنی
                   </span>
                   <span className="text-sm text-m3-on-error-container/80">
-                    حداکثر مهلت: ۲۴ ساعت پس از تحویل فیزیکی اقلام توسط پیک امانی
+                    حداکثر مهلت: ۲۴ ساعت پس از تحویل فیزیکی اقلام
                     یا حضوری
                   </span>
                 </div>
@@ -986,7 +986,7 @@ export default function DamageClaimsClient({
                   </span>
                   <div className="flex flex-col gap-0.5">
                     <span className="text-sm text-on-surface font-bold">
-                      تضمین سلامت دادرسی اٌوِراگارد
+                      تضمین سلامت فرآیند داوری
                     </span>
                     <span className="text-xs text-on-surface-variant leading-relaxed">
                       پرونده‌ها توسط کارشناسان اٌوِرا بررسی می‌شوند؛ این فرآیند
@@ -1079,7 +1079,7 @@ export default function DamageClaimsClient({
                       خط اختصاصی داوری اٌوِرا
                     </span>
                     <span className="text-xs text-m3-outline">
-                      پاسخگویی سریع ۲۴ ساعته
+                      پاسخگویی سریع
                     </span>
                   </div>
                 </div>

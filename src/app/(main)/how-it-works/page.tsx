@@ -82,10 +82,10 @@ export default function HowItWorksPage() {
                 </svg>
               </div>
               <h4 className="text-xs font-bold text-neutral-text">
-                پشتیبانی ۲۴ ساعته
+                پشتیبانی آنلاین
               </h4>
               <p className="text-[11px] text-neutral-muted">
-                همیشه در کنار شما
+                در کنار شما
               </p>
             </div>
             <div className="flex flex-col items-center gap-2 px-2 pt-3 md:pt-0">
@@ -105,7 +105,7 @@ export default function HowItWorksPage() {
                 </svg>
               </div>
               <h4 className="text-xs font-bold text-neutral-text">
-                بیمه کامل وسایل
+                ضمانت سلامت کالا
               </h4>
               <p className="text-[11px] text-neutral-muted">در زمان اجاره</p>
             </div>

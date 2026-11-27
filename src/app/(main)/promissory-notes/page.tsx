@@ -21,9 +21,10 @@ export default function PromissoryNotesPage() {
             gavel
           </span>
           <p className="text-xs sm:text-sm leading-relaxed text-m3-on-error-container">
-            <strong className="font-bold">توجه:</strong> این بخش صرفاً راهنمای
-            فرآیند است؛ صدور سند واقعی نیازمند اتصال به سرویس‌دهنده مجاز و بررسی
-            حقوقی است و در این نسخه شبیه‌سازی نشده است.
+            <strong className="font-bold">فقط راهنمای فرآیند:</strong> این صفحه
+            و مرحلهٔ ثبت، صرفاً شبیه‌سازی آموزشی روند صدور سفته هستند؛ سند واقعی
+            صادر نمی‌شود، هیچ ارزش حقوقی ندارند و اتصال به سرویس‌دهندهٔ مجاز در
+            این نسخه انجام نشده است.
           </p>
         </div>
       </div>
@@ -46,7 +47,7 @@ export default function PromissoryNotesPage() {
               account_balance
             </span>
             <span>
-              سامانه یکپارچه سفته و برات الکترونیکی خزانه‌داری کل کشور
+              سامانه نمونه سفته و برات الکترونیک
             </span>
           </div>
         </div>
@@ -73,7 +74,7 @@ export default function PromissoryNotesPage() {
               <span className="material-symbols-outlined text-[18px]">
                 task_alt
               </span>
-              <span className="truncate">۳. ثبت در خزانه‌داری</span>
+              <span className="truncate">۳. ثبت نهایی سفته</span>
             </div>
           </div>
         </div>
@@ -145,7 +146,7 @@ export default function PromissoryNotesPage() {
                   <p className="text-[11px] text-on-surface-variant leading-relaxed">
                     به محض اینکه کالا در پایان مدت اجاره تحویل مالک گردید و کد
                     تایید سلامت در اپلیکیشن اٌوِرا ثبت شد، شناسه این سفته در
-                    سامانه خزانه‌داری به وضعیت «باطل‌شده» تغییر یافته و هیچ‌گونه
+                    سامانه به وضعیت «باطل‌شده» تغییر یافته و هیچ‌گونه
                     تعهد مالی باقی نخواهد ماند.
                   </p>
                 </div>

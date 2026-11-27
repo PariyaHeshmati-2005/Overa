@@ -269,7 +269,7 @@ export default async function ReviewsPage() {
                 <span className="material-symbols-outlined text-sm">
                   headset_mic
                 </span>
-                پشتیبانی ۲۴ ساعته میزبانان
+                پشتیبانی میزبانان
               </Link>
               <Link
                 className="hover:text-m3-primary transition-colors"

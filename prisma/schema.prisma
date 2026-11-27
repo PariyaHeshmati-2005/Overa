@@ -331,7 +331,7 @@ model WalletTransaction {
   id          String   @id @default(cuid())
   userId      String
   // DEPOSIT_HOLD | DEPOSIT_RELEASE | DEPOSIT_DEDUCTION | RENTAL_PAYMENT |
-  // RENTAL_REFUND | PAYOUT | TOPUP
+  // RENTAL_REFUND | PAYOUT | TOPUP | PLATFORM_FEE
   type        String
   amount      Int // positive = credit, negative = debit (Toman)
   status      String   @default("COMPLETED") // PENDING | COMPLETED | FAILED

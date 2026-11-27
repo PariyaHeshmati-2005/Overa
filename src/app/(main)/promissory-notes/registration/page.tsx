@@ -6,7 +6,7 @@ import UserMenu from "@/components/layout/UserMenu";
 import M3Styles from "@/components/overa/M3Styles";
 
 export const metadata: Metadata = {
-  title: "ثبت در خزانه‌داری و صدور سند سفته الکترونیک",
+  title: "صدور سند سفته الکترونیک (فقط راهنما)",
 };
 export const dynamic = "force-dynamic";
 
@@ -25,8 +25,23 @@ export default async function PromissoryRegistrationPage() {
   return (
     <div className="bg-m3-surface text-body-md text-on-surface antialiased min-h-screen flex flex-col">
       <M3Styles />
-      {/* Header — preserved from Registration-in-the-Treasury source */}
+      {/* Header — promissory registration guide page */}
       <SiteHeader />
+
+      {/* Mandatory guide-only notice — the promissory flow is a demo guide */}
+      <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-5">
+        <div className="rounded-xl border border-m3-error/30 bg-m3-error-container/60 px-4 py-3 flex items-start gap-3">
+          <span className="material-symbols-outlined text-m3-on-error-container text-[20px] shrink-0 mt-0.5">
+            gavel
+          </span>
+          <p className="text-xs sm:text-sm leading-relaxed text-m3-on-error-container">
+            <strong className="font-bold">فقط راهنمای فرآیند:</strong> این صفحه
+            صرفاً شبیه‌سازی آموزشی روند ثبت سفته است؛ سند واقعی صادر نمی‌شود،
+            هیچ ارزش حقوقی ندارد و اتصال به سرویس‌دهندهٔ مجاز در این نسخه انجام
+            نشده است.
+          </p>
+        </div>
+      </div>
 
       <main className="w-full bg-m3-surface pt-6 flex-1">
         <div className="flex flex-col w-full">
@@ -116,7 +131,7 @@ export default async function PromissoryRegistrationPage() {
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm text-m3-primary font-bold">
-                      ۳. ثبت در خزانه‌داری و صدور سند
+                      ۳. ثبت نهایی و صدور سند
                     </span>
                     <span className="text-xs text-m3-primary font-semibold">
                       ثبت نهایی و صدور شناسه شمس
@@ -158,13 +173,13 @@ export default async function PromissoryRegistrationPage() {
                       </span>
                     </div>
                     <h1 className="text-2xl font-bold text-on-surface tracking-tight leading-snug">
-                      سفته الکترونیک با موفقیت در سامانه یکپارچه خزانه‌داری کل
-                      کشور ثبت و صادر گردید
+                      سفته الکترونیک با موفقیت در سامانه یکپارچه سفته
+                      ثبت و صادر گردید
                     </h1>
                     <p className="text-sm text-on-surface-variant max-w-4xl leading-relaxed">
                       ضمانت حسن انجام تعهدات قرارداد اجاره دوربین Sony Alpha 7
-                      IV به ارزش ۱۵,۰۰۰,۰۰۰ تومان در صندوق امنیتی امانی
-                      اٌوِراگارد فعال شد. بدون نیاز به مسدودی وجه نقد از حساب
+                      IV به ارزش ۱۵,۰۰۰,۰۰۰ تومان در صندوق امن امانی
+                      فعال شد. بدون نیاز به مسدودی وجه نقد از حساب
                       شما.
                     </p>
                   </div>
@@ -219,8 +234,7 @@ export default async function PromissoryRegistrationPage() {
                             جمهوری اسلامی ایران - وزارت امور اقتصادی و دارایی
                           </span>
                           <h2 className="text-lg md:text-xl text-on-surface font-extrabold leading-snug">
-                            سند رسمی تعهد پرداخت و گواهی ثبت در خزانه‌داری کل
-                            کشور
+                            سند رسمی تعهد پرداخت و گواهی ثبت سفته
                           </h2>
                           <span className="text-xs text-m3-primary font-semibold">
                             سامانه صدور و اعتبارسنجی سفته الکترونیک (سامانه شمس)
@@ -253,7 +267,7 @@ export default async function PromissoryRegistrationPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="bg-surface-container-low p-4 rounded-lg flex flex-col gap-1">
                         <span className="text-xs text-m3-outline">
-                          شناسه یکتای ملی خزانه‌داری (کد شمس)
+                          شناسه یکتای سند (کد شمس)
                         </span>
                         <span
                           className="text-sm md:text-base font-bold text-m3-primary tracking-wider font-mono"
@@ -340,7 +354,7 @@ export default async function PromissoryRegistrationPage() {
                       </div>
                       <div className="bg-surface-container-low p-4 rounded-lg flex flex-col gap-1">
                         <span className="text-xs text-m3-outline">
-                          زمان دقیق ثبت و تایید در خزانه‌داری
+                          زمان دقیق ثبت و تایید سند
                         </span>
                         <span className="text-sm font-medium text-on-surface">
                           ۱۴ آبان ۱۴۰۵ — ساعت ۱۰:۲۴:۱۸
@@ -381,7 +395,7 @@ export default async function PromissoryRegistrationPage() {
                           به موقع تجهیزات مورد اجاره نزد صندوق امانی اٌوِرا
                           توثیق گردیده است. بلافاصله پس از ثبت کد تایید دوطرفه
                           تحویل در اپلیکیشن اٌوِرا و بررسی سلامت کالا، این سند
-                          در بستر خزانه‌داری به صورت خودکار به وضعیت
+                          در بستر سامانه سفته به صورت خودکار به وضعیت
                           <strong className="text-on-primary-fixed font-bold">
                             {" "}
                             «باطل‌شده و فاقد اثر حقوقی»{" "}
@@ -445,7 +459,7 @@ export default async function PromissoryRegistrationPage() {
                         <div className="flex flex-col gap-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="text-base font-bold text-on-surface">
-                              گواهی رسمی و معتبر خزانه‌داری کل کشور
+                              گواهی رسمی و معتبر ثبت سفته
                             </span>
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
                               <svg
@@ -506,7 +520,7 @@ export default async function PromissoryRegistrationPage() {
                           <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"></path>
                         </svg>
                         <span>
-                          سند به مدت ۱۰ سال در آرشیو الکترونیک خزانه‌داری قابل
+                          سند به مدت ۱۰ سال در آرشیو الکترونیک سامانه قابل
                           بازیابی و استعلام مستقیم است.
                         </span>
                       </div>
@@ -568,7 +582,7 @@ export default async function PromissoryRegistrationPage() {
                       </span>
                       <p className="text-xs text-on-surface-variant leading-relaxed">
                         در روز سررسید، پس از تحویل کالا به میزبان و تایید نهایی
-                        در سامانه، سفته به‌طور آنی در سامانه خزانه‌داری باطل شده
+                        در سامانه، سفته به‌طور آنی باطل شده
                         و پیامک ابطال رسمی همراه با کد رهگیری برای شما ارسال
                         می‌گردد.
                       </p>
@@ -618,7 +632,7 @@ export default async function PromissoryRegistrationPage() {
                       </div>
                       <div className="flex flex-col gap-0.5">
                         <span className="text-sm font-bold text-m3-primary">
-                          ۱. ثبت و فعال‌سازی در خزانه‌داری
+                          ۱. ثبت و فعال‌سازی سند
                         </span>
                         <span className="text-xs text-emerald-700 font-semibold">
                           وضعیت فعلی: فعال و امانت‌گذاری‌شده
@@ -697,7 +711,7 @@ export default async function PromissoryRegistrationPage() {
                           ۴. ابطال آنی و دائم سند
                         </span>
                         <span className="text-xs text-on-surface-variant">
-                          ابطال سیستمی در خزانه‌داری کل و ارسال پیامک تاییدیه به
+                          ابطال سیستمی سند و ارسال پیامک تاییدیه به
                           کاربر
                         </span>
                       </div>
@@ -768,25 +782,6 @@ export default async function PromissoryRegistrationPage() {
                         <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path>
                       </svg>
                       <span>۴.۹</span>
-                    </div>
-                  </div>
-                  <div className="p-3.5 bg-emerald-50 rounded-lg flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                      <svg
-                        className="w-5 h-5 text-emerald-700"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 6h2v4h-2zm0 6h2v2h-2z"></path>
-                      </svg>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold text-emerald-900">
-                        پوشش بیمه اٌوِراگارد فعال است
-                      </span>
-                      <span className="text-[11px] text-emerald-700">
-                        پوشش حوادث و خسارت ناگهانی تا سقف ۵۰ میلیون تومان
-                      </span>
                     </div>
                   </div>
                 </div>
@@ -879,7 +874,7 @@ export default async function PromissoryRegistrationPage() {
               <p className="text-xs leading-relaxed text-m3-outline max-w-sm">
                 اٌوِرا نخستین پلتفرم هوشمند اجاره و تبادل وسایل در ایران است که
                 امکان کرایه مطمئن تجهیزات عکاسی، دیجیتال، کمپینگ و ابزارآلات را
-                با تضمین اصالت، سفته الکترونیک خزانه‌داری و بیمه کامل فراهم
+                با تضمین اصالت و سفته الکترونیک فراهم
                 می‌سازد.
               </p>
               <div className="flex items-center gap-4 text-m3-outline pt-2 text-[11px]">
@@ -961,7 +956,7 @@ export default async function PromissoryRegistrationPage() {
                   className="hover:text-m3-primary transition-colors"
                   href="/tos-support-faq"
                 >
-                  پوشش بیمه و خسارت وسایل
+                  جبران خسارت وسایل
                 </Link>
                 <Link
                   className="hover:text-m3-primary transition-colors"
@@ -1029,7 +1024,7 @@ export default async function PromissoryRegistrationPage() {
                       strokeLinejoin="round"
                     ></path>
                   </svg>
-                  <span>پشتیبانی: ۲۴ ساعته در ۷ روز هفته</span>
+                  <span>پشتیبانی اٌوِرا</span>
                 </div>
               </div>
               <div className="flex items-center gap-2 pt-2">

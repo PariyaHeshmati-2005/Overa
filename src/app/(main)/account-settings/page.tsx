@@ -93,7 +93,7 @@ export default async function AccountSettingsPage() {
 
           {/* Bottom section matching the source */}
           <div className="flex flex-col gap-3 pt-4 pb-2">
-            {/* 24/7 Support Card */}
+            {/* Support Card */}
             <div
               className="rounded-2xl p-4 flex flex-col items-center text-center gap-2 border border-[#431f7a]/40 shadow-inner"
               style={{
@@ -108,10 +108,10 @@ export default async function AccountSettingsPage() {
               </div>
               <div className="flex flex-col gap-0.5 mt-0.5">
                 <span className="font-bold text-white text-xs tracking-tight">
-                  پشتیبانی ۲۴ ساعته
+                  پشتیبانی آنلاین
                 </span>
                 <span className="text-[11px] text-[#bca7e8]">
-                  در هر زمان کنار شما هستیم
+                  در کنار شما هستیم
                 </span>
               </div>
               <Link
@@ -251,7 +251,7 @@ export default async function AccountSettingsPage() {
                   راهنمای میزبانان برتر
                 </Link>
                 <Link className="hover:underline" href="/tos-support-faq">
-                  شرایط بیمه کالاها
+                  شرایط و قوانین کالاها
                 </Link>
                 <Link className="hover:underline" href="/tos-support-faq">
                   سیاست حریم خصوصی

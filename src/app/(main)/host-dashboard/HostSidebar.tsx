@@ -83,10 +83,10 @@ export default function HostSidebar({
           </div>
           <div className="flex flex-col gap-0.5 mt-0.5">
             <span className="font-bold text-white text-xs tracking-tight">
-              پشتیبانی ۲۴ ساعته
+              پشتیبانی آنلاین
             </span>
             <span className="text-[11px] text-[#bca7e8]">
-              در هر زمان کنار شما هستیم
+              در کنار شما هستیم
             </span>
           </div>
           <Link

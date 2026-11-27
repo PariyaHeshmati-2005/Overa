@@ -14,7 +14,7 @@ export async function GET() {
     db.listing.count({ where: { status: "ACTIVE" } }),
     db.listing.count({ where: { status: "PENDING" } }),
     db.reservation.count(),
-    db.reservation.count({ where: { status: { in: ["PAID", "DELIVERED"] } } }),
+    db.reservation.count({ where: { status: { in: ["PAID", "DELIVERED", "RENTAL_ACTIVE"] } } }),
     db.damageClaim.count(),
     db.damageClaim.count({ where: { status: { in: ["OPEN", "COUNTER_EVIDENCE", "UNDER_REVIEW"] } } }),
     db.reservation.count({ where: { status: "COMPLETED" } }),
